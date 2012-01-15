@@ -7,12 +7,14 @@
 #include <assimp/aiScene.h>
 #include <assimp/aiPostProcess.h>
 #include <glm/glm.hpp>
+#include <glimg/glimg.h>
 
 #define aisgl_min(x,y) (x<y?x:y)
 #define aisgl_max(x,y) (y>x?y:x)
 
 RenderObject::RenderObject(std::string model) {
-	scene = aiImportFile( model.c_str(),  aiProcessPreset_TargetRealtime_MaxQuality);
+	scene = aiImportFile( model.c_str(), aiProcess_Triangulate | aiProcess_GenSmoothNormals );
+	rotation = 0;
 	if(scene != 0) {
 		printf("Loaded model %s: \nMeshes: %d\nTextures: %d\nMaterials: %d\n",model.c_str(), scene->mNumMeshes, scene->mNumTextures, scene->mNumMaterials);
 
@@ -23,7 +25,6 @@ RenderObject::RenderObject(std::string model) {
 		scene_max = glm::make_vec3((float*)&s_max);
 		scene_center  = (scene_min+scene_max)/2.0f;
 
-		//Generate vertexarrayobjects
 		pre_render();
 	} else {
 		printf("Failed to load model %s\n", model.c_str());
@@ -36,72 +37,72 @@ void RenderObject::pre_render() {
 
 	recursive_pre_render(scene->mRootNode);
 
+	//Init materials:
+	for(unsigned int i= 0; i < scene->mNumMaterials; ++i) {
+		const aiMaterial * mtl = scene->mMaterials[i];
+		material_t mtl_data;
+		aiString path;
+		std::string full_path;
+		if(mtl->GetTextureCount(aiTextureType_DIFFUSE) > 0 && 
+			mtl->GetTexture(aiTextureType_DIFFUSE, 0, &path, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS) {
+			std::string p(path.data);
+			full_path = std::string("textures/")+p;
+		} else {
+			full_path = "textures/notex.png";
+		}
+		printf("Load texture %s\n", full_path.c_str());
+		glimg::ImageSet *pImgSet = glimg::loaders::stb::LoadFromFile(full_path.c_str());
+		mtl_data.texture = glimg::CreateTexture(pImgSet, 0);
+		delete pImgSet;
+		materials.push_back(mtl_data);
+	}
+
 	glUseProgram(0);
 }
 
 void RenderObject::recursive_pre_render(const aiNode* node) {
-	GLuint vao[node->mNumMeshes];
-	glGenVertexArrays(node->mNumMeshes, vao);
-
-	printf("%s\n", node->mName.data);
-
+	const aiVector3D zero_3d(0.0f,0.0f,0.0f);
+	
 	for(unsigned int i=0; i<node->mNumMeshes; ++i) {
-		glBindVertexArray(vao[i]);
 		const aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-		
-		float bufferData[mesh->mNumVertices*2*3]; //Vertices and normals
-		
-		unsigned short numIndices = mesh->mFaces[0].mNumIndices;
-		if(numIndices > 4) {
-			printf("No support for gt quads\n");
-			exit(-1);
-		}	
-		unsigned int indexData[mesh->mNumFaces*3];
+		mesh_data_t md;
+
+		md.mtl_index = mesh->mMaterialIndex;
+
+		std::vector<vertex_t> vertexData;
+		std::vector<unsigned int> indexData;
 
 		for(unsigned int n = 0; n<mesh->mNumVertices; ++n) {
-			memcpy((void*)(bufferData + n*3), &mesh->mVertices[n].x, 3*sizeof(float));
-			if(mesh->HasNormals())
-				memcpy((void*)(bufferData + mesh->mNumVertices*3 + n*3), &mesh->mNormals[n].x, 3*sizeof(float));
+			const aiVector3D* pos = &(mesh->mVertices[n]);
+			const aiVector3D* texCoord = mesh->HasTextureCoords(0) ? &(mesh->mTextureCoords[0][n]) : &zero_3d;
+			const aiVector3D* normal = &(mesh->mNormals[n]);
+			vertexData.push_back(vertex_t(pos, texCoord, normal));
 		}
 
-		for(unsigned int n=0; n<mesh->mNumFaces; ++n) {
-			if(mesh->mFaces[n].mNumIndices != numIndices) {
-				printf("Only supports meshes with same numIndies on faces!\n");
-				exit(-1);
+		for(unsigned int n = 0 ; n<mesh->mNumFaces; ++n) {
+			const aiFace* face = &mesh->mFaces[n];
+			assert(face->mNumIndices == 3);
+			md.num_indices+=3;
+
+			for(unsigned int j = 0; j< face->mNumIndices; ++j) {
+				int index = face->mIndices[j];
+				indexData.push_back(index);
 			}
-			printf("(%f, %f, %f)\n(%f, %f, %f)\n(%f, %f, %f)\n\n", 
-				bufferData[mesh->mFaces[n].mIndices[0]*3],
-				bufferData[mesh->mFaces[n].mIndices[0]*3+1],
-				bufferData[mesh->mFaces[n].mIndices[0]*3+2],
-				bufferData[mesh->mFaces[n].mIndices[1]*3],
-				bufferData[mesh->mFaces[n].mIndices[1]*3+1],
-				bufferData[mesh->mFaces[n].mIndices[1]*3+2],
-				bufferData[mesh->mFaces[n].mIndices[2]*3],
-				bufferData[mesh->mFaces[n].mIndices[2]*3+1],
-				bufferData[mesh->mFaces[n].mIndices[2]*3+2]);
-			memcpy((void*)(indexData+n*numIndices),mesh->mFaces[n].mIndices, numIndices*sizeof(unsigned int));
 		}
 
-		GLuint buffers[2];
-		glGenBuffers(2, buffers);
+		glGenBuffers(1, &md.vb);
 
-		glBindBuffer(GL_ARRAY_BUFFER, buffers[0]);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(bufferData), bufferData, GL_STATIC_DRAW);
+		glBindBuffer(GL_ARRAY_BUFFER, md.vb);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(vertex_t)*vertexData.size(), &vertexData.front(), GL_STATIC_DRAW);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-		glEnableVertexAttribArray(0);
-		//TODO: Normals
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+		glGenBuffers(1, &md.ib);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, md.ib);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int)*indexData.size(), &indexData.front(), GL_STATIC_DRAW);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffers[1]);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indexData), indexData, GL_STATIC_DRAW);
-		
-		glBindVertexArray(0);
-
-		mesh_buffers[mesh] = buffers;
+		mesh_data[mesh] = md;
 	}
-
-	node_vao[node] = vao;
-
 
 	for(unsigned int i=0; i<node->mNumChildren; ++i) {
 		recursive_pre_render(node->mChildren[i]);
@@ -114,34 +115,30 @@ void RenderObject::recursive_render(const aiNode* node, double dt) {
 	aiMatrix4x4 m = node->mTransformation; 	
 	aiTransposeMatrix4(&m);
 	modelViewMatrix *= glm::make_mat4((float*)&m);
+	glUniformMatrix4fv(shader.mvp, 1, GL_FALSE, glm::value_ptr(modelViewMatrix.Top()));
 
 	for(unsigned int i=0; i<node->mNumMeshes; ++i) {
-		glBindVertexArray(node_vao[node][i]);
-		const aiMesh* mesh = scene->mMeshes[i];
+		const aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
 
-		glBindBuffer(GL_ARRAY_BUFFER, mesh_buffers[mesh][0]);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh_buffers[mesh][1]);
-		GLenum draw_mode;
-		switch(mesh->mFaces[0].mNumIndices) {
-			case 1:
-				draw_mode = GL_POINTS;
-				break;
-			case 2:
-				draw_mode = GL_LINES;
-				break;
-			case 3:
-				draw_mode = GL_TRIANGLES;
-				break;
-			case 4:
-				draw_mode = GL_QUADS;
-				break;
+		if(mesh->mNumFaces > 0) {
+			mesh_data_t *md = &mesh_data[mesh];
+
+			glBindBuffer(GL_ARRAY_BUFFER, md->vb);
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, md->ib);
+			glEnableVertexAttribArray(0);
+			glEnableVertexAttribArray(1);
+			glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_t), 0);
+			glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(vertex_t), (const GLvoid*) (sizeof(float)*3));
+
+			glBindTexture(GL_TEXTURE_2D, materials[md->mtl_index].texture);
+
+			glDrawElements(GL_TRIANGLES, md->num_indices, GL_UNSIGNED_INT,0 );
+
+			glDisableVertexAttribArray(1);
+			glDisableVertexAttribArray(0);
+			glBindBuffer(GL_ARRAY_BUFFER, 0);
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 		}
-
-		glUniformMatrix4fv(shader.mvp, 1, GL_FALSE, glm::value_ptr(modelViewMatrix.Top()));
-
-		glDrawElements(draw_mode, mesh->mNumFaces, GL_UNSIGNED_INT, 0);
-
-		glBindVertexArray(0);
 	}
 
 	for(unsigned int i=0; i<node->mNumChildren; ++i) {
@@ -160,10 +157,18 @@ void RenderObject::render(double dt) {
 	tmp = aisgl_max(scene_max.z - scene_min.z,tmp);
 	tmp = 1.f / tmp;
 
-	modelViewMatrix.Scale(tmp);
 
-	modelViewMatrix.Translate( -scene_center.x, -scene_center.y, 10.0f );
-	//modelViewMatrix.Translate( 0.5, 0.7, 10.0);
+
+	modelViewMatrix.Translate( -scene_center.x, -scene_center.y, -scene_center.z );
+	modelViewMatrix.Scale(tmp);
+	modelViewMatrix.Scale(2);
+	rotation += 20.0f*dt;
+
+	rotation = fmod(rotation, 360.0f);
+	
+	modelViewMatrix.RotateY(rotation);
+	modelViewMatrix.RotateZ(rotation);
+	modelViewMatrix.RotateX(rotation);
 
 	recursive_render(scene->mRootNode, dt);		
 

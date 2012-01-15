@@ -61,117 +61,7 @@ float zFar = 1000.0f;
 
 shader_t shader;
 
-GLuint vao, pbo;
-
-const float vertexData[] = {
-	1.0f,  1.0f, 1.0f, 1.0f,
-	1.0f, 0.0f, 1.0f, 1.0f,
-	0.0f,  1.0f, 1.0f, 1.0f,
-
-	1.0f, 0.0f, 1.0f, 1.0f,
-	0.0f, 0.0f, 1.0f, 1.0f,
-	0.0f,  1.0f, 1.0f, 1.0f,
-
-	1.0f,  1.0f, 0.0f, 1.0f,
-	0.0f,  1.0f, 0.0f, 1.0f,
-	1.0f, 0.0f, 0.0f, 1.0f,
-
-	1.0f, 0.0f, 0.0f, 1.0f,
-	0.0f,  1.0f, 0.0f, 1.0f,
-	0.0f, 0.0f, 0.0f, 1.0f,
-
-	0.0f,  1.0f, 1.0f, 1.0f,
-	0.0f, 0.0f, 1.0f, 1.0f,
-	0.0f, 0.0f, 0.0f, 1.0f,
-
-	0.0f,  1.0f, 1.0f, 1.0f,
-	0.0f, 0.0f, 0.0f, 1.0f,
-	0.0f,  1.0f, 0.0f, 1.0f,
-
-	1.0f,  1.0f, 1.0f, 1.0f,
-	1.0f, 0.0f, 0.0f, 1.0f,
-	1.0f, 0.0f, 1.0f, 1.0f,
-
-	1.0f,  1.0f, 1.0f, 1.0f,
-	1.0f,  1.0f, 0.0f, 1.0f,
-	1.0f, 0.0f, 0.0f, 1.0f,
-
-	1.0f,  1.0f, 0.0f, 1.0f,
-	1.0f,  1.0f, 1.0f, 1.0f,
-	0.0f,  1.0f, 1.0f, 1.0f,
-
-	1.0f,  1.0f, 0.0f, 1.0f,
-	0.0f,  1.0f, 1.0f, 1.0f,
-	0.0f,  1.0f, 0.0f, 1.0f,
-
-	1.0f, 0.0f, 0.0f, 1.0f,
-	0.0f, 0.0f, 1.0f, 1.0f,
-	1.0f, 0.0f, 1.0f, 1.0f,
-
-	1.0f, 0.0f, 0.0f, 1.0f,
-	0.0f, 0.0f, 0.0f, 1.0f,
-	0.0f, 0.0f, 1.0f, 1.0f,
-
-
-	//Face 0
-	469, 163,
-	469, 315,
-	317, 163,
-
-	469, 315,
-	317, 315,
-	317, 163,
-
-
-	//Face 1
-
-	165, 315,
-	13, 315,
-	13, 163,
-
-	165, 163,
-	165, 315,
-	13, 163,
-	//Face 2
-	317, 11,
-	317, 163,
-	165, 11,
-
-	317, 163,
-	165, 163,
-	165, 11,
-
-	//Face 3
-	317, 315,
- 	317, 467,
-	165, 315,
-
- 	317, 467,
-	165, 467,
-	165, 315,
-
-	//Face 4
-	317, 163, 
-	317, 315,
-	165, 163,
-
-	317, 315,
-	165, 315,
-	165, 163,
-
-	//Face 5
-	621, 163,
-	621, 315,
-	469, 163,
-
-	621, 315,
-	469, 315,
-	469, 163
-
-};
-
-GLuint texture_unit = 0;
-GLuint texture;
+GLuint vao;
 
 void render_init(int w, int h, bool fullscreen) {
 
@@ -191,8 +81,8 @@ void render_init(int w, int h, bool fullscreen) {
 
 	std::vector<GLuint> shader_list;
 	//Load shader:
-	shader_list.push_back(load_shader(GL_VERTEX_SHADER, "simple.vert"));
-	shader_list.push_back(load_shader(GL_FRAGMENT_SHADER, "simple.frag"));
+	shader_list.push_back(load_shader(GL_VERTEX_SHADER, "texture.vert"));
+	shader_list.push_back(load_shader(GL_FRAGMENT_SHADER, "texture.frag"));
 	
 	shader.program = create_program(shader_list);
 
@@ -202,23 +92,27 @@ void render_init(int w, int h, bool fullscreen) {
 	//Init shaders
 
 	shader.mvp = glGetUniformLocation(shader.program, "mvp");
-
-	glGenBuffers(1, &pbo);
-	glBindBuffer(GL_ARRAY_BUFFER, pbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertexData), vertexData, GL_STATIC_DRAW);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	shader.texture = glGetUniformLocation(shader.program, "tex");
 
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
+	
+	glUseProgram(shader.program);
+
+	glUniform1i(shader.texture, 0);
+	glActiveTexture(GL_TEXTURE0);
+
+	glUseProgram(0);
 
 	/* setup opengl */
-	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+	glClearColor(0.2f, 0.1f, 0.2f, 0.0f);
 	glViewport(0, 0, w, h);
 
 	/*glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
 	glFrontFace(GL_CW);
 */
+
 	glEnable(GL_DEPTH_TEST);
 	glDepthMask(GL_TRUE);
 	glDepthFunc(GL_LEQUAL);
@@ -240,35 +134,6 @@ void render(double dt){
 	modelViewMatrix.Push();
 
 	modelViewMatrix.LookAt(camera_pos, look_at, up_dir);
-
-	modelViewMatrix.Push();
-
-	modelViewMatrix.Translate(glm::vec3(0.7, 0, 10.0));
-
-	rotation += 20.0f*dt;
-
-	rotation = fmod(rotation, 360.0f);
-	
-	modelViewMatrix.RotateY(rotation);
-	modelViewMatrix.RotateZ(rotation);
-	modelViewMatrix.RotateX(rotation);
-
-	glUniformMatrix4fv(shader.mvp, 1, GL_FALSE, glm::value_ptr(modelViewMatrix.Top()));
-
-
-	size_t texCoord= sizeof(float) * 4 * 3 * 2 * 6;
-	glBindBuffer(GL_ARRAY_BUFFER,pbo);
-	glEnableVertexAttribArray(0);
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, 0);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, (void*)texCoord);
-
-	glDrawArrays(GL_TRIANGLES, 0, 36);
-
-	glDisableVertexAttribArray(0);
-	glDisableVertexAttribArray(1);
-
-	modelViewMatrix.Pop();
 
 	for(std::vector<RenderObject>::iterator it=objects.begin(); it!=objects.end(); ++it) {
 		it->render(dt);

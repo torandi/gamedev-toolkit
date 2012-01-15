@@ -12,7 +12,6 @@
 		GLuint program;
 		GLuint mvp;
 		GLuint texture;
-		GLuint texSize;
 	};
 	extern shader_t shader;
 

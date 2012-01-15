@@ -14,7 +14,10 @@ static void setup(){
 	render_init(1024, 768, fullscreen);
 
 	//load models:
-	objects.push_back(RenderObject("models/cube.blend"));
+	//objects.push_back(RenderObject("models/vadertie.blend"));
+	//objects.push_back(RenderObject("models/cube.obj"));
+	//objects.push_back(RenderObject("models/apple.obj"));
+	objects.push_back(RenderObject("models/sonic.obj"));
 }
 
 static void poll(bool* run){
