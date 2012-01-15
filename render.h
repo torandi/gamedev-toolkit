@@ -14,6 +14,7 @@
 		GLuint texture;
 		GLuint texSize;
 	};
+	extern shader_t shader;
 
 	extern std::vector<RenderObject> objects;
 

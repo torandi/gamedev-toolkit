@@ -176,7 +176,7 @@ GLuint texture;
 void render_init(int w, int h, bool fullscreen) {
 
 
-	camera_pos = glm::vec3(0,0,-2.0);
+	camera_pos = glm::vec3(0,0,-10.0);
 	look_at = glm::vec3(0.0, 0.0, 0);
 	up_dir = glm::vec3(0.0, 1.0, 0.0);
 
@@ -198,27 +198,10 @@ void render_init(int w, int h, bool fullscreen) {
 
 	std::for_each(shader_list.begin(), shader_list.end(), glDeleteShader);
 
-	//load texture
-
-	glimg::ImageSet *pImgSet = glimg::loaders::stb::LoadFromFile("texture/cube.jpg");
-	texture = glimg::CreateTexture(pImgSet, 0);
-
 
 	//Init shaders
 
 	shader.mvp = glGetUniformLocation(shader.program, "mvp");
-	shader.texSize = glGetUniformLocation(shader.program, "texSize");
-	shader.texture = glGetUniformLocation(shader.program, "tex");
-
-	glUseProgram(shader.program);
-
-	glUniform2f(shader.texSize, 640.0f, 482.0f);
-	glUniform1i(shader.texture, texture_unit);
-
-	glActiveTexture(GL_TEXTURE0 + texture_unit);
-	glBindTexture(GL_TEXTURE_2D, texture);
-
-	glUseProgram(0);
 
 	glGenBuffers(1, &pbo);
 	glBindBuffer(GL_ARRAY_BUFFER, pbo);
@@ -232,10 +215,10 @@ void render_init(int w, int h, bool fullscreen) {
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 	glViewport(0, 0, w, h);
 
-	glEnable(GL_CULL_FACE);
+	/*glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
 	glFrontFace(GL_CW);
-
+*/
 	glEnable(GL_DEPTH_TEST);
 	glDepthMask(GL_TRUE);
 	glDepthFunc(GL_LEQUAL);
@@ -258,6 +241,8 @@ void render(double dt){
 
 	modelViewMatrix.LookAt(camera_pos, look_at, up_dir);
 
+	modelViewMatrix.Push();
+
 	modelViewMatrix.Translate(glm::vec3(0.7, 0, 10.0));
 
 	rotation += 20.0f*dt;
@@ -270,7 +255,6 @@ void render(double dt){
 
 	glUniformMatrix4fv(shader.mvp, 1, GL_FALSE, glm::value_ptr(modelViewMatrix.Top()));
 
-	modelViewMatrix.Pop();
 
 	size_t texCoord= sizeof(float) * 4 * 3 * 2 * 6;
 	glBindBuffer(GL_ARRAY_BUFFER,pbo);
@@ -284,6 +268,13 @@ void render(double dt){
 	glDisableVertexAttribArray(0);
 	glDisableVertexAttribArray(1);
 
+	modelViewMatrix.Pop();
+
+	for(std::vector<RenderObject>::iterator it=objects.begin(); it!=objects.end(); ++it) {
+		it->render(dt);
+	}
+
+	modelViewMatrix.Pop();
 
 	SDL_GL_SwapBuffers();
 }

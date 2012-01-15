@@ -12,6 +12,9 @@ bool fullscreen = false;
 
 static void setup(){
 	render_init(1024, 768, fullscreen);
+
+	//load models:
+	objects.push_back(RenderObject("models/cube.blend"));
 }
 
 static void poll(bool* run){
