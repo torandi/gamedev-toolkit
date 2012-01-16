@@ -15,6 +15,8 @@
 
 #define RENDER_LIGHT 1
 
+#define HALF_LIGHT_DISTANCE 20.f
+
 RenderObject *light;
 
 glutil::MatrixStack modelViewMatrix;
@@ -72,9 +74,9 @@ void render_init(int w, int h, bool fullscreen) {
 	up_dir = glm::vec3(0.0, 1.0, 0.0);
 	light_pos = glm::vec3(2.0, 2.0, 2.0);
 
-	light_attenuation = 0.5f;
-	light_intensity = glm::vec4(0.9f,0.9f, 0.9f, 1.0f);
-	ambient_intensity = glm::vec4(0.1f,0.1f,0.1f,1.0f);
+	light_attenuation = 1.f/pow(HALF_LIGHT_DISTANCE,2);
+	light_intensity = glm::vec4(0.8f,0.8f, 0.8f, 1.0f);
+	ambient_intensity = glm::vec4(0.2f,0.2f,0.2f,1.0f);
 
   	/* create window */
   	SDL_Init(SDL_INIT_VIDEO);

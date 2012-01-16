@@ -48,5 +48,5 @@ void main() {
 
 	gaussianTerm = cosAngIncidence != 0.0 ? gaussianTerm : 0.0;
 	
-	outputColor = texture(tex, tex_coord)*((diffuse*attenIntensity*cosAngIncidence) + (specular * attenIntensity * gaussianTerm) + ( ambient*ambient_intensity));
+	outputColor = texture(tex, tex_coord)*((diffuse*attenIntensity*cosAngIncidence) + (specular * attenIntensity * gaussianTerm) + ( diffuse*ambient_intensity));
 }

@@ -15,6 +15,7 @@ struct RenderObject {
 	glm::vec3 scene_min, scene_max, scene_center;
 
 	struct mesh_data_t {
+		mesh_data_t() : num_indices(0) {};
 		GLuint vb, ib; //vertex buffer, index buffer
 		GLenum draw_mode;
 		unsigned int num_indices;

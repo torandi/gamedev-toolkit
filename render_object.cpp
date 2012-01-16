@@ -30,7 +30,11 @@ void RenderObject::set_float4(float f[4], float a, float b, float c, float d)
 
 
 RenderObject::RenderObject(std::string model) {
-	scene = aiImportFile( model.c_str(), aiProcess_Triangulate | aiProcess_GenSmoothNormals );
+	scene = aiImportFile( model.c_str(), 
+		aiProcess_Triangulate | aiProcess_GenSmoothNormals |
+		aiProcess_JoinIdenticalVertices |  aiProcess_GenUVCoords |
+		aiProcess_OptimizeMeshes | aiProcess_OptimizeGraph 
+		);
 	scale = 1.f;
 	position = glm::vec3(0.f, 0.f, 0.f);
 
@@ -133,6 +137,8 @@ void RenderObject::recursive_pre_render(const aiNode* node) {
 			const aiVector3D* pos = &(mesh->mVertices[n]);
 			const aiVector3D* texCoord = mesh->HasTextureCoords(0) ? &(mesh->mTextureCoords[0][n]) : &zero_3d;
 			const aiVector3D* normal = &(mesh->mNormals[n]);
+			if(!mesh->HasNormals())
+				normal = &zero_3d;
 			vertexData.push_back(vertex_t(pos, texCoord, normal));
 		}
 
