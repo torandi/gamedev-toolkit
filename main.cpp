@@ -24,6 +24,7 @@ static void setup(){
 	objects.push_back(RenderObject("models/nintendo.obj"));
 	objects.back().scale = 0.5f;
 	objects.back().position-=glm::vec3(0.0,1.f,0.0f);
+	//objects.push_back(RenderObject("models/vadertie.obj"));
 }
 
 static void poll(bool* run){

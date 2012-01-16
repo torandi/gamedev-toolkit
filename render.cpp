@@ -13,9 +13,16 @@
 #include <algorithm>
 #include <SDL/SDL.h>
 
+#define RENDER_LIGHT 1
+
+RenderObject *light;
+
 glutil::MatrixStack modelViewMatrix;
+glutil::MatrixStack projectionMatrix;
 std::vector<RenderObject> objects;
-glm::vec3 camera_pos, look_at, up_dir;
+glm::vec3 camera_pos, look_at, up_dir, light_pos;
+float light_attenuation;
+glm::vec4 light_intensity, ambient_intensity;
 
 GLuint load_shader(GLenum eShaderType, const std::string &strFilename)
 {
@@ -63,6 +70,11 @@ void render_init(int w, int h, bool fullscreen) {
 	camera_pos = glm::vec3(0,0,-10.0);
 	look_at = glm::vec3(0.0, 0.0, 0);
 	up_dir = glm::vec3(0.0, 1.0, 0.0);
+	light_pos = glm::vec3(2.0, 2.0, 2.0);
+
+	light_attenuation = 0.5f;
+	light_intensity = glm::vec4(0.9f,0.9f, 0.9f, 1.0f);
+	ambient_intensity = glm::vec4(0.1f,0.1f,0.1f,1.0f);
 
   	/* create window */
   	SDL_Init(SDL_INIT_VIDEO);
@@ -86,7 +98,14 @@ void render_init(int w, int h, bool fullscreen) {
 	//Init shaders
 
 	shader.mvp = glGetUniformLocation(shader.program, "mvp");
+	shader.projection_matrix = glGetUniformLocation(shader.program, "projection_matrix");
 	shader.texture = glGetUniformLocation(shader.program, "tex");
+	shader.camera_pos= glGetUniformLocation(shader.program, "camera_pos");
+
+	shader.light_pos= glGetUniformLocation(shader.program, "light_pos");
+	shader.light_attenuation= glGetUniformLocation(shader.program, "light_attenuation");
+	shader.light_intensity= glGetUniformLocation(shader.program, "light_intensity");
+	shader.ambient_intensity= glGetUniformLocation(shader.program, "ambient_intensity");
 
 	shader.diffuse = glGetUniformLocation(shader.program, "diffuse");
 	shader.specular = glGetUniformLocation(shader.program, "specular");
@@ -120,7 +139,12 @@ void render_init(int w, int h, bool fullscreen) {
 	glEnable(GL_DEPTH_CLAMP);
 
 
-	modelViewMatrix.Perspective(45.0f, w/(float)h, zNear, zFar);
+	projectionMatrix.Perspective(45.0f, w/(float)h, zNear, zFar);
+
+	if(RENDER_LIGHT) {
+		light = new RenderObject("models/cube.obj");	
+		light->scale = 0.25f/2.0f;
+	}
 }
 
 float rotation = 0;
@@ -131,15 +155,27 @@ void render(double dt){
 
 	glUseProgram(shader.program);
 
-	modelViewMatrix.Push();
+	projectionMatrix.Push();
 
-	modelViewMatrix.LookAt(camera_pos, look_at, up_dir);
+	projectionMatrix.LookAt(camera_pos, look_at, up_dir);
+
+	glUniformMatrix4fv(shader.projection_matrix, 1, GL_FALSE,  glm::value_ptr(projectionMatrix.Top()));
+	glUniform3fv(shader.camera_pos,3,  glm::value_ptr(camera_pos));
+
+	glUniform3fv(shader.light_pos, 3, glm::value_ptr(light_pos));
+	glUniform1f(shader.light_attenuation, light_attenuation);
+	glUniform4fv(shader.light_intensity, 4,  glm::value_ptr(light_intensity));
+	glUniform4fv(shader.ambient_intensity,4,  glm::value_ptr(ambient_intensity));
 
 	for(std::vector<RenderObject>::iterator it=objects.begin(); it!=objects.end(); ++it) {
 		it->render(dt);
 	}
+	if(RENDER_LIGHT) {
+		light->position = light_pos;
+		light->render(dt);
+	}
 
-	modelViewMatrix.Pop();
+	projectionMatrix.Pop();
 
 	SDL_GL_SwapBuffers();
 }

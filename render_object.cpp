@@ -67,12 +67,12 @@ void RenderObject::pre_render() {
 			std::string p(path.data);
 			full_path = std::string("textures/")+p;
 			printf("Load texture %s\n", full_path.c_str());
-			glimg::ImageSet *pImgSet = glimg::loaders::stb::LoadFromFile(full_path.c_str());
-			mtl_data.texture = glimg::CreateTexture(pImgSet, 0);
-			delete pImgSet;
 		} else {
-			mtl_data.texture = 0;
+			full_path = std::string("textures/white.png");
 		}
+		glimg::ImageSet *pImgSet = glimg::loaders::stb::LoadFromFile(full_path.c_str());
+		mtl_data.texture = glimg::CreateTexture(pImgSet, 0);
+		delete pImgSet;
 
 		aiColor4D diffuse;
 		aiColor4D specular;
@@ -184,14 +184,18 @@ void RenderObject::recursive_render(const aiNode* node, double dt) {
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, md->ib);
 			glEnableVertexAttribArray(0);
 			glEnableVertexAttribArray(1);
+			glEnableVertexAttribArray(2);
 			glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_t), 0);
 			glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(vertex_t), (const GLvoid*) (sizeof(float)*3));
+			glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_t), (const GLvoid*) (sizeof(float)*5));
 
 			materials[md->mtl_index].activate();
 
-
 			glDrawElements(GL_TRIANGLES, md->num_indices, GL_UNSIGNED_INT,0 );
 
+			materials[md->mtl_index].deactivate();
+
+			glDisableVertexAttribArray(2);
 			glDisableVertexAttribArray(1);
 			glDisableVertexAttribArray(0);
 			glBindBuffer(GL_ARRAY_BUFFER, 0);
