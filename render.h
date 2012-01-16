@@ -13,6 +13,12 @@
 		GLuint program;
 		GLuint mvp;
 		GLuint texture;
+
+		GLuint diffuse;
+		GLuint specular;
+		GLuint ambient;
+		GLuint emission;
+		GLuint shininess;
 	};
 	extern shader_t shader;
 

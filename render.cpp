@@ -88,6 +88,12 @@ void render_init(int w, int h, bool fullscreen) {
 	shader.mvp = glGetUniformLocation(shader.program, "mvp");
 	shader.texture = glGetUniformLocation(shader.program, "tex");
 
+	shader.diffuse = glGetUniformLocation(shader.program, "diffuse");
+	shader.specular = glGetUniformLocation(shader.program, "specular");
+	shader.ambient = glGetUniformLocation(shader.program, "ambient");
+	shader.emission = glGetUniformLocation(shader.program, "emission");
+	shader.shininess = glGetUniformLocation(shader.program, "shininess");
+
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
 	

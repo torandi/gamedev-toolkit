@@ -222,9 +222,17 @@ void RenderObject::render(double dt) {
 }
 
 void RenderObject::material_t::activate() {
-	glBindTexture(GL_TEXTURE_2D, texture);
 	if(two_sided)
 		glDisable(GL_CULL_FACE);
+
+	glBindTexture(GL_TEXTURE_2D, texture);
+
+	glUniform4fv(shader.diffuse, 4, diffuse);
+	glUniform4fv(shader.specular, 4, specular);
+	glUniform4fv(shader.ambient,  4,ambient);
+	glUniform4fv(shader.emission, 4, emission);
+	glUniform1f(shader.shininess, shininess);
+
 }
 
 void RenderObject::material_t::deactivate() {
