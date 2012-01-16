@@ -12,9 +12,28 @@
 #define aisgl_min(x,y) (x<y?x:y)
 #define aisgl_max(x,y) (y>x?y:x)
 
+void RenderObject::color4_to_float4(const struct aiColor4D *c, float f[4])
+{
+	f[0] = c->r;
+	f[1] = c->g;
+	f[2] = c->b;
+	f[3] = c->a;
+}
+
+void RenderObject::set_float4(float f[4], float a, float b, float c, float d)
+{
+	f[0] = a;
+	f[1] = b;
+	f[2] = c;
+	f[3] = d;
+}
+
+
 RenderObject::RenderObject(std::string model) {
 	scene = aiImportFile( model.c_str(), aiProcess_Triangulate | aiProcess_GenSmoothNormals );
-	rotation = 0;
+	scale = 1.f;
+	position = glm::vec3(0.f, 0.f, 0.f);
+
 	if(scene != 0) {
 		printf("Loaded model %s: \nMeshes: %d\nTextures: %d\nMaterials: %d\n",model.c_str(), scene->mNumMeshes, scene->mNumTextures, scene->mNumMaterials);
 
@@ -47,13 +66,51 @@ void RenderObject::pre_render() {
 			mtl->GetTexture(aiTextureType_DIFFUSE, 0, &path, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS) {
 			std::string p(path.data);
 			full_path = std::string("textures/")+p;
+			printf("Load texture %s\n", full_path.c_str());
+			glimg::ImageSet *pImgSet = glimg::loaders::stb::LoadFromFile(full_path.c_str());
+			mtl_data.texture = glimg::CreateTexture(pImgSet, 0);
+			delete pImgSet;
 		} else {
-			full_path = "textures/notex.png";
+			mtl_data.texture = 0;
 		}
-		printf("Load texture %s\n", full_path.c_str());
-		glimg::ImageSet *pImgSet = glimg::loaders::stb::LoadFromFile(full_path.c_str());
-		mtl_data.texture = glimg::CreateTexture(pImgSet, 0);
-		delete pImgSet;
+
+		aiColor4D diffuse;
+		aiColor4D specular;
+		aiColor4D ambient;
+		aiColor4D emission;	
+		set_float4(mtl_data.diffuse, 0.8f, 0.8f, 0.8f, 1.0f);
+		if(AI_SUCCESS == aiGetMaterialColor(mtl, AI_MATKEY_COLOR_DIFFUSE, &diffuse))
+			color4_to_float4(&diffuse, mtl_data.diffuse);
+
+		set_float4(mtl_data.specular, 0.0f, 0.0f, 0.0f, 1.0f);
+		if(AI_SUCCESS == aiGetMaterialColor(mtl, AI_MATKEY_COLOR_SPECULAR, &specular))
+			color4_to_float4(&specular, mtl_data.specular);
+
+		set_float4(mtl_data.ambient, 0.2f, 0.2f, 0.2f, 1.0f);
+		if(AI_SUCCESS == aiGetMaterialColor(mtl, AI_MATKEY_COLOR_AMBIENT, &ambient))
+			color4_to_float4(&ambient, mtl_data.ambient);
+
+		set_float4(mtl_data.emission, 0.0f, 0.0f, 0.0f, 1.0f);
+		if(AI_SUCCESS == aiGetMaterialColor(mtl, AI_MATKEY_COLOR_EMISSIVE, &emission))
+			color4_to_float4(&emission, mtl_data.emission);
+
+		unsigned int max = 1;
+		float strength;
+		int ret1 = aiGetMaterialFloatArray(mtl, AI_MATKEY_SHININESS, &mtl_data.shininess, &max);
+		if(ret1 == AI_SUCCESS) {
+			max = 1;
+			int ret2 = aiGetMaterialFloatArray(mtl, AI_MATKEY_SHININESS_STRENGTH, &strength, &max);
+			if(ret2 == AI_SUCCESS)
+				mtl_data.shininess *= strength;
+		} else {
+			mtl_data.shininess = 0.0f;
+			set_float4(mtl_data.specular, 0.f, 0.f, 0.f, 0.f);
+		}
+		max = 1;
+		int two_sided;
+		if((AI_SUCCESS == aiGetMaterialIntegerArray(mtl, AI_MATKEY_TWOSIDED, &two_sided, &max)) && two_sided)
+			mtl_data.two_sided = true;
+
 		materials.push_back(mtl_data);
 	}
 
@@ -130,7 +187,8 @@ void RenderObject::recursive_render(const aiNode* node, double dt) {
 			glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_t), 0);
 			glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(vertex_t), (const GLvoid*) (sizeof(float)*3));
 
-			glBindTexture(GL_TEXTURE_2D, materials[md->mtl_index].texture);
+			materials[md->mtl_index].activate();
+
 
 			glDrawElements(GL_TRIANGLES, md->num_indices, GL_UNSIGNED_INT,0 );
 
@@ -152,27 +210,27 @@ void RenderObject::render(double dt) {
 
 	modelViewMatrix.Push();
 
-	float tmp = scene_max.x-scene_min.x;
-	tmp = aisgl_max(scene_max.y - scene_min.y,tmp);
-	tmp = aisgl_max(scene_max.z - scene_min.z,tmp);
-	tmp = 1.f / tmp;
+	modelViewMatrix.Translate(position);
 
+	modelViewMatrix.ApplyMatrix(rotationMatrix.Top());
 
-
-	modelViewMatrix.Translate( -scene_center.x, -scene_center.y, -scene_center.z );
-	modelViewMatrix.Scale(tmp);
-	modelViewMatrix.Scale(2);
-	rotation += 20.0f*dt;
-
-	rotation = fmod(rotation, 360.0f);
-	
-	modelViewMatrix.RotateY(rotation);
-	modelViewMatrix.RotateZ(rotation);
-	modelViewMatrix.RotateX(rotation);
+	modelViewMatrix.Scale(scale);
 
 	recursive_render(scene->mRootNode, dt);		
 
 	modelViewMatrix.Pop();
+}
+
+void RenderObject::material_t::activate() {
+	glBindTexture(GL_TEXTURE_2D, texture);
+	if(two_sided)
+		glDisable(GL_CULL_FACE);
+}
+
+void RenderObject::material_t::deactivate() {
+	glBindTexture(GL_TEXTURE_2D, texture);
+	if(two_sided)
+		glEnable(GL_CULL_FACE);
 }
 
 

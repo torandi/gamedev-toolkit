@@ -4,6 +4,7 @@
 #include <unistd.h>
 
 #include "render.h"
+#include "logic.h"
 
 #define REF_FPS 30
 #define REF_DT (1.0/REF_FPS)
@@ -15,9 +16,12 @@ static void setup(){
 
 	//load models:
 	//objects.push_back(RenderObject("models/vadertie.blend"));
-	//objects.push_back(RenderObject("models/cube.obj"));
 	//objects.push_back(RenderObject("models/apple.obj"));
 	objects.push_back(RenderObject("models/sonic.obj"));
+	objects.back().rotationMatrix.RotateY(180);
+	objects.back().scale = 2.0f;
+	objects.push_back(RenderObject("models/cube.obj"));
+	objects.back().position-=glm::vec3(0.0,1.f,0.0f);
 }
 
 static void poll(bool* run){
@@ -52,7 +56,7 @@ int main(int argc, char* argv[]){
     dt /= 1000000;
 
     poll(&run);
-//	 logic(dt);
+	 logic(dt);
 	 render(dt);
 		 
     /* framelimiter */

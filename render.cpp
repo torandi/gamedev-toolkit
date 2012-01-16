@@ -50,12 +50,6 @@ GLuint create_program(const std::vector<GLuint> &shaderList)
 	std::for_each(shaderList.begin(), shaderList.end(), glDeleteShader);
 }
 
-float deg_to_rad(float fAngDeg)
-{
-	const float fDegToRad = 3.14159f * 2.0f / 360.0f;
-	return fAngDeg * fDegToRad;
-}
-
 float zNear = 1.0f;
 float zFar = 1000.0f;
 
@@ -110,8 +104,8 @@ void render_init(int w, int h, bool fullscreen) {
 
 	/*glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
-	glFrontFace(GL_CW);
-*/
+	glFrontFace(GL_CW);*/
+
 
 	glEnable(GL_DEPTH_TEST);
 	glDepthMask(GL_TRUE);

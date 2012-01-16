@@ -1,4 +1,4 @@
-OBJS = main.o render.o render_object.o
+OBJS = main.o render.o render_object.o logic.o
 CFLAGS += -Wall `sdl-config --cflags` -g
 LDFLAGS += `sdl-config --libs` -lassimp
 

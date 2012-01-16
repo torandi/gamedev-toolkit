@@ -7,6 +7,7 @@
 	#include "render_object.h"
 
 	extern glutil::MatrixStack modelViewMatrix;
+	extern glm::vec3 camera_pos, look_at, up_dir;
 
 	struct shader_t {
 		GLuint program;
