@@ -1,4 +1,6 @@
 #include "render.h"
+#include "render_object.h"
+
 #include <glload/gll.hpp>
 #include <glload/gl_3_3.h>
 #include <glutil/Shader.h>
@@ -12,10 +14,13 @@
 #include <stdio.h>
 #include <algorithm>
 #include <SDL/SDL.h>
+#include <GL/glu.h>
 
-#define RENDER_LIGHT 1
+#define RENDER_LIGHT 0
 
 #define HALF_LIGHT_DISTANCE 20.f
+
+int errcnt = 0;
 
 RenderObject *light;
 
@@ -24,7 +29,11 @@ glutil::MatrixStack projectionMatrix;
 std::vector<RenderObject> objects;
 glm::vec3 camera_pos, look_at, up_dir;
 float light_attenuation;
-glm::vec4 light_intensity, ambient_intensity, light_pos;
+glm::vec4 ambient_intensity;
+std::vector<light_t> lights;
+shader_globals_t sg;
+
+lights_t lightData;
 
 GLuint load_shader(GLenum eShaderType, const std::string &strFilename)
 {
@@ -72,11 +81,18 @@ void render_init(int w, int h, bool fullscreen) {
 	camera_pos = glm::vec3(0,0,-10.0);
 	look_at = glm::vec3(0.0, 0.0, 0);
 	up_dir = glm::vec3(0.0, 1.0, 0.0);
-	light_pos = glm::vec4(2.0, 2.0, 2.0, 0.0);
 
 	light_attenuation = 1.f/pow(HALF_LIGHT_DISTANCE,2);
-	light_intensity = glm::vec4(0.8f,0.8f, 0.8f, 1.0f);
 	ambient_intensity = glm::vec4(0.2f,0.2f,0.2f,1.0f);
+
+	light_t l;
+	l.intensity = glm::vec4(0.8f,0.8f, 0.8f, 1.0f);
+	l.position = glm::vec4(2.0, 2.0, 2.0, 0.0);
+	l.color = glm::vec4(1.0, 1.0, 1.0, 1.0);
+	
+	lights.push_back(l);
+
+	projectionMatrix.Perspective(45.0f, w/(float)h, zNear, zFar);
 
   	/* create window */
   	SDL_Init(SDL_INIT_VIDEO);
@@ -89,8 +105,8 @@ void render_init(int w, int h, bool fullscreen) {
 
 	std::vector<GLuint> shader_list;
 	//Load shader:
-	shader_list.push_back(load_shader(GL_VERTEX_SHADER, "texture.vert"));
-	shader_list.push_back(load_shader(GL_FRAGMENT_SHADER, "texture.frag"));
+	shader_list.push_back(load_shader(GL_VERTEX_SHADER, "shaders/normal.vert"));
+	shader_list.push_back(load_shader(GL_FRAGMENT_SHADER, "shaders/normal.frag"));
 	
 	shader.program = create_program(shader_list);
 
@@ -99,21 +115,35 @@ void render_init(int w, int h, bool fullscreen) {
 
 	//Init shaders
 
-	shader.mvp = glGetUniformLocation(shader.program, "mvp");
-	shader.projection_matrix = glGetUniformLocation(shader.program, "projection_matrix");
+	//Local uniforms
 	shader.texture = glGetUniformLocation(shader.program, "tex");
 	shader.camera_pos= glGetUniformLocation(shader.program, "camera_pos");
 
-	shader.light_pos= glGetUniformLocation(shader.program, "light_pos");
-	shader.light_attenuation= glGetUniformLocation(shader.program, "light_attenuation");
-	shader.light_intensity= glGetUniformLocation(shader.program, "light_intensity");
-	shader.ambient_intensity= glGetUniformLocation(shader.program, "ambient_intensity");
+	//Global uniforms
+	shader.Matrices = glGetUniformBlockIndex(shader.program, "Matrices");
+	shader.LightsData = glGetUniformBlockIndex(shader.program, "LightsData");
+	shader.Material = glGetUniformBlockIndex(shader.program, "Material");
 
-	shader.diffuse = glGetUniformLocation(shader.program, "diffuse");
-	shader.specular = glGetUniformLocation(shader.program, "specular");
-	shader.ambient = glGetUniformLocation(shader.program, "ambient");
-	shader.emission = glGetUniformLocation(shader.program, "emission");
-	shader.shininess = glGetUniformLocation(shader.program, "shininess");
+
+	//Bind to blocks
+	glUniformBlockBinding(shader.program, shader.Matrices, MATRICES_BLOCK_INDEX);
+	glUniformBlockBinding(shader.program, shader.LightsData, LIGHTS_DATA_BLOCK_INDEX);
+	glUniformBlockBinding(shader.program, shader.Material, MATERIAL_BLOCK_INDEX);
+
+	//Setup uniform buffers
+	glGenBuffers(sizeof(shader_globals_t)/sizeof(GLuint), (GLuint*)&sg);
+	glBindBuffer(GL_UNIFORM_BUFFER, sg.matricesBuffer);
+	glBufferData(GL_UNIFORM_BUFFER, sizeof(glm::mat4)*2, NULL, GL_STREAM_DRAW);
+	glBindBuffer(GL_UNIFORM_BUFFER, sg.lightsBuffer);
+	glBufferData(GL_UNIFORM_BUFFER, sizeof(lights_t), NULL, GL_STREAM_DRAW);
+	glBindBuffer(GL_UNIFORM_BUFFER, sg.materialBuffer);
+	glBufferData(GL_UNIFORM_BUFFER, sizeof(shader_material_t), NULL, GL_STREAM_DRAW);
+	glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+	//Bind buffers to blocks:
+	glBindBufferRange(GL_UNIFORM_BUFFER, MATRICES_BLOCK_INDEX, sg.matricesBuffer, 0, sizeof(glm::mat4)*2);
+	glBindBufferRange(GL_UNIFORM_BUFFER, LIGHTS_DATA_BLOCK_INDEX, sg.lightsBuffer, 0, sizeof(lights_t));
+	glBindBufferRange(GL_UNIFORM_BUFFER, MATERIAL_BLOCK_INDEX, sg.materialBuffer, 0, sizeof(shader_material_t));
 
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
@@ -127,6 +157,8 @@ void render_init(int w, int h, bool fullscreen) {
 
 	/* setup opengl */
 	glClearColor(0.2f, 0.1f, 0.2f, 0.0f);
+
+	//Setup view (this may be moved to reshape
 	glViewport(0, 0, w, h);
 
 	/*glEnable(GL_CULL_FACE);
@@ -140,16 +172,27 @@ void render_init(int w, int h, bool fullscreen) {
 	glDepthRange(0.0f, 1.0f);
 	glEnable(GL_DEPTH_CLAMP);
 
-
-	projectionMatrix.Perspective(45.0f, w/(float)h, zNear, zFar);
-
-	if(RENDER_LIGHT) {
-		light = new RenderObject("models/cube.obj");	
-		light->scale = 0.25f/2.0f;
-	}
+	light = new RenderObject("models/cube.obj");
+	light->scale = 0.25f/2.0f;
 }
 
 float rotation = 0;
+
+int checkForGLErrors( const char *s )
+{
+ int errors = 0 ;
+
+ while ( true )
+ {
+	GLenum x = glGetError() ;
+
+	if ( x == GL_NO_ERROR )
+	  return errors ;
+
+	fprintf( stderr, "%s: OpenGL error: %s [%08x]\n", s ? s : "", gluErrorString ( x ), errcnt++ ) ;
+	errors++ ;
+ }
+}
 
 void render(double dt){
 	glClear(GL_COLOR_BUFFER_BIT);
@@ -161,23 +204,34 @@ void render(double dt){
 
 	projectionMatrix.LookAt(camera_pos, look_at, up_dir);
 
-	glUniformMatrix4fv(shader.projection_matrix, 1, GL_FALSE,  glm::value_ptr(projectionMatrix.Top()));
+	//Upload projection matrix:
+	glBindBuffer(GL_UNIFORM_BUFFER, sg.matricesBuffer);
+	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(projectionMatrix.Top()));
+	glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
 	glUniform3fv(shader.camera_pos,3,  glm::value_ptr(camera_pos));
 
-	glUniform4fv(shader.light_pos, 4, glm::value_ptr(light_pos));
-	glUniform1f(shader.light_attenuation, light_attenuation);
-	glUniform4fv(shader.light_intensity, 4,  glm::value_ptr(light_intensity));
-	glUniform4fv(shader.ambient_intensity,4,  glm::value_ptr(ambient_intensity));
+	//Build lights object:
+	assert(lights.size() <= MAX_NUM_LIGHTS);
+	lightData.num_lights	= lights.size();
+	lightData.attenuation = light_attenuation;
+	lightData.ambient_intensity =  ambient_intensity;
+	memcpy(lightData.lights, &lights.front(), lightData.num_lights*sizeof(light_t));
+	//Upload light data:
+	glBindBuffer(GL_UNIFORM_BUFFER, sg.lightsBuffer);
+	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(lights_t), &lightData);
+	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
 	for(std::vector<RenderObject>::iterator it=objects.begin(); it!=objects.end(); ++it) {
 		it->render(dt);
 	}
-	if(RENDER_LIGHT) {
-		light->position = glm::vec3(light_pos);
-		light->render(dt);
-	}
+
+	light->position = glm::vec3(lights.front().position);
+	light->render(dt);
 
 	projectionMatrix.Pop();
 
 	SDL_GL_SwapBuffers();
+
+	checkForGLErrors("Render(): ");
 }

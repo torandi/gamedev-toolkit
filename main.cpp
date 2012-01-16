@@ -4,6 +4,7 @@
 #include <unistd.h>
 
 #include "render.h"
+#include "render_object.h"
 #include "logic.h"
 
 #define REF_FPS 30
@@ -18,8 +19,10 @@ static void setup(){
 	//objects.push_back(RenderObject("models/vadertie.blend"));
 	//objects.push_back(RenderObject("models/apple.obj"));
 	objects.push_back(RenderObject("models/mario_obj.obj"));
+	//objects.push_back(RenderObject("models/ninja.b3d"));
 	objects.back().rotationMatrix.RotateY(180);
 	//objects.push_back(RenderObject("models/cube.obj"));
+	//objects.back().position+=glm::vec3(0.0, 0.0, 100.f);
 	objects.push_back(RenderObject("models/nintendo.obj"));
 	objects.back().position-=glm::vec3(0.0,1.f,0.0f);
 }

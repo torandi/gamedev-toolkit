@@ -10,6 +10,8 @@
 #include <glm/glm.hpp>
 #include <glutil/glutil.h>
 
+#include "render.h"
+
 struct RenderObject {
 	const aiScene* scene;
 	glm::vec3 scene_min, scene_max, scene_center;
@@ -47,11 +49,7 @@ struct RenderObject {
 	struct material_t {
 		material_t() : two_sided(false) {};
 		GLuint texture;
-		float diffuse[4];
-		float specular[4];
-		float ambient[4];
-		float emission[4];
-		float shininess;
+		shader_material_t attr;
 		bool two_sided;
 
 		void activate();
@@ -77,8 +75,7 @@ private:
 
 	void get_bounding_box_for_node (const struct aiNode* nd,	struct aiVector3D* min, struct aiVector3D* max, struct aiMatrix4x4* trafo);
 	void get_bounding_box (struct aiVector3D* min, struct aiVector3D* max);
-	void set_float4(float f[4], float a, float b, float c, float d);
-	void color4_to_float4(const struct aiColor4D *c, float f[4]);
+	void color4_to_vec4(const struct aiColor4D *c, glm::vec4 &target);
 };
 
 #endif

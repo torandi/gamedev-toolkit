@@ -12,22 +12,12 @@
 #define aisgl_min(x,y) (x<y?x:y)
 #define aisgl_max(x,y) (y>x?y:x)
 
-void RenderObject::color4_to_float4(const struct aiColor4D *c, float f[4])
-{
-	f[0] = c->r;
-	f[1] = c->g;
-	f[2] = c->b;
-	f[3] = c->a;
+void RenderObject::color4_to_vec4(const struct aiColor4D *c, glm::vec4 &target) {
+	target.x = c->r;
+	target.y = c->g;
+	target.z = c->b;
+	target.w = c->a;
 }
-
-void RenderObject::set_float4(float f[4], float a, float b, float c, float d)
-{
-	f[0] = a;
-	f[1] = b;
-	f[2] = c;
-	f[3] = d;
-}
-
 
 RenderObject::RenderObject(std::string model) {
 	scene = aiImportFile( model.c_str(), 
@@ -69,46 +59,50 @@ void RenderObject::pre_render() {
 		if(mtl->GetTextureCount(aiTextureType_DIFFUSE) > 0 && 
 			mtl->GetTexture(aiTextureType_DIFFUSE, 0, &path, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS) {
 			std::string p(path.data);
+			size_t last_slash = p.rfind("/");
+			if(last_slash != std::string::npos) 
+				p = p.substr(last_slash+1);
 			full_path = std::string("textures/")+p;
 			printf("Load texture %s\n", full_path.c_str());
+			glimg::ImageSet *pImgSet = glimg::loaders::stb::LoadFromFile(full_path.c_str());
+			mtl_data.texture = glimg::CreateTexture(pImgSet, 0);
+			delete pImgSet;
+			mtl_data.attr.useTexture = 1;
 		} else {
-			full_path = std::string("textures/white.png");
+			mtl_data.attr.useTexture = 0;
 		}
-		glimg::ImageSet *pImgSet = glimg::loaders::stb::LoadFromFile(full_path.c_str());
-		mtl_data.texture = glimg::CreateTexture(pImgSet, 0);
-		delete pImgSet;
 
 		aiColor4D diffuse;
 		aiColor4D specular;
 		aiColor4D ambient;
 		aiColor4D emission;	
-		set_float4(mtl_data.diffuse, 0.8f, 0.8f, 0.8f, 1.0f);
+		mtl_data.attr.diffuse = glm::vec4( 0.8f, 0.8f, 0.8f, 1.0f);
 		if(AI_SUCCESS == aiGetMaterialColor(mtl, AI_MATKEY_COLOR_DIFFUSE, &diffuse))
-			color4_to_float4(&diffuse, mtl_data.diffuse);
+			color4_to_vec4(&diffuse, mtl_data.attr.diffuse);
 
-		set_float4(mtl_data.specular, 0.0f, 0.0f, 0.0f, 1.0f);
+		mtl_data.attr.specular = glm::vec4( 0.0f, 0.0f, 0.0f, 1.0f);
 		if(AI_SUCCESS == aiGetMaterialColor(mtl, AI_MATKEY_COLOR_SPECULAR, &specular))
-			color4_to_float4(&specular, mtl_data.specular);
+			color4_to_vec4(&specular, mtl_data.attr.specular);
 
-		set_float4(mtl_data.ambient, 0.2f, 0.2f, 0.2f, 1.0f);
+		mtl_data.attr.ambient = glm::vec4( 0.2f, 0.2f, 0.2f, 1.0f);
 		if(AI_SUCCESS == aiGetMaterialColor(mtl, AI_MATKEY_COLOR_AMBIENT, &ambient))
-			color4_to_float4(&ambient, mtl_data.ambient);
+			color4_to_vec4(&ambient, mtl_data.attr.ambient);
 
-		set_float4(mtl_data.emission, 0.0f, 0.0f, 0.0f, 1.0f);
+		mtl_data.attr.emission = glm::vec4( 0.0f, 0.0f, 0.0f, 1.0f);
 		if(AI_SUCCESS == aiGetMaterialColor(mtl, AI_MATKEY_COLOR_EMISSIVE, &emission))
-			color4_to_float4(&emission, mtl_data.emission);
+			color4_to_vec4(&emission, mtl_data.attr.emission);
 
 		unsigned int max = 1;
 		float strength;
-		int ret1 = aiGetMaterialFloatArray(mtl, AI_MATKEY_SHININESS, &mtl_data.shininess, &max);
+		int ret1 = aiGetMaterialFloatArray(mtl, AI_MATKEY_SHININESS, &mtl_data.attr.shininess, &max);
 		if(ret1 == AI_SUCCESS) {
 			max = 1;
 			int ret2 = aiGetMaterialFloatArray(mtl, AI_MATKEY_SHININESS_STRENGTH, &strength, &max);
 			if(ret2 == AI_SUCCESS)
-				mtl_data.shininess *= strength;
+				mtl_data.attr.shininess *= strength;
 		} else {
-			mtl_data.shininess = 0.0f;
-			set_float4(mtl_data.specular, 0.f, 0.f, 0.f, 0.f);
+			mtl_data.attr.shininess = 0.0f;
+			mtl_data.attr.specular = glm::vec4(0.f, 0.f, 0.f, 0.f);
 		}
 		max = 1;
 		int two_sided;
@@ -178,7 +172,11 @@ void RenderObject::recursive_render(const aiNode* node, double dt) {
 	aiMatrix4x4 m = node->mTransformation; 	
 	aiTransposeMatrix4(&m);
 	modelViewMatrix *= glm::make_mat4((float*)&m);
-	glUniformMatrix4fv(shader.mvp, 1, GL_FALSE, glm::value_ptr(modelViewMatrix.Top()));
+
+	//Upload mvp to shader
+	glBindBuffer(GL_UNIFORM_BUFFER, sg.matricesBuffer);
+	glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(modelViewMatrix.Top()));
+	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
 	for(unsigned int i=0; i<node->mNumMeshes; ++i) {
 		const aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
@@ -219,22 +217,16 @@ void RenderObject::recursive_render(const aiNode* node, double dt) {
 void RenderObject::render(double dt) {
 
 	modelViewMatrix.Push();
-
 	modelViewMatrix.Translate(position);
-
 	modelViewMatrix.ApplyMatrix(rotationMatrix.Top());
-
 	modelViewMatrix.Scale(scale);
 
 	//Center the model in it's own space (and scale to 1.0/1.0/1.0)
 	
 	glm::vec3 size = scene_max - scene_min;
-
 	float tmp = aisgl_max(size.x, size.y);
 	tmp = aisgl_max(tmp, size.z);
-
 	modelViewMatrix.Scale(1.f/tmp);
-
 	modelViewMatrix.Translate(-scene_center.x, -scene_center.y, -scene_center.z);
 
 	recursive_render(scene->mRootNode, dt);		
@@ -248,11 +240,10 @@ void RenderObject::material_t::activate() {
 
 	glBindTexture(GL_TEXTURE_2D, texture);
 
-	glUniform4fv(shader.diffuse, 4, diffuse);
-	glUniform4fv(shader.specular, 4, specular);
-	glUniform4fv(shader.ambient,  4,ambient);
-	glUniform4fv(shader.emission, 4, emission);
-	glUniform1f(shader.shininess, shininess);
+	//Upload material attributes to shader
+	glBindBuffer(GL_UNIFORM_BUFFER, sg.materialBuffer);
+	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(shader_material_t), &attr);
+	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
 }
 

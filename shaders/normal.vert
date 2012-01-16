@@ -1,7 +1,9 @@
 #version 330
 
-uniform mat4 mvp;
-uniform mat4 projection_matrix;
+layout(std140) uniform Matrices {
+	mat4 projection_matrix;
+	mat4 mvp;
+};
 
 layout (location = 0) in vec4 position;
 layout (location = 1) in vec2 texCoord;
