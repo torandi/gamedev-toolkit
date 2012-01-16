@@ -17,11 +17,10 @@ static void setup(){
 	//load models:
 	//objects.push_back(RenderObject("models/vadertie.blend"));
 	//objects.push_back(RenderObject("models/apple.obj"));
-	objects.push_back(RenderObject("models/sonic.obj"));
+	objects.push_back(RenderObject("models/mario_obj.obj"));
 	objects.back().rotationMatrix.RotateY(180);
-	objects.back().scale = 2.0f;
-	objects.push_back(RenderObject("models/cube.obj"));
-	//objects.push_back(RenderObject("models/nintendo.obj"));
+	//objects.push_back(RenderObject("models/cube.obj"));
+	objects.push_back(RenderObject("models/nintendo.obj"));
 	objects.back().position-=glm::vec3(0.0,1.f,0.0f);
 }
 

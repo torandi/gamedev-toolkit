@@ -22,9 +22,9 @@ RenderObject *light;
 glutil::MatrixStack modelViewMatrix;
 glutil::MatrixStack projectionMatrix;
 std::vector<RenderObject> objects;
-glm::vec3 camera_pos, look_at, up_dir, light_pos;
+glm::vec3 camera_pos, look_at, up_dir;
 float light_attenuation;
-glm::vec4 light_intensity, ambient_intensity;
+glm::vec4 light_intensity, ambient_intensity, light_pos;
 
 GLuint load_shader(GLenum eShaderType, const std::string &strFilename)
 {
@@ -72,7 +72,7 @@ void render_init(int w, int h, bool fullscreen) {
 	camera_pos = glm::vec3(0,0,-10.0);
 	look_at = glm::vec3(0.0, 0.0, 0);
 	up_dir = glm::vec3(0.0, 1.0, 0.0);
-	light_pos = glm::vec3(2.0, 2.0, 2.0);
+	light_pos = glm::vec4(2.0, 2.0, 2.0, 0.0);
 
 	light_attenuation = 1.f/pow(HALF_LIGHT_DISTANCE,2);
 	light_intensity = glm::vec4(0.8f,0.8f, 0.8f, 1.0f);
@@ -164,7 +164,7 @@ void render(double dt){
 	glUniformMatrix4fv(shader.projection_matrix, 1, GL_FALSE,  glm::value_ptr(projectionMatrix.Top()));
 	glUniform3fv(shader.camera_pos,3,  glm::value_ptr(camera_pos));
 
-	glUniform3fv(shader.light_pos, 3, glm::value_ptr(light_pos));
+	glUniform4fv(shader.light_pos, 4, glm::value_ptr(light_pos));
 	glUniform1f(shader.light_attenuation, light_attenuation);
 	glUniform4fv(shader.light_intensity, 4,  glm::value_ptr(light_intensity));
 	glUniform4fv(shader.ambient_intensity,4,  glm::value_ptr(ambient_intensity));
@@ -173,7 +173,7 @@ void render(double dt){
 		it->render(dt);
 	}
 	if(RENDER_LIGHT) {
-		light->position = light_pos;
+		light->position = glm::vec3(light_pos);
 		light->render(dt);
 	}
 

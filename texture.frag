@@ -13,7 +13,7 @@ uniform float light_attenuation;
 uniform vec4 light_intensity;
 uniform vec4 ambient_intensity;
 
-uniform vec3 light_pos;
+uniform vec4 light_pos;
 
 in vec2 tex_coord;
 in vec3 frag_normal;
@@ -23,7 +23,7 @@ out vec4 outputColor;
 
 float CalcAttenuation(in vec3 world_pos, out vec3 light_dir)
 {
-	vec3 lightDifference =  world_pos - light_pos;
+	vec3 lightDifference =  world_pos - vec3(light_pos);
 	float lightDistanceSqr = dot(lightDifference, lightDifference);
 	light_dir = lightDifference * inversesqrt(lightDistanceSqr);
 	
@@ -32,8 +32,14 @@ float CalcAttenuation(in vec3 world_pos, out vec3 light_dir)
 
 void main() {
 	vec3 light_dir = vec3(0.0);
-	float atten = CalcAttenuation(world_pos, light_dir);
-	vec4 attenIntensity = atten * light_intensity;
+	vec4 lightIntensity;
+	if(light_pos.w == 0.0) {
+		light_dir = world_pos - vec3(light_pos);
+		lightIntensity = light_intensity;	
+	} else {
+		float atten = CalcAttenuation(world_pos, light_dir);
+		lightIntensity =  atten * light_intensity;
+	}
 
 	vec3 surfaceNormal = normalize(frag_normal);
 	float cosAngIncidence = dot(surfaceNormal, light_dir);
@@ -48,5 +54,5 @@ void main() {
 
 	gaussianTerm = cosAngIncidence != 0.0 ? gaussianTerm : 0.0;
 	
-	outputColor = texture(tex, tex_coord)*((diffuse*attenIntensity*cosAngIncidence) + (specular * attenIntensity * gaussianTerm) + ( diffuse*ambient_intensity));
+	outputColor = texture(tex, tex_coord)*((diffuse*lightIntensity*cosAngIncidence) + (specular * lightIntensity * gaussianTerm) + ( diffuse*ambient_intensity));
 }

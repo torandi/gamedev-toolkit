@@ -7,9 +7,9 @@
 	#include "render_object.h"
 
 	extern glutil::MatrixStack modelViewMatrix;
-	extern glm::vec3 camera_pos, look_at, up_dir, light_pos;
+	extern glm::vec3 camera_pos, look_at, up_dir;
 	extern float light_attenuation;
-	extern glm::vec4 light_intensity, ambient_intensity;
+	extern glm::vec4 light_intensity, ambient_intensity, light_pos;
 
 	struct shader_t {
 		GLuint program;

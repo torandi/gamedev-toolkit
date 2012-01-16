@@ -226,6 +226,17 @@ void RenderObject::render(double dt) {
 
 	modelViewMatrix.Scale(scale);
 
+	//Center the model in it's own space (and scale to 1.0/1.0/1.0)
+	
+	glm::vec3 size = scene_max - scene_min;
+
+	float tmp = aisgl_max(size.x, size.y);
+	tmp = aisgl_max(tmp, size.z);
+
+	modelViewMatrix.Scale(1.f/tmp);
+
+	modelViewMatrix.Translate(-scene_center.x, -scene_center.y, -scene_center.z);
+
 	recursive_render(scene->mRootNode, dt);		
 
 	modelViewMatrix.Pop();

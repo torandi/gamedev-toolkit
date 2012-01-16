@@ -27,5 +27,5 @@ void logic(double dt) {
 	lit_rot+= 2*ROTATION_SPEED*dt;
 	lit_rot = fmod(lit_rot, M_PI*2);	
 	camera_pos = glm::vec3(cos(cam_rot), 0.0, sin(cam_rot))*cam_center_distance;
-	light_pos= glm::vec3(cos(lit_rot+M_PI), 2.0, sin(lit_rot+M_PI))*lit_center_distance;
+	light_pos= glm::vec4(cos(lit_rot+M_PI), 2.0, sin(lit_rot+M_PI), 1.0)*lit_center_distance;
 }
