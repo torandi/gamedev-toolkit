@@ -26,7 +26,6 @@
 	struct light_t {
 		glm::vec4 intensity;
 		glm::vec4 position;
-		glm::vec4 color;
 	};
 
 	struct lights_t {

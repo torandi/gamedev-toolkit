@@ -22,7 +22,6 @@ layout(std140) uniform Material {
 struct light_data {
 	vec4 intensity;
 	vec4 position;
-	vec4 color;
 };
 
 layout(std140) uniform LightsData {
@@ -90,6 +89,4 @@ void main() {
 		accumLighting += computeLighting(Lgt.lights[light], originalColor);
 	}
 	outputColor = accumLighting;
-//	outputColor = computeLighting(Lgt.lights[0], originalColor);
-	//outputColor = originalColor;
 }

@@ -18,7 +18,7 @@
 
 #define RENDER_LIGHT 0
 
-#define HALF_LIGHT_DISTANCE 20.f
+#define HALF_LIGHT_DISTANCE 10.f
 
 int errcnt = 0;
 
@@ -83,14 +83,15 @@ void render_init(int w, int h, bool fullscreen) {
 	up_dir = glm::vec3(0.0, 1.0, 0.0);
 
 	light_attenuation = 1.f/pow(HALF_LIGHT_DISTANCE,2);
-	ambient_intensity = glm::vec4(0.2f,0.2f,0.2f,1.0f);
+	ambient_intensity = glm::vec4(0.1f,0.1f,0.1f,1.0f);
 
 	light_t l;
-	l.intensity = glm::vec4(0.8f,0.8f, 0.8f, 1.0f);
+
+	l.intensity = glm::vec4(0.5f,0.5f, 0.5f, 1.0f);
 	l.position = glm::vec4(2.0, 2.0, 2.0, 0.0);
-	l.color = glm::vec4(1.0, 1.0, 1.0, 1.0);
 	
 	lights.push_back(l);
+
 
 	projectionMatrix.Perspective(45.0f, w/(float)h, zNear, zFar);
 
