@@ -1,6 +1,7 @@
 #include "render.h"
 #include "render_object.h"
 #include "camera.h"
+#include "light.h"
 
 #include <glload/gll.hpp>
 #include <glload/gl_3_3.h>
@@ -30,10 +31,10 @@ glutil::MatrixStack projectionMatrix;
 std::vector<RenderObject> objects;
 float light_attenuation;
 glm::vec4 ambient_intensity;
-std::vector<light_t> lights;
-shader_globals_t sg;
+std::vector<Light> lights;
+shader_globals_t shader_globals;
 
-lights_t lightData;
+shader_lights_t lightData;
 
 Camera camera(glm::vec3(0.0, 0.0, -2.5));
 
@@ -83,10 +84,7 @@ void render_init(int w, int h, bool fullscreen) {
 	light_attenuation = 1.f/pow(HALF_LIGHT_DISTANCE,2);
 	ambient_intensity = glm::vec4(0.1f,0.1f,0.1f,1.0f);
 
-	light_t l;
-
-	l.intensity = glm::vec4(0.5f,0.5f, 0.5f, 1.0f);
-	l.position = glm::vec4(2.0, 2.0, 2.0, 1.0);
+	Light l(glm::vec3(0.5f,0.5f, 0.5f), glm::vec3(2.0, 2.0, 2.0), Light::POINT_LIGHT);
 	
 	lights.push_back(l);
 
@@ -129,19 +127,19 @@ void render_init(int w, int h, bool fullscreen) {
 	glUniformBlockBinding(shader.program, shader.Material, MATERIAL_BLOCK_INDEX);
 
 	//Setup uniform buffers
-	glGenBuffers(sizeof(shader_globals_t)/sizeof(GLuint), (GLuint*)&sg);
-	glBindBuffer(GL_UNIFORM_BUFFER, sg.matricesBuffer);
+	glGenBuffers(sizeof(shader_globals_t)/sizeof(GLuint), (GLuint*)&shader_globals);
+	glBindBuffer(GL_UNIFORM_BUFFER, shader_globals.matricesBuffer);
 	glBufferData(GL_UNIFORM_BUFFER, sizeof(glm::mat4)*2, NULL, GL_STREAM_DRAW);
-	glBindBuffer(GL_UNIFORM_BUFFER, sg.lightsBuffer);
-	glBufferData(GL_UNIFORM_BUFFER, sizeof(lights_t), NULL, GL_STREAM_DRAW);
-	glBindBuffer(GL_UNIFORM_BUFFER, sg.materialBuffer);
+	glBindBuffer(GL_UNIFORM_BUFFER, shader_globals.lightsBuffer);
+	glBufferData(GL_UNIFORM_BUFFER, sizeof(shader_lights_t), NULL, GL_STREAM_DRAW);
+	glBindBuffer(GL_UNIFORM_BUFFER, shader_globals.materialBuffer);
 	glBufferData(GL_UNIFORM_BUFFER, sizeof(shader_material_t), NULL, GL_STREAM_DRAW);
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
 	//Bind buffers to blocks:
-	glBindBufferRange(GL_UNIFORM_BUFFER, MATRICES_BLOCK_INDEX, sg.matricesBuffer, 0, sizeof(glm::mat4)*2);
-	glBindBufferRange(GL_UNIFORM_BUFFER, LIGHTS_DATA_BLOCK_INDEX, sg.lightsBuffer, 0, sizeof(lights_t));
-	glBindBufferRange(GL_UNIFORM_BUFFER, MATERIAL_BLOCK_INDEX, sg.materialBuffer, 0, sizeof(shader_material_t));
+	glBindBufferRange(GL_UNIFORM_BUFFER, MATRICES_BLOCK_INDEX, shader_globals.matricesBuffer, 0, sizeof(glm::mat4)*2);
+	glBindBufferRange(GL_UNIFORM_BUFFER, LIGHTS_DATA_BLOCK_INDEX, shader_globals.lightsBuffer, 0, sizeof(shader_lights_t));
+	glBindBufferRange(GL_UNIFORM_BUFFER, MATERIAL_BLOCK_INDEX, shader_globals.materialBuffer, 0, sizeof(shader_material_t));
 
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
@@ -205,21 +203,27 @@ void render(double dt){
 	projectionMatrix.LookAt(camera.position(), camera.look_at(), camera.up());
 
 	//Upload projection matrix:
-	glBindBuffer(GL_UNIFORM_BUFFER, sg.matricesBuffer);
+	glBindBuffer(GL_UNIFORM_BUFFER, shader_globals.matricesBuffer);
 	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(projectionMatrix.Top()));
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
 	glUniform3fv(shader.camera_pos,3,  glm::value_ptr(camera.position()));
 
 	//Build lights object:
-	assert(lights.size() <= MAX_NUM_LIGHTS);
-	lightData.num_lights	= lights.size();
+	if (lights.size() <= MAX_NUM_LIGHTS) {
+		lightData.num_lights	= lights.size();
+	} else {
+		lightData.num_lights = MAX_NUM_LIGHTS;
+		fprintf(stderr, "Warning! There are more than %d lights. Only the %d first ligths will be used!\n", MAX_NUM_LIGHTS, MAX_NUM_LIGHTS);
+	}
 	lightData.attenuation = light_attenuation;
 	lightData.ambient_intensity =  ambient_intensity;
-	memcpy(lightData.lights, &lights.front(), lightData.num_lights*sizeof(light_t));
+	for(unsigned int i=0; i < lightData.num_lights; ++i) {
+		lightData.lights[0] = lights[i].shader_light();
+	}
 	//Upload light data:
-	glBindBuffer(GL_UNIFORM_BUFFER, sg.lightsBuffer);
-	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(lights_t), &lightData);
+	glBindBuffer(GL_UNIFORM_BUFFER, shader_globals.lightsBuffer);
+	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(shader_lights_t), &lightData);
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
 	modelViewMatrix.Push();
@@ -231,7 +235,7 @@ void render(double dt){
 	}
 
 #if RENDER_LIGHT
-	light->position = glm::vec3(lights.front().position);
+	light->position = lights.front().position();
 	light->render(dt);
 #endif
 

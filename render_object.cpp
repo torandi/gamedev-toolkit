@@ -188,7 +188,7 @@ void RenderObject::recursive_render(const aiNode* node, double dt) {
 	modelViewMatrix *= glm::make_mat4((float*)&m);
 
 	//Upload mvp to shader
-	glBindBuffer(GL_UNIFORM_BUFFER, sg.matricesBuffer);
+	glBindBuffer(GL_UNIFORM_BUFFER, shader_globals.matricesBuffer);
 	glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(modelViewMatrix.Top()));
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
@@ -252,7 +252,7 @@ void RenderObject::material_t::activate() {
 	glBindTexture(GL_TEXTURE_2D, texture);
 
 	//Upload material attributes to shader
-	glBindBuffer(GL_UNIFORM_BUFFER, sg.materialBuffer);
+	glBindBuffer(GL_UNIFORM_BUFFER, shader_globals.materialBuffer);
 	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(shader_material_t), &attr);
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 

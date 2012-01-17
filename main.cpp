@@ -26,10 +26,10 @@ static void setup(){
 	objects.push_back(RenderObject("models/ninja.b3d"));
 	objects.back().position+=glm::vec3(0.0,0.0,5.0);
 	objects.push_back(RenderObject("models/earth.obj"));
-	objects.back().position+=glm::vec3(2.0,0.0,0.0);
+	objects.back().position+=glm::vec3(0.0,3.0,0.0);
 	//objects.back().position+=glm::vec3(0.0, 0.0, 0.f);
 	objects.push_back(RenderObject("models/nintendo.obj"));
-	objects.back().position-=glm::vec3(0.0,3.f,0.0f);
+	objects.back().position-=glm::vec3(2.0,0.f,0.0f);
 }
 
 

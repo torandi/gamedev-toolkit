@@ -56,7 +56,7 @@ void logic(double dt) {
 		y = -normalized_axis_value(4)*MOVE_SPEED*dt;
 		z = -normalized_axis_value(1)*MOVE_SPEED*dt;
 
-		lights.back().position+=glm::vec4(x, y, z, 0.0);
+		lights.back().absolute_move(glm::vec3(x, y, z));
 	} else {
 
 		if(fabs(x) > 0 || fabs(y) > 0 || fabs(z) > 0) 
