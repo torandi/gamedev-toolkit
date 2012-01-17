@@ -22,14 +22,15 @@ static void setup(){
 	//load models:
 	//objects.push_back(RenderObject("models/vadertie.blend"));
 	//objects.push_back(RenderObject("models/apple.obj"));
-	objects.push_back(RenderObject("models/mario_obj.obj"));
-	objects.push_back(RenderObject("models/ninja.b3d"));
-	objects.back().position+=glm::vec3(0.0,0.0,5.0);
-	objects.push_back(RenderObject("models/earth.obj"));
-	objects.back().position+=glm::vec3(0.0,3.0,0.0);
+	objects.push_back(new RenderObject("models/mario_obj.obj"));
+	objects.back()->scale*=3.0f;
+	objects.push_back(new RenderObject("models/ninja.b3d"));
+	objects.back()->absolute_move(glm::vec3(0.0,0.0,5.0));
+	objects.push_back(new RenderObject("models/earth.obj"));
+	objects.back()->absolute_move(glm::vec3(0.0,3.0,0.0));
 	//objects.back().position+=glm::vec3(0.0, 0.0, 0.f);
-	objects.push_back(RenderObject("models/nintendo.obj"));
-	objects.back().position-=glm::vec3(2.0,0.f,0.0f);
+	objects.push_back(new RenderObject("models/nintendo.obj"));
+	objects.back()->absolute_move(glm::vec3(-2.0,0.0,0.0));
 }
 
 

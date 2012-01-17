@@ -1,4 +1,5 @@
 #include "render_object.h"
+#include "render_group.h"
 #include "render.h"
 #include <string>
 #include <cstdio>
@@ -19,14 +20,16 @@ void RenderObject::color4_to_vec4(const struct aiColor4D *c, glm::vec4 &target) 
 	target.w = c->a;
 }
 
-RenderObject::RenderObject(std::string model, bool normalize_scale) {
+RenderObject::~RenderObject() {
+	aiReleaseImport(scene);
+}
+
+RenderObject::RenderObject(std::string model, bool normalize_scale) : RenderGroup() {
 	scene = aiImportFile( model.c_str(), 
 		aiProcess_Triangulate | aiProcess_GenSmoothNormals |
 		aiProcess_JoinIdenticalVertices |  aiProcess_GenUVCoords |
 		aiProcess_OptimizeMeshes | aiProcess_OptimizeGraph 
 		);
-	scale = 1.f;
-	position = glm::vec3(0.f, 0.f, 0.f);
 
 	if(scene != 0) {
 		printf("Loaded model %s: \nMeshes: %d\nTextures: %d\nMaterials: %d\n",model.c_str(), scene->mNumMeshes, scene->mNumTextures, scene->mNumMaterials);
@@ -231,18 +234,16 @@ void RenderObject::recursive_render(const aiNode* node, double dt) {
 void RenderObject::render(double dt) {
 
 	modelViewMatrix.Push();
-	modelViewMatrix.Translate(position);
-	modelViewMatrix.ApplyMatrix(rotationMatrix.Top());
-	modelViewMatrix.Scale(scale);
 
-	
-
-	//Center the model in it's own space (and scale to 1.0/1.0/1.0) if it was normalized
-	modelViewMatrix.ApplyMatrix(normalization_matrix_);
+	modelViewMatrix.ApplyMatrix(matrix());
 
 	recursive_render(scene->mRootNode, dt);		
 
 	modelViewMatrix.Pop();
+}
+
+const glm::mat4 RenderObject::matrix() const {
+	return RenderGroup::matrix() * normalization_matrix_;
 }
 
 void RenderObject::material_t::activate() {

@@ -62,6 +62,16 @@ void MovableObject::relative_rotate(const glm::vec3 &axis, const float &angle) {
 	orientation_ = glm::rotate(orientation_, angle, axis);
 }
 
+void MovableObject::set_position(const glm::vec3 &pos) {
+	position_ = pos;
+	translation_matrix_dirty_ = true;
+}
+
+void MovableObject::set_rotation(const glm::vec3 &axis, const float angle) {
+	rotation_matrix_dirty_ = true;
+	orientation_ = glm::rotate(glm::fquat(1.f, 0.f, 0.f, 0.f), angle, axis);
+}
+
 glm::vec3 MovableObject::orient_vector(const glm::vec3 &vec) const {
 	return glm::vec3(rotation_matrix()*glm::vec4(vec, 1.f));
 }

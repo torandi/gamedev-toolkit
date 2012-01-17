@@ -11,8 +11,21 @@
 #include <glutil/glutil.h>
 
 #include "render.h"
+#include "render_group.h"
 
-struct RenderObject {
+class RenderObject : public RenderGroup {
+
+	glm::mat4 normalization_matrix_;
+
+	void get_bounding_box_for_node (const struct aiNode* nd,	struct aiVector3D* min, struct aiVector3D* max, struct aiMatrix4x4* trafo);
+	void get_bounding_box (struct aiVector3D* min, struct aiVector3D* max);
+	void color4_to_vec4(const struct aiColor4D *c, glm::vec4 &target);
+
+	//Hide these functions:
+	RenderGroup::operator[];
+	RenderGroup::add_object;
+
+public:
 	const aiScene* scene;
 	glm::vec3 scene_min, scene_max, scene_center;
 
@@ -23,6 +36,7 @@ struct RenderObject {
 		unsigned int num_indices;
 		unsigned int mtl_index;
 	};
+
 
 	struct vertex_t {
 		float pos_x;
@@ -56,29 +70,22 @@ struct RenderObject {
 		void deactivate();
 	};
 
+	//Set normalize_scale to false to not scale down to 1.0
+	RenderObject(std::string model, bool normalize_scale=true);
+	virtual ~RenderObject();
+
 	std::vector<material_t> materials;
 
 	std::map<const aiMesh*, mesh_data_t > mesh_data;
 
-	//Set normalize_scale to false to not scale down to 1.0
-	RenderObject(std::string model, bool normalize_scale=true);
 
 	void pre_render();
 	void recursive_pre_render(const aiNode* node);
 	void recursive_render(const aiNode* node, double dt);
-	void render(double dt);
+	virtual void render(double dt);
+	virtual const glm::mat4 matrix() const;
 
-	glutil::MatrixStack rotationMatrix;
-
-	glm::vec3 position;
-	float scale;
-private:
-
-	glm::mat4 normalization_matrix_;
-
-	void get_bounding_box_for_node (const struct aiNode* nd,	struct aiVector3D* min, struct aiVector3D* max, struct aiMatrix4x4* trafo);
-	void get_bounding_box (struct aiVector3D* min, struct aiVector3D* max);
-	void color4_to_vec4(const struct aiColor4D *c, glm::vec4 &target);
+	
 };
 
 #endif

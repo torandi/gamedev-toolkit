@@ -1,4 +1,5 @@
 #include "render.h"
+#include "render_group.h"
 #include "render_object.h"
 #include "camera.h"
 #include "light.h"
@@ -28,7 +29,7 @@ RenderObject *light;
 
 glutil::MatrixStack modelViewMatrix;
 glutil::MatrixStack projectionMatrix;
-std::vector<RenderObject> objects;
+std::vector<RenderGroup*> objects;
 float light_attenuation;
 glm::vec4 ambient_intensity;
 std::vector<Light> lights;
@@ -78,6 +79,12 @@ shader_t shader;
 
 GLuint vao;
 
+void render_teardown() {
+	for(std::vector<RenderGroup*>::iterator it = objects.begin(); it!=objects.end(); ++it) {
+		delete (*it);
+	}
+}
+
 void render_init(int w, int h, bool fullscreen) {
 
 
@@ -87,8 +94,6 @@ void render_init(int w, int h, bool fullscreen) {
 	Light l(glm::vec3(0.5f,0.5f, 0.5f), glm::vec3(2.0, 2.0, 2.0), Light::POINT_LIGHT);
 	
 	lights.push_back(l);
-
-
 
   	/* create window */
   	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK);
@@ -170,7 +175,7 @@ void render_init(int w, int h, bool fullscreen) {
 	glEnable(GL_DEPTH_CLAMP);
 #if RENDER_LIGHT
 	light = new RenderObject("models/cube.obj");
-	light->scale = 0.25f/2.0f;
+	light->scale*(0.25f/2.0f);
 #endif
 }
 
@@ -228,14 +233,12 @@ void render(double dt){
 
 	modelViewMatrix.Push();
 
-	//modelViewMatrix*= camera.matrix();
-
-	for(std::vector<RenderObject>::iterator it=objects.begin(); it!=objects.end(); ++it) {
-		it->render(dt);
+	for(std::vector<RenderGroup*>::iterator it=objects.begin(); it!=objects.end(); ++it) {
+		(*it)->render(dt);
 	}
 
 #if RENDER_LIGHT
-	light->position = lights.front().position();
+	light->set_position(lights.front().position());
 	light->render(dt);
 #endif
 

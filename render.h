@@ -6,8 +6,7 @@
 
 	#include "camera.h"
 	#include "light.h"
-
-	struct RenderObject;
+	#include "render_group.h"
 
 	#define MAX_NUM_LIGHTS 4
 
@@ -62,9 +61,10 @@
 
 	extern shader_t shader;
 
-	extern std::vector<RenderObject> objects;
+	extern std::vector<RenderGroup*> objects;
 
 	void render_init(int w, int h, bool fullscreen);
+	void render_teardown();
 
 	void render(double dt);
 
