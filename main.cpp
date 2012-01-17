@@ -6,14 +6,18 @@
 #include "render.h"
 #include "render_object.h"
 #include "logic.h"
+#include "input.h"
 
 #define REF_FPS 30
 #define REF_DT (1.0/REF_FPS)
 
 bool fullscreen = false;
 
+
 static void setup(){
 	render_init(1024, 768, fullscreen);
+
+	init_input();
 
 	//load models:
 	//objects.push_back(RenderObject("models/vadertie.blend"));
@@ -27,20 +31,10 @@ static void setup(){
 	objects.back().position-=glm::vec3(0.0,1.f,0.0f);
 }
 
-static void poll(bool* run){
-
-	SDL_Event event;
-	while ( SDL_PollEvent(&event) ){
-		switch (event.type){
-			case SDL_QUIT:
-				*run = false;
-				break;
-		}
-	}
-}
 
 static void cleanup(){
-  SDL_Quit();
+	cleanup_input();
+	SDL_Quit();
 }
 
 int main(int argc, char* argv[]){

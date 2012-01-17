@@ -1,5 +1,6 @@
 #include "render.h"
 #include "render_object.h"
+#include "camera.h"
 
 #include <glload/gll.hpp>
 #include <glload/gl_3_3.h>
@@ -34,6 +35,8 @@ std::vector<light_t> lights;
 shader_globals_t sg;
 
 lights_t lightData;
+
+camera_t camera;
 
 GLuint load_shader(GLenum eShaderType, const std::string &strFilename)
 {
@@ -96,7 +99,7 @@ void render_init(int w, int h, bool fullscreen) {
 	projectionMatrix.Perspective(45.0f, w/(float)h, zNear, zFar);
 
   	/* create window */
-  	SDL_Init(SDL_INIT_VIDEO);
+  	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK);
 	int flags = SDL_OPENGL | SDL_DOUBLEBUF;
 	if ( fullscreen ) flags |= SDL_FULLSCREEN;
 	SDL_SetVideoMode(w, h, 0, flags);
@@ -223,13 +226,19 @@ void render(double dt){
 	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(lights_t), &lightData);
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
+	modelViewMatrix.Push();
+
+	modelViewMatrix*= camera.matrix();
+
 	for(std::vector<RenderObject>::iterator it=objects.begin(); it!=objects.end(); ++it) {
 		it->render(dt);
 	}
 
+
 	light->position = glm::vec3(lights.front().position);
 	light->render(dt);
 
+	modelViewMatrix.Pop();
 	projectionMatrix.Pop();
 
 	SDL_GL_SwapBuffers();

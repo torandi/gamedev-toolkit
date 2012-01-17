@@ -4,6 +4,8 @@
 	#include <glload/gl_3_3.h>
 	#include <glutil/MatrixStack.h>
 
+	#include "camera.h"
+
 	struct RenderObject;
 
 	#define MAX_NUM_LIGHTS 4
@@ -12,6 +14,9 @@
 	extern glm::vec3 camera_pos, look_at, up_dir;
 	extern float light_attenuation;
 	extern glm::vec4 ambient_intensity;
+
+
+	extern camera_t camera;
 
 	struct shader_material_t {
 		unsigned int useTexture; //Set to 1 to use texture

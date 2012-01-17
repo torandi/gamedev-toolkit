@@ -79,7 +79,7 @@ vec4 computeLighting(in light_data light, in vec4 originalColor) {
 void main() {
 	vec4 originalColor; 
 	if(Mtl.useTexture == 1) {
-		originalColor = texture(tex, tex_coord);//*Mtl.diffuse;
+		originalColor = texture(tex, tex_coord)*Mtl.diffuse;
 	} else {
 		originalColor = Mtl.diffuse;
 	}
