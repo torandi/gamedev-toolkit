@@ -10,6 +10,8 @@
 	#include "render_group.h"
 
 	#define MAX_NUM_LIGHTS 4
+	#define HALF_LIGHT_DISTANCE 5.f
+
 
 class Renderer {
 public:

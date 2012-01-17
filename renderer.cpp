@@ -19,8 +19,6 @@
 #include <SDL/SDL.h>
 #include <GL/glu.h>
 
-#define HALF_LIGHT_DISTANCE 10.f
-
 std::string Renderer::shader_files[] = {
 	"normal",
 	"light_source"
