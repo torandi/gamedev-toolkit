@@ -11,6 +11,10 @@
 
 	void poll(bool *run);
 
+	bool button_down(int btn);
+
 	float normalized_trigger_value(int axis);
 	float normalized_axis_value(int axis);
+	float get_hat_up_down(int hat);
+	float get_hat_right_left(int hat);
 #endif

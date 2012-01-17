@@ -1,4 +1,5 @@
 #include "input.h"
+#include "camera.h"
 #include <SDL/SDL.h>
 #include <cmath>
 
@@ -31,6 +32,27 @@ float normalized_trigger_value(int axis) {
 	}
 }
 
+float get_hat_up_down(int hat) {
+	int val = SDL_JoystickGetHat(joy, hat);
+	if(val & SDL_HAT_UP)
+		return 1.f;
+	else if(val & SDL_HAT_DOWN)
+		return -1.f;
+	else
+		return 0.f;
+	
+}
+
+float get_hat_right_left(int hat) {
+	int val = SDL_JoystickGetHat(joy, hat);
+	if(val & SDL_HAT_RIGHT)
+		return 1.f;
+	else if(val & SDL_HAT_LEFT)
+		return -1.f;
+	else
+		return 0.f;
+	
+}
 void init_input() {
 	SDL_JoystickEventState(SDL_TRUE);
 	SDL_InitSubSystem(SDL_INIT_JOYSTICK);
@@ -80,9 +102,12 @@ void poll(bool* run){
 				moved_triggers[event.jaxis.axis]=true;
 				break;
 
-/*
+
 			case SDL_JOYBUTTONDOWN:
-				//joystickIndex=event.jbutton.which;
+				if(event.jbutton.button == 0)
+					printf("Camera position: (%f, %f, %f)\n", camera.position().x, camera.position().y, camera.position().z);
+				break;
+			/*
 			case SDL_JOYBUTTONUP:
 				break;
 			case SDL_JOYHATMOTION:
@@ -91,4 +116,8 @@ void poll(bool* run){
 */
 		}
 	}
+}
+
+bool button_down(int btn) {
+	return SDL_JoystickGetButton(joy, btn)==1;
 }

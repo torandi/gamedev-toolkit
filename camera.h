@@ -21,4 +21,6 @@
 		void relative_move(const glm::vec3 &move);
 		void relative_rotate(const glm::vec3 &_axis, const float &angle);
 	};
+
+	extern camera_t camera;
 #endif

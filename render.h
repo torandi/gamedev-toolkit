@@ -11,12 +11,11 @@
 	#define MAX_NUM_LIGHTS 4
 
 	extern glutil::MatrixStack modelViewMatrix;
-	extern glm::vec3 camera_pos, look_at, up_dir;
+	//extern glm::vec3 camera_pos, look_at, up_dir;
 	extern float light_attenuation;
 	extern glm::vec4 ambient_intensity;
 
 
-	extern camera_t camera;
 
 	struct shader_material_t {
 		unsigned int useTexture; //Set to 1 to use texture

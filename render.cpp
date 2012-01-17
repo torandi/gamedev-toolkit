@@ -36,7 +36,7 @@ shader_globals_t sg;
 
 lights_t lightData;
 
-camera_t camera;
+camera_t camera(glm::vec3(0.0, 0.0, -2.5));
 
 GLuint load_shader(GLenum eShaderType, const std::string &strFilename)
 {
@@ -206,6 +206,10 @@ void render(double dt){
 
 	projectionMatrix.Push();
 
+	camera_pos = camera.position();
+	look_at = camera.look_at();
+	up_dir = camera.up();
+
 	projectionMatrix.LookAt(camera_pos, look_at, up_dir);
 
 	//Upload projection matrix:
@@ -228,7 +232,7 @@ void render(double dt){
 
 	modelViewMatrix.Push();
 
-	modelViewMatrix*= camera.matrix();
+	//modelViewMatrix*= camera.matrix();
 
 	for(std::vector<RenderObject>::iterator it=objects.begin(); it!=objects.end(); ++it) {
 		it->render(dt);
