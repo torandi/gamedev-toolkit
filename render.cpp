@@ -28,7 +28,6 @@ RenderObject *light;
 glutil::MatrixStack modelViewMatrix;
 glutil::MatrixStack projectionMatrix;
 std::vector<RenderObject> objects;
-glm::vec3 camera_pos, look_at, up_dir;
 float light_attenuation;
 glm::vec4 ambient_intensity;
 std::vector<light_t> lights;
@@ -36,7 +35,7 @@ shader_globals_t sg;
 
 lights_t lightData;
 
-camera_t camera(glm::vec3(0.0, 0.0, -2.5));
+Camera camera(glm::vec3(0.0, 0.0, -2.5));
 
 GLuint load_shader(GLenum eShaderType, const std::string &strFilename)
 {
@@ -81,10 +80,6 @@ GLuint vao;
 void render_init(int w, int h, bool fullscreen) {
 
 
-	camera_pos = glm::vec3(0,0,-10.0);
-	look_at = glm::vec3(0.0, 0.0, 0);
-	up_dir = glm::vec3(0.0, 1.0, 0.0);
-
 	light_attenuation = 1.f/pow(HALF_LIGHT_DISTANCE,2);
 	ambient_intensity = glm::vec4(0.1f,0.1f,0.1f,1.0f);
 
@@ -96,7 +91,6 @@ void render_init(int w, int h, bool fullscreen) {
 	lights.push_back(l);
 
 
-	projectionMatrix.Perspective(45.0f, w/(float)h, zNear, zFar);
 
   	/* create window */
   	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK);
@@ -162,7 +156,8 @@ void render_init(int w, int h, bool fullscreen) {
 	/* setup opengl */
 	glClearColor(0.2f, 0.1f, 0.2f, 0.0f);
 
-	//Setup view (this may be moved to reshape
+	//Setup view (this may be moved to reshape)
+	projectionMatrix.Perspective(45.0f, w/(float)h, zNear, zFar);
 	glViewport(0, 0, w, h);
 
 	/*glEnable(GL_CULL_FACE);
@@ -207,18 +202,14 @@ void render(double dt){
 
 	projectionMatrix.Push();
 
-	camera_pos = camera.position();
-	look_at = camera.look_at();
-	up_dir = camera.up();
-
-	projectionMatrix.LookAt(camera_pos, look_at, up_dir);
+	projectionMatrix.LookAt(camera.position(), camera.look_at(), camera.up());
 
 	//Upload projection matrix:
 	glBindBuffer(GL_UNIFORM_BUFFER, sg.matricesBuffer);
 	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(projectionMatrix.Top()));
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
-	glUniform3fv(shader.camera_pos,3,  glm::value_ptr(camera_pos));
+	glUniform3fv(shader.camera_pos,3,  glm::value_ptr(camera.position()));
 
 	//Build lights object:
 	assert(lights.size() <= MAX_NUM_LIGHTS);
