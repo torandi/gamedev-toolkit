@@ -9,6 +9,8 @@
 		const glm::mat4 rotation_matrix() const;
 		const glm::mat4 translation_matrix() const;
 
+		glm::vec3 orient_vector(const glm::vec3 &vec) const;
+
 	public:
 		camera_t() : orientation_(1.f, 0.f, 0.f,0.f) {};
 		camera_t(glm::vec3 position) : position_(position), orientation_(1.f, 0.f, 0.f,0.f) {};
@@ -20,6 +22,7 @@
 
 		void relative_move(const glm::vec3 &move);
 		void relative_rotate(const glm::vec3 &_axis, const float &angle);
+		void absolute_rotate(const glm::vec3 &_axis, const float &angle);
 	};
 
 	extern camera_t camera;

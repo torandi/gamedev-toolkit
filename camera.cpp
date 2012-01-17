@@ -26,9 +26,17 @@ const glm::vec3 camera_t::up() const {
 }
 
 void camera_t::relative_move(const glm::vec3 &move) {
-	position_+= glm::vec3(rotation_matrix()*glm::vec4(move,1.f));
+	position_+= orient_vector(move);
+}
+
+void camera_t::absolute_rotate(const glm::vec3 &axis, const float &angle) {
+	orientation_ = glm::rotate(orientation_, angle, orient_vector(axis*1.f));
 }
 
 void camera_t::relative_rotate(const glm::vec3 &axis, const float &angle) {
 	orientation_ = glm::rotate(orientation_, angle, axis);
+}
+
+glm::vec3 camera_t::orient_vector(const glm::vec3 &vec) const {
+	return glm::vec3(rotation_matrix()*glm::vec4(vec, 1.f));
 }

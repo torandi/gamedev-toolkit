@@ -35,7 +35,7 @@ void logic(double dt) {
 	float y = get_hat_up_down(0)*MOVE_SPEED*dt;
 	float z;
 	if(button_down(5))
-		y = normalized_axis_value(1)*MOVE_SPEED*dt;
+		y = -normalized_axis_value(1)*MOVE_SPEED*dt;
 	else
 		z = -normalized_axis_value(1)*MOVE_SPEED*dt;
 	float rx = -normalized_axis_value(4)*ROTATION_SPEED*dt;
@@ -51,6 +51,14 @@ void logic(double dt) {
 		camera.relative_rotate(glm::vec3(0.f, 0.f, 1.f), rz);
 	if(fabs(ry) > 0) 
 		camera.relative_rotate(glm::vec3(0.f, 1.f, 0.f), ry);
+	if(button_down(4)) {
+		if(fabs(rx) > 0) 
+			camera.absolute_rotate(glm::vec3(1.f, 0.f, 0.f), ROTATION_SPEED*dt*rx);
+		if(fabs(rz) > 0) 
+			camera.absolute_rotate(glm::vec3(0.f, 0.f, 1.f), rz);
+		if(fabs(ry) > 0) 
+			camera.absolute_rotate(glm::vec3(0.f, 1.f, 0.f), ry);
+	}
 	//if(fabs(rx) > 0) 
 	//if(fabs(rx) > 0) 
 
