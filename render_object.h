@@ -60,7 +60,8 @@ struct RenderObject {
 
 	std::map<const aiMesh*, mesh_data_t > mesh_data;
 
-	RenderObject(std::string model);
+	//Set normalize_scale to false to not scale down to 1.0
+	RenderObject(std::string model, bool normalize_scale=true);
 
 	void pre_render();
 	void recursive_pre_render(const aiNode* node);
@@ -72,6 +73,8 @@ struct RenderObject {
 	glm::vec3 position;
 	float scale;
 private:
+
+	glm::mat4 normalization_matrix_;
 
 	void get_bounding_box_for_node (const struct aiNode* nd,	struct aiVector3D* min, struct aiVector3D* max, struct aiMatrix4x4* trafo);
 	void get_bounding_box (struct aiVector3D* min, struct aiVector3D* max);

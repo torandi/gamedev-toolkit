@@ -19,7 +19,7 @@ void RenderObject::color4_to_vec4(const struct aiColor4D *c, glm::vec4 &target) 
 	target.w = c->a;
 }
 
-RenderObject::RenderObject(std::string model) {
+RenderObject::RenderObject(std::string model, bool normalize_scale) {
 	scene = aiImportFile( model.c_str(), 
 		aiProcess_Triangulate | aiProcess_GenSmoothNormals |
 		aiProcess_JoinIdenticalVertices |  aiProcess_GenUVCoords |
@@ -38,7 +38,21 @@ RenderObject::RenderObject(std::string model) {
 		scene_max = glm::make_vec3((float*)&s_max);
 		scene_center  = (scene_min+scene_max)/2.0f;
 
+		//Calculate normalization matrix
+		glutil::MatrixStack normMatrix;
+		if(normalize_scale) {
+			glm::vec3 size = scene_max - scene_min;
+			float tmp = aisgl_max(size.x, size.y);
+			tmp = aisgl_max(tmp, size.z);
+			normMatrix.Scale(1.f/tmp);
+		}
+		normMatrix.Translate(-scene_center.x, -scene_center.y, -scene_center.z);
+		
+		normalization_matrix_ = normMatrix.Top();
+
 		pre_render();
+
+
 	} else {
 		printf("Failed to load model %s\n", model.c_str());
 	}
@@ -221,13 +235,10 @@ void RenderObject::render(double dt) {
 	modelViewMatrix.ApplyMatrix(rotationMatrix.Top());
 	modelViewMatrix.Scale(scale);
 
-	//Center the model in it's own space (and scale to 1.0/1.0/1.0)
 	
-	glm::vec3 size = scene_max - scene_min;
-	float tmp = aisgl_max(size.x, size.y);
-	tmp = aisgl_max(tmp, size.z);
-	modelViewMatrix.Scale(1.f/tmp);
-	modelViewMatrix.Translate(-scene_center.x, -scene_center.y, -scene_center.z);
+
+	//Center the model in it's own space (and scale to 1.0/1.0/1.0) if it was normalized
+	modelViewMatrix.ApplyMatrix(normalization_matrix_);
 
 	recursive_render(scene->mRootNode, dt);		
 
