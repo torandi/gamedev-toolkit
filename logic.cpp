@@ -1,9 +1,10 @@
 #include <cstdio>
 #include <cmath>
 #include <SDL/SDL.h>
-#include "render.h"
+#include "renderer.h"
 #include "input.h"
 #include "util.h"
+#include "world.h"
 
 #define LIGHT_ROTATION_SPEED M_PI/8.f
 
@@ -15,10 +16,10 @@ float lit_rot = 0;
 //float cam_center_distance = 5.0f;
 float lit_center_distance = 2.0f;
 
-bool move_light = false;
+int move_light = -1;
 bool last_a_btn_status = false;
 
-void logic(double dt) {
+void logic(double dt, Renderer * renderer) {
 	//Rotate light
 /*	lit_rot+= LIGHT_ROTATION_SPEED*dt;
 	lit_rot = fmod(lit_rot, M_PI*2);	
@@ -35,7 +36,9 @@ void logic(double dt) {
 	*/
 	if(button_down(0) && !last_a_btn_status) {
 		last_a_btn_status = true;
-		move_light = !move_light;
+		++move_light;
+		if(move_light >= NUM_LIGHTS)
+			move_light = -1;
 		printf("Toggle move light to: %d\n", move_light);
 	} else if(!button_down(0)) {
 		last_a_btn_status = false;
@@ -52,22 +55,22 @@ void logic(double dt) {
 	float ry = (normalized_trigger_value(2)-normalized_trigger_value(5))*ROTATION_SPEED*dt;
 	float rz = normalized_axis_value(3)*ROTATION_SPEED*dt;
 
-	if(move_light) {
+	if(move_light != -1) {
 		y = -normalized_axis_value(4)*MOVE_SPEED*dt;
 		z = -normalized_axis_value(1)*MOVE_SPEED*dt;
 
-		lights.back().absolute_move(glm::vec3(x, y, z));
+		lights[move_light].absolute_move(glm::vec3(x, y, z));
 	} else {
 
 		if(fabs(x) > 0 || fabs(y) > 0 || fabs(z) > 0) 
-			camera.relative_move(glm::vec3(x, y, z));
+			renderer->camera.relative_move(glm::vec3(x, y, z));
 
 		if(fabs(rx) > 0) 
-			camera.relative_rotate(glm::vec3(1.f, 0.f, 0.f), ROTATION_SPEED*dt*rx);
+			renderer->camera.relative_rotate(glm::vec3(1.f, 0.f, 0.f), ROTATION_SPEED*dt*rx);
 		if(fabs(rz) > 0) 
-			camera.relative_rotate(glm::vec3(0.f, 0.f, 1.f), rz);
+			renderer->camera.relative_rotate(glm::vec3(0.f, 0.f, 1.f), rz);
 		if(fabs(ry) > 0) 
-			camera.relative_rotate(glm::vec3(0.f, 1.f, 0.f), ry);
+			renderer->camera.relative_rotate(glm::vec3(0.f, 1.f, 0.f), ry);
 	}
 	//if(fabs(rx) > 0) 
 	//if(fabs(rx) > 0) 

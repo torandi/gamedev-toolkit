@@ -10,7 +10,7 @@
 #include <glm/glm.hpp>
 #include <glutil/glutil.h>
 
-#include "render.h"
+#include "renderer.h"
 #include "render_group.h"
 
 class RenderObject : public RenderGroup {
@@ -24,6 +24,8 @@ class RenderObject : public RenderGroup {
 	//Hide these functions:
 	RenderGroup::operator[];
 	RenderGroup::add_object;
+
+	Renderer::shader_program_t shader_program_;
 
 public:
 	const aiScene* scene;
@@ -63,15 +65,15 @@ public:
 	struct material_t {
 		material_t() : two_sided(false) {};
 		GLuint texture;
-		shader_material_t attr;
+		Renderer::shader_material_t attr;
 		bool two_sided;
 
-		void activate();
+		void activate(Renderer * renderer);
 		void deactivate();
 	};
 
 	//Set normalize_scale to false to not scale down to 1.0
-	RenderObject(std::string model, bool normalize_scale=true);
+	RenderObject(std::string model, Renderer::shader_program_t shader_program, bool normalize_scale=true);
 	virtual ~RenderObject();
 
 	std::vector<material_t> materials;
@@ -81,8 +83,8 @@ public:
 
 	void pre_render();
 	void recursive_pre_render(const aiNode* node);
-	void recursive_render(const aiNode* node, double dt);
-	virtual void render(double dt);
+	void recursive_render(const aiNode* node, double dt, Renderer * renderer);
+	virtual void render(double dt, Renderer * renderer);
 	virtual const glm::mat4 matrix() const;
 
 	

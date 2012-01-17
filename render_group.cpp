@@ -1,5 +1,5 @@
 #include "render_group.h"
-#include "render.h"
+#include "renderer.h"
 
 #include <vector>
 #include <glm/glm.hpp>
@@ -24,15 +24,15 @@ const glm::mat4 RenderGroup::matrix() const {
 	return MovableObject::matrix() * glm::scale(glm::mat4(1.0f), scale);
 }
 
-void RenderGroup::render(double dt) {
-	modelViewMatrix.Push();
+void RenderGroup::render(double dt, Renderer * renderer) {
+	renderer->modelViewMatrix.Push();
 	
-	modelViewMatrix.ApplyMatrix(matrix());
+	renderer->modelViewMatrix.ApplyMatrix(matrix());
 
 	for(std::vector<RenderGroup*>::iterator it=objects_.begin(); it!=objects_.end(); ++it) {
-		(*it)->render(dt);
+		(*it)->render(dt, renderer);
 	}
 
-	modelViewMatrix.Pop();
+	renderer->modelViewMatrix.Pop();
 }
 

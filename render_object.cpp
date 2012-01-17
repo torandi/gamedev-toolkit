@@ -1,6 +1,6 @@
 #include "render_object.h"
 #include "render_group.h"
-#include "render.h"
+#include "renderer.h"
 #include <string>
 #include <cstdio>
 
@@ -24,7 +24,9 @@ RenderObject::~RenderObject() {
 	aiReleaseImport(scene);
 }
 
-RenderObject::RenderObject(std::string model, bool normalize_scale) : RenderGroup() {
+RenderObject::RenderObject(std::string model, Renderer::shader_program_t shader_program, bool normalize_scale) 
+	: RenderGroup(), shader_program_(shader_program) {
+
 	scene = aiImportFile( model.c_str(), 
 		aiProcess_Triangulate | aiProcess_GenSmoothNormals |
 		aiProcess_JoinIdenticalVertices |  aiProcess_GenUVCoords |
@@ -62,8 +64,6 @@ RenderObject::RenderObject(std::string model, bool normalize_scale) : RenderGrou
 }
 
 void RenderObject::pre_render() {
-
-	glUseProgram(shader.program);
 
 	recursive_pre_render(scene->mRootNode);
 
@@ -129,7 +129,6 @@ void RenderObject::pre_render() {
 		materials.push_back(mtl_data);
 	}
 
-	glUseProgram(0);
 }
 
 void RenderObject::recursive_pre_render(const aiNode* node) {
@@ -183,16 +182,16 @@ void RenderObject::recursive_pre_render(const aiNode* node) {
 	}
 }
 
-void RenderObject::recursive_render(const aiNode* node, double dt) {
-	modelViewMatrix.Push();
+void RenderObject::recursive_render(const aiNode* node, double dt, Renderer * renderer) {
+	renderer->modelViewMatrix.Push();
 
 	aiMatrix4x4 m = node->mTransformation; 	
 	aiTransposeMatrix4(&m);
-	modelViewMatrix *= glm::make_mat4((float*)&m);
+	renderer->modelViewMatrix *= glm::make_mat4((float*)&m);
 
 	//Upload mvp to shader
-	glBindBuffer(GL_UNIFORM_BUFFER, shader_globals.matricesBuffer);
-	glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(modelViewMatrix.Top()));
+	glBindBuffer(GL_UNIFORM_BUFFER, renderer->shader_globals.matricesBuffer);
+	glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(renderer->modelViewMatrix.Top()));
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
 	for(unsigned int i=0; i<node->mNumMeshes; ++i) {
@@ -210,7 +209,7 @@ void RenderObject::recursive_render(const aiNode* node, double dt) {
 			glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(vertex_t), (const GLvoid*) (sizeof(float)*3));
 			glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_t), (const GLvoid*) (sizeof(float)*5));
 
-			materials[md->mtl_index].activate();
+			materials[md->mtl_index].activate(renderer);
 
 			glDrawElements(GL_TRIANGLES, md->num_indices, GL_UNSIGNED_INT,0 );
 
@@ -225,42 +224,43 @@ void RenderObject::recursive_render(const aiNode* node, double dt) {
 	}
 
 	for(unsigned int i=0; i<node->mNumChildren; ++i) {
-		recursive_render(node->mChildren[i], dt);
+		recursive_render(node->mChildren[i], dt, renderer);
 	}
 
-	modelViewMatrix.Pop();
+	renderer->modelViewMatrix.Pop();
 }
 
-void RenderObject::render(double dt) {
+void RenderObject::render(double dt, Renderer * renderer) {
 
-	modelViewMatrix.Push();
+	glUseProgram(renderer->shaders[shader_program_].program);
 
-	modelViewMatrix.ApplyMatrix(matrix());
+	renderer->modelViewMatrix.Push();
 
-	recursive_render(scene->mRootNode, dt);		
+	renderer->modelViewMatrix.ApplyMatrix(matrix());
 
-	modelViewMatrix.Pop();
+	recursive_render(scene->mRootNode, dt, renderer);		
+
+	renderer->modelViewMatrix.Pop();
 }
 
 const glm::mat4 RenderObject::matrix() const {
 	return RenderGroup::matrix() * normalization_matrix_;
 }
 
-void RenderObject::material_t::activate() {
+void RenderObject::material_t::activate(Renderer * renderer) {
 	if(two_sided)
 		glDisable(GL_CULL_FACE);
 
 	glBindTexture(GL_TEXTURE_2D, texture);
 
 	//Upload material attributes to shader
-	glBindBuffer(GL_UNIFORM_BUFFER, shader_globals.materialBuffer);
-	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(shader_material_t), &attr);
+	glBindBuffer(GL_UNIFORM_BUFFER, renderer->shader_globals.materialBuffer);
+	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(Renderer::shader_material_t), &attr);
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
 }
 
 void RenderObject::material_t::deactivate() {
-	glBindTexture(GL_TEXTURE_2D, texture);
 	if(two_sided)
 		glEnable(GL_CULL_FACE);
 }

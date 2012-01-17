@@ -1,4 +1,6 @@
 #ifndef LOGIC_H
 #define LOGIC_H
-	void logic(double dt);
+	#include "renderer.h"
+
+	void logic(double dt, Renderer * rendere);
 #endif

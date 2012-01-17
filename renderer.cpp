@@ -1,4 +1,4 @@
-#include "render.h"
+#include "renderer.h"
 #include "render_group.h"
 #include "render_object.h"
 #include "camera.h"
@@ -19,27 +19,16 @@
 #include <SDL/SDL.h>
 #include <GL/glu.h>
 
-#define RENDER_LIGHT 1
-
 #define HALF_LIGHT_DISTANCE 10.f
 
-int errcnt = 0;
+std::string Renderer::shader_files[] = {
+	"normal",
+	"light_source"
+};
 
-RenderObject *light;
 
-glutil::MatrixStack modelViewMatrix;
-glutil::MatrixStack projectionMatrix;
-std::vector<RenderGroup*> objects;
-float light_attenuation;
-glm::vec4 ambient_intensity;
-std::vector<Light> lights;
-shader_globals_t shader_globals;
 
-shader_lights_t lightData;
-
-Camera camera(glm::vec3(0.0, 0.0, -2.5));
-
-GLuint load_shader(GLenum eShaderType, const std::string &strFilename)
+GLuint Renderer::load_shader(GLenum eShaderType, const std::string &strFilename)
 {
 	std::ifstream shaderFile(strFilename.c_str());
 	std::stringstream shaderData;
@@ -57,7 +46,7 @@ GLuint load_shader(GLenum eShaderType, const std::string &strFilename)
 	}
 }
 
-GLuint create_program(const std::vector<GLuint> &shaderList)
+GLuint Renderer::create_program(const std::vector<GLuint> &shaderList)
 {
 	try
 	{
@@ -72,42 +61,13 @@ GLuint create_program(const std::vector<GLuint> &shaderList)
 	std::for_each(shaderList.begin(), shaderList.end(), glDeleteShader);
 }
 
-float zNear = 1.0f;
-float zFar = 1000.0f;
-
-shader_t shader;
-
-GLuint vao;
-
-void render_teardown() {
-	for(std::vector<RenderGroup*>::iterator it = objects.begin(); it!=objects.end(); ++it) {
-		delete (*it);
-	}
-}
-
-void render_init(int w, int h, bool fullscreen) {
-
-
-	light_attenuation = 1.f/pow(HALF_LIGHT_DISTANCE,2);
-	ambient_intensity = glm::vec4(0.1f,0.1f,0.1f,1.0f);
-
-	Light l(glm::vec3(0.5f,0.5f, 0.5f), glm::vec3(2.0, 2.0, 2.0), Light::POINT_LIGHT);
-	
-	lights.push_back(l);
-
-  	/* create window */
-  	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK);
-	int flags = SDL_OPENGL | SDL_DOUBLEBUF;
-	if ( fullscreen ) flags |= SDL_FULLSCREEN;
-	SDL_SetVideoMode(w, h, 0, flags);
-	SDL_WM_SetCaption("Game menu","Game menu");
-
-	glload::LoadFunctions();
+Renderer::shader_t Renderer::load_shader_program(std::string file) {
+	shader_t shader;
 
 	std::vector<GLuint> shader_list;
-	//Load shader:
-	shader_list.push_back(load_shader(GL_VERTEX_SHADER, "shaders/normal.vert"));
-	shader_list.push_back(load_shader(GL_FRAGMENT_SHADER, "shaders/normal.frag"));
+	//Load shaders:
+	shader_list.push_back(load_shader(GL_VERTEX_SHADER, "shaders/"+file+".vert"));
+	shader_list.push_back(load_shader(GL_FRAGMENT_SHADER, "shaders/"+file+".frag"));
 	
 	shader.program = create_program(shader_list);
 
@@ -125,11 +85,35 @@ void render_init(int w, int h, bool fullscreen) {
 	shader.LightsData = glGetUniformBlockIndex(shader.program, "LightsData");
 	shader.Material = glGetUniformBlockIndex(shader.program, "Material");
 
-
 	//Bind to blocks
 	glUniformBlockBinding(shader.program, shader.Matrices, MATRICES_BLOCK_INDEX);
 	glUniformBlockBinding(shader.program, shader.LightsData, LIGHTS_DATA_BLOCK_INDEX);
 	glUniformBlockBinding(shader.program, shader.Material, MATERIAL_BLOCK_INDEX);
+
+	return shader;
+}
+
+Renderer::Renderer(int w, int h, bool fullscreen) {
+	float zNear = 1.0f;
+	float zFar = 1000.0f;
+	light_attenuation = 1.f/pow(HALF_LIGHT_DISTANCE,2);
+	ambient_intensity = glm::vec4(0.1f,0.1f,0.1f,1.0f);
+
+	camera.set_position(glm::vec3(0.0, 0.0, -2.5));
+
+  	/* create window */
+  	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK);
+	int flags = SDL_OPENGL | SDL_DOUBLEBUF;
+	if ( fullscreen ) flags |= SDL_FULLSCREEN;
+	SDL_SetVideoMode(w, h, 0, flags);
+	SDL_WM_SetCaption("Game menu","Game menu");
+
+	glload::LoadFunctions();
+
+	//Load shaders:
+	for(int i=0;i<NUM_SHADERS; ++i) {
+		shaders[i] = load_shader_program(shader_files[i]);
+	}
 
 	//Setup uniform buffers
 	glGenBuffers(sizeof(shader_globals_t)/sizeof(GLuint), (GLuint*)&shader_globals);
@@ -149,9 +133,9 @@ void render_init(int w, int h, bool fullscreen) {
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
 	
-	glUseProgram(shader.program);
+	glUseProgram(shaders[NORMAL_SHADER].program);
 
-	glUniform1i(shader.texture, 0);
+	glUniform1i(shaders[NORMAL_SHADER].texture, 0);
 	glActiveTexture(GL_TEXTURE0);
 
 	glUseProgram(0);
@@ -173,15 +157,12 @@ void render_init(int w, int h, bool fullscreen) {
 	glDepthFunc(GL_LEQUAL);
 	glDepthRange(0.0f, 1.0f);
 	glEnable(GL_DEPTH_CLAMP);
-#if RENDER_LIGHT
-	light = new RenderObject("models/cube.obj");
-	light->scale*(0.25f/2.0f);
-#endif
 }
 
-float rotation = 0;
 
-int checkForGLErrors( const char *s )
+Renderer::~Renderer() { }
+
+int Renderer::checkForGLErrors( const char *s )
 {
  int errors = 0 ;
 
@@ -192,16 +173,16 @@ int checkForGLErrors( const char *s )
 	if ( x == GL_NO_ERROR )
 	  return errors ;
 
-	fprintf( stderr, "%s: OpenGL error: %s [%08x]\n", s ? s : "", gluErrorString ( x ), errcnt++ ) ;
+	fprintf( stderr, "%s: OpenGL error: %s\n", s, gluErrorString ( x )) ;
 	errors++ ;
  }
 }
 
-void render(double dt){
+void Renderer::render(double dt){
 	glClear(GL_COLOR_BUFFER_BIT);
 	glClear(GL_DEPTH_BUFFER_BIT);
 
-	glUseProgram(shader.program);
+	glUseProgram(shaders[NORMAL_SHADER].program);
 
 	projectionMatrix.Push();
 
@@ -212,8 +193,9 @@ void render(double dt){
 	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(projectionMatrix.Top()));
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
-	glUniform3fv(shader.camera_pos,3,  glm::value_ptr(camera.position()));
-
+	for(int i=0; i < NUM_SHADERS; ++i) {
+		glUniform3fv(shaders[i].camera_pos,3,  glm::value_ptr(camera.position()));
+	}
 	//Build lights object:
 	if (lights.size() <= MAX_NUM_LIGHTS) {
 		lightData.num_lights	= lights.size();
@@ -224,7 +206,7 @@ void render(double dt){
 	lightData.attenuation = light_attenuation;
 	lightData.ambient_intensity =  ambient_intensity;
 	for(unsigned int i=0; i < lightData.num_lights; ++i) {
-		lightData.lights[0] = lights[i].shader_light();
+		lightData.lights[0] = lights[i]->shader_light();
 	}
 	//Upload light data:
 	glBindBuffer(GL_UNIFORM_BUFFER, shader_globals.lightsBuffer);
@@ -233,19 +215,14 @@ void render(double dt){
 
 	modelViewMatrix.Push();
 
-	for(std::vector<RenderGroup*>::iterator it=objects.begin(); it!=objects.end(); ++it) {
-		(*it)->render(dt);
+	for(std::vector<RenderGroup*>::iterator it=render_objects.begin(); it!=render_objects.end(); ++it) {
+		(*it)->render(dt, this);
 	}
-
-#if RENDER_LIGHT
-	light->set_position(lights.front().position());
-	light->render(dt);
-#endif
 
 	modelViewMatrix.Pop();
 	projectionMatrix.Pop();
 
 	SDL_GL_SwapBuffers();
 
-	checkForGLErrors("Render(): ");
+	checkForGLErrors("render(): ");
 }

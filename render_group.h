@@ -2,8 +2,9 @@
 #define RENDER_GROUP_H
 
 #include "movable_object.h"
-
 #include <vector>
+
+class Renderer; //Forward declaration
 
 class RenderGroup : public MovableObject {
 	std::vector<RenderGroup*> objects_;
@@ -19,7 +20,7 @@ public:
 
 	void add_object(RenderGroup* obj);
 
-	virtual void render(double dt);
+	virtual void render(double dt, Renderer * renderer);
 	virtual const glm::mat4 matrix() const;
 
 };

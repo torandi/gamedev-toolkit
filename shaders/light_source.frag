@@ -48,7 +48,7 @@ float calcAttenuation(in vec3 world_pos,in vec3 light_pos, out vec3 light_dir) {
 }
 
 
-vec4 computeLighting(in light_data light, in vec4 originalColor, in vec3 surfaceNormal) {
+vec4 computeLighting(in light_data light, in vec4 originalColor) {
 	vec3 light_dir = vec3(0.0);
 	vec4 lightIntensity;
 	//Turn off light attenuatin if w == 0.0
@@ -60,6 +60,7 @@ vec4 computeLighting(in light_data light, in vec4 originalColor, in vec3 surface
 		lightIntensity =  atten * light.intensity;
 	}
 
+	vec3 surfaceNormal = normalize(frag_normal);
 	float cosAngIncidence = dot(surfaceNormal, light_dir);
 	cosAngIncidence = clamp(cosAngIncidence, 0, 1);
 
@@ -77,7 +78,6 @@ vec4 computeLighting(in light_data light, in vec4 originalColor, in vec3 surface
 
 void main() {
 	vec4 originalColor; 
-	vec3 surfaceNormal = normalize(frag_normal);
 	if(Mtl.useTexture == 1) {
 		originalColor = texture(tex, tex_coord)*Mtl.diffuse;
 	} else {
@@ -86,7 +86,7 @@ void main() {
 	vec4 accumLighting = originalColor * Lgt.ambient_intensity;
 
 	for(uint light = 0; light < Lgt.num_lights; ++light) {
-		accumLighting += computeLighting(Lgt.lights[light], originalColor, surfaceNormal);
+		accumLighting += computeLighting(Lgt.lights[light], originalColor);
 	}
 	outputColor = accumLighting;
 }

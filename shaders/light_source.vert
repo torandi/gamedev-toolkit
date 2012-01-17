@@ -18,6 +18,6 @@ void main() {
 	world_pos = vec3(w_pos);
 	gl_Position = projection_matrix *  w_pos;
 	tex_coord = texCoord;
-	frag_normal = vec3(mvp * vec4(normal,1.0));
+	frag_normal = normal;
 }
 

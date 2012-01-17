@@ -9,7 +9,6 @@
 MovableObject::MovableObject() : orientation_(1.f, 0.f, 0.f,0.f) {
 	rotation_matrix_dirty_ = true;
 	translation_matrix_dirty_ = true;
-	matrix_dirty_ = true;
 };
 
 MovableObject::MovableObject(glm::vec3 position) : position_(position), orientation_(1.f, 0.f, 0.f,0.f) { 
@@ -35,11 +34,7 @@ const glm::mat4 MovableObject::rotation_matrix() const{
 }
 
 const glm::mat4 MovableObject::matrix() const{
-	if(matrix_dirty_) {
-		matrix_dirty_ = false;
-		matrix_ = translation_matrix()*rotation_matrix();
-	}
-	return matrix_;
+	return translation_matrix()*rotation_matrix();
 }
 
 void MovableObject::relative_move(const glm::vec3 &move) {
