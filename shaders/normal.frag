@@ -39,21 +39,19 @@ in vec3 world_pos; //my position in world space
 
 out vec4 outputColor;
 
-float calcAttenuation(in vec3 world_pos,in vec3 light_pos, out vec3 light_dir) {
-	vec3 lightDifference =  light_pos - world_pos;
-	float lightDistanceSqr = dot(lightDifference, lightDifference);
-	light_dir = lightDifference * inversesqrt(lightDistanceSqr);
+float calcAttenuation(in vec3 world_pos,in vec3 light_pos, inout vec3 light_dir) {
+	float lightDistanceSqr = dot(light_dir, light_dir);
+	light_dir *= inversesqrt(lightDistanceSqr);
 	
 	return (1 / ( 1.0 + Lgt.light_attenuation * sqrt(lightDistanceSqr)));
 }
 
 
 vec4 computeLighting(in light_data light, in vec4 originalColor, in vec3 surfaceNormal) {
-	vec3 light_dir = vec3(0.0);
+	vec3  light_dir = vec3(light.position) - world_pos;
 	vec4 lightIntensity;
 	//Turn off light attenuatin if w == 0.0
 	if(light.position.w == 0.0) {
-		light_dir = world_pos - vec3(light.position);
 		lightIntensity = light.intensity;	
 	} else { 
 		float atten = calcAttenuation(world_pos, vec3(light.position), light_dir);

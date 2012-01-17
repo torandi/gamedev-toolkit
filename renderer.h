@@ -31,6 +31,7 @@ public:
 		Light::shader_light_t lights[MAX_NUM_LIGHTS];
 	};
 
+
 private:
 
 	static std::string shader_files[];
@@ -64,8 +65,11 @@ public:
 
 	shader_t shaders[NUM_SHADERS];
 
-	glutil::MatrixStack modelViewMatrix;
-	glutil::MatrixStack projectionMatrix;
+	//Uploads model and normal matrices
+	void upload_model_matrices();
+
+	glutil::MatrixStack modelMatrix;
+	glutil::MatrixStack projectionViewMatrix;
 	float light_attenuation;
 	glm::vec4 ambient_intensity;
 	Camera camera;

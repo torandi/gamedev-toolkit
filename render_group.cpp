@@ -25,14 +25,14 @@ const glm::mat4 RenderGroup::matrix() const {
 }
 
 void RenderGroup::render(double dt, Renderer * renderer) {
-	renderer->modelViewMatrix.Push();
+	renderer->modelMatrix.Push();
 	
-	renderer->modelViewMatrix.ApplyMatrix(matrix());
+	renderer->modelMatrix.ApplyMatrix(matrix());
 
 	for(std::vector<RenderGroup*>::iterator it=objects_.begin(); it!=objects_.end(); ++it) {
 		(*it)->render(dt, renderer);
 	}
 
-	renderer->modelViewMatrix.Pop();
+	renderer->modelMatrix.Pop();
 }
 

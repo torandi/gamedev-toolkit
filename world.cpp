@@ -14,7 +14,7 @@ MoveGroup mario;
 
 void create_world(Renderer * renderer) {
 	//Lights:
-	lights_lights[LIGHT_SOURCE0] = new Light(glm::vec3(0.8, 0.8, 0.8), Light::POINT_LIGHT);
+	lights_lights[LIGHT_SOURCE0] = new Light(glm::vec3(0.8, 0.8, 0.8), Light::DIRECTIONAL_LIGHT);
 	//lights_lights[LIGHT_SOURCE1] = new Light(glm::vec3(0.5, 0.5, 0.5), Light::DIRECTIONAL_LIGHT);
 
 	for(int i=0; i < NUM_LIGHTS; ++i) {

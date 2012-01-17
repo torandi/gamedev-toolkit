@@ -183,16 +183,13 @@ void RenderObject::recursive_pre_render(const aiNode* node) {
 }
 
 void RenderObject::recursive_render(const aiNode* node, double dt, Renderer * renderer) {
-	renderer->modelViewMatrix.Push();
+	renderer->modelMatrix.Push();
 
 	aiMatrix4x4 m = node->mTransformation; 	
 	aiTransposeMatrix4(&m);
-	renderer->modelViewMatrix *= glm::make_mat4((float*)&m);
+	renderer->modelMatrix *= glm::make_mat4((float*)&m);
 
-	//Upload mvp to shader
-	glBindBuffer(GL_UNIFORM_BUFFER, renderer->shader_globals.matricesBuffer);
-	glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(renderer->modelViewMatrix.Top()));
-	glBindBuffer(GL_UNIFORM_BUFFER, 0);
+	renderer->upload_model_matrices();
 
 	for(unsigned int i=0; i<node->mNumMeshes; ++i) {
 		const aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
@@ -227,20 +224,19 @@ void RenderObject::recursive_render(const aiNode* node, double dt, Renderer * re
 		recursive_render(node->mChildren[i], dt, renderer);
 	}
 
-	renderer->modelViewMatrix.Pop();
+	renderer->modelMatrix.Pop();
 }
 
 void RenderObject::render(double dt, Renderer * renderer) {
 
 	glUseProgram(renderer->shaders[shader_program_].program);
 
-	renderer->modelViewMatrix.Push();
-
-	renderer->modelViewMatrix.ApplyMatrix(matrix());
+	renderer->modelMatrix.Push();
+	renderer->modelMatrix.ApplyMatrix(matrix());
 
 	recursive_render(scene->mRootNode, dt, renderer);		
 
-	renderer->modelViewMatrix.Pop();
+	renderer->modelMatrix.Pop();
 }
 
 const glm::mat4 RenderObject::matrix() const {

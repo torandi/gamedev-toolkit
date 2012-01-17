@@ -118,7 +118,7 @@ Renderer::Renderer(int w, int h, bool fullscreen) {
 	//Setup uniform buffers
 	glGenBuffers(sizeof(shader_globals_t)/sizeof(GLuint), (GLuint*)&shader_globals);
 	glBindBuffer(GL_UNIFORM_BUFFER, shader_globals.matricesBuffer);
-	glBufferData(GL_UNIFORM_BUFFER, sizeof(glm::mat4)*2, NULL, GL_STREAM_DRAW);
+	glBufferData(GL_UNIFORM_BUFFER, sizeof(glm::mat4)*3, NULL, GL_STREAM_DRAW);
 	glBindBuffer(GL_UNIFORM_BUFFER, shader_globals.lightsBuffer);
 	glBufferData(GL_UNIFORM_BUFFER, sizeof(shader_lights_t), NULL, GL_STREAM_DRAW);
 	glBindBuffer(GL_UNIFORM_BUFFER, shader_globals.materialBuffer);
@@ -144,7 +144,7 @@ Renderer::Renderer(int w, int h, bool fullscreen) {
 	glClearColor(0.2f, 0.1f, 0.2f, 0.0f);
 
 	//Setup view (this may be moved to reshape)
-	projectionMatrix.Perspective(45.0f, w/(float)h, zNear, zFar);
+	projectionViewMatrix.Perspective(45.0f, w/(float)h, zNear, zFar);
 	glViewport(0, 0, w, h);
 
 	/*glEnable(GL_CULL_FACE);
@@ -184,13 +184,13 @@ void Renderer::render(double dt){
 
 	glUseProgram(shaders[NORMAL_SHADER].program);
 
-	projectionMatrix.Push();
+	projectionViewMatrix.Push();
 
-	projectionMatrix.LookAt(camera.position(), camera.look_at(), camera.up());
+	projectionViewMatrix.LookAt(camera.position(), camera.look_at(), camera.up());
 
 	//Upload projection matrix:
 	glBindBuffer(GL_UNIFORM_BUFFER, shader_globals.matricesBuffer);
-	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(projectionMatrix.Top()));
+	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(projectionViewMatrix.Top()));
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
 	for(int i=0; i < NUM_SHADERS; ++i) {
@@ -206,23 +206,33 @@ void Renderer::render(double dt){
 	lightData.attenuation = light_attenuation;
 	lightData.ambient_intensity =  ambient_intensity;
 	for(unsigned int i=0; i < lightData.num_lights; ++i) {
-		lightData.lights[0] = lights[i]->shader_light();
+		lightData.lights[i] = lights[i]->shader_light();
 	}
 	//Upload light data:
 	glBindBuffer(GL_UNIFORM_BUFFER, shader_globals.lightsBuffer);
 	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(shader_lights_t), &lightData);
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
-	modelViewMatrix.Push();
+	modelMatrix.Push();
 
 	for(std::vector<RenderGroup*>::iterator it=render_objects.begin(); it!=render_objects.end(); ++it) {
 		(*it)->render(dt, this);
 	}
 
-	modelViewMatrix.Pop();
-	projectionMatrix.Pop();
+	modelMatrix.Pop();
+	projectionViewMatrix.Pop();
 
 	SDL_GL_SwapBuffers();
 
 	checkForGLErrors("render(): ");
+}
+
+
+void Renderer::upload_model_matrices() {
+	glBindBuffer(GL_UNIFORM_BUFFER, shader_globals.matricesBuffer);
+	//Model matrix:
+	glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(modelMatrix.Top()));
+	//Normal matrix:
+	glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4)*2, sizeof(glm::mat4), glm::value_ptr(glm::transpose(glm::inverse(modelMatrix.Top()))));
+	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
