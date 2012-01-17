@@ -40,7 +40,7 @@ in vec3 world_pos; //my position in world space
 out vec4 outputColor;
 
 float calcAttenuation(in vec3 world_pos,in vec3 light_pos, out vec3 light_dir) {
-	vec3 lightDifference =  world_pos - light_pos;
+	vec3 lightDifference =  light_pos - world_pos;
 	float lightDistanceSqr = dot(lightDifference, lightDifference);
 	light_dir = lightDifference * inversesqrt(lightDistanceSqr);
 	

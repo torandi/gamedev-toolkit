@@ -17,7 +17,7 @@
 #include <SDL/SDL.h>
 #include <GL/glu.h>
 
-#define RENDER_LIGHT 0
+#define RENDER_LIGHT 1
 
 #define HALF_LIGHT_DISTANCE 10.f
 
@@ -91,7 +91,7 @@ void render_init(int w, int h, bool fullscreen) {
 	light_t l;
 
 	l.intensity = glm::vec4(0.5f,0.5f, 0.5f, 1.0f);
-	l.position = glm::vec4(2.0, 2.0, 2.0, 0.0);
+	l.position = glm::vec4(2.0, 2.0, 2.0, 1.0);
 	
 	lights.push_back(l);
 
@@ -175,9 +175,10 @@ void render_init(int w, int h, bool fullscreen) {
 	glDepthFunc(GL_LEQUAL);
 	glDepthRange(0.0f, 1.0f);
 	glEnable(GL_DEPTH_CLAMP);
-
+#if RENDER_LIGHT
 	light = new RenderObject("models/cube.obj");
 	light->scale = 0.25f/2.0f;
+#endif
 }
 
 float rotation = 0;
@@ -238,9 +239,10 @@ void render(double dt){
 		it->render(dt);
 	}
 
-
+#if RENDER_LIGHT
 	light->position = glm::vec3(lights.front().position);
 	light->render(dt);
+#endif
 
 	modelViewMatrix.Pop();
 	projectionMatrix.Pop();

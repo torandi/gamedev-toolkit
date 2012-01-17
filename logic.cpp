@@ -15,12 +15,14 @@ float lit_rot = 0;
 //float cam_center_distance = 5.0f;
 float lit_center_distance = 2.0f;
 
+bool move_light = false;
+bool last_a_btn_status = false;
 
 void logic(double dt) {
 	//Rotate light
-	lit_rot+= LIGHT_ROTATION_SPEED*dt;
+/*	lit_rot+= LIGHT_ROTATION_SPEED*dt;
 	lit_rot = fmod(lit_rot, M_PI*2);	
-	lights.back().position  = glm::vec4(cos(lit_rot+M_PI), 0.0, sin(lit_rot+M_PI), 1.0)*lit_center_distance;
+	lights.back().position  = glm::vec4(cos(lit_rot+M_PI), 0.0, sin(lit_rot+M_PI), 1.0)*lit_center_distance;*/
 
 	//Move camera:
 	/*
@@ -31,6 +33,14 @@ void logic(double dt) {
 	if(normalized_axis_value(1) != 0.f)
 		printf("Axis Z: %f\n", normalized_axis_value(1));
 	*/
+	if(button_down(0) && !last_a_btn_status) {
+		last_a_btn_status = true;
+		move_light = !move_light;
+		printf("Toggle move light to: %d\n", move_light);
+	} else if(!button_down(0)) {
+		last_a_btn_status = false;
+	}
+	
 	float x = -normalized_axis_value(0)*MOVE_SPEED*dt - get_hat_right_left(0)*MOVE_SPEED*dt;;
 	float y = get_hat_up_down(0)*MOVE_SPEED*dt;
 	float z;
@@ -42,22 +52,22 @@ void logic(double dt) {
 	float ry = (normalized_trigger_value(2)-normalized_trigger_value(5))*ROTATION_SPEED*dt;
 	float rz = normalized_axis_value(3)*ROTATION_SPEED*dt;
 
-	if(fabs(x) > 0 || fabs(y) > 0 || fabs(z) > 0) 
-		camera.relative_move(glm::vec3(x, y, z));
+	if(move_light) {
+		y = -normalized_axis_value(4)*MOVE_SPEED*dt;
+		z = -normalized_axis_value(1)*MOVE_SPEED*dt;
 
-	if(fabs(rx) > 0) 
-		camera.relative_rotate(glm::vec3(1.f, 0.f, 0.f), ROTATION_SPEED*dt*rx);
-	if(fabs(rz) > 0) 
-		camera.relative_rotate(glm::vec3(0.f, 0.f, 1.f), rz);
-	if(fabs(ry) > 0) 
-		camera.relative_rotate(glm::vec3(0.f, 1.f, 0.f), ry);
-	if(button_down(4)) {
+		lights.back().position+=glm::vec4(x, y, z, 0.0);
+	} else {
+
+		if(fabs(x) > 0 || fabs(y) > 0 || fabs(z) > 0) 
+			camera.relative_move(glm::vec3(x, y, z));
+
 		if(fabs(rx) > 0) 
-			camera.absolute_rotate(glm::vec3(1.f, 0.f, 0.f), ROTATION_SPEED*dt*rx);
+			camera.relative_rotate(glm::vec3(1.f, 0.f, 0.f), ROTATION_SPEED*dt*rx);
 		if(fabs(rz) > 0) 
-			camera.absolute_rotate(glm::vec3(0.f, 0.f, 1.f), rz);
+			camera.relative_rotate(glm::vec3(0.f, 0.f, 1.f), rz);
 		if(fabs(ry) > 0) 
-			camera.absolute_rotate(glm::vec3(0.f, 1.f, 0.f), ry);
+			camera.relative_rotate(glm::vec3(0.f, 1.f, 0.f), ry);
 	}
 	//if(fabs(rx) > 0) 
 	//if(fabs(rx) > 0) 

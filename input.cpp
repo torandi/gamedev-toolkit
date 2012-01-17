@@ -104,8 +104,6 @@ void poll(bool* run){
 
 
 			case SDL_JOYBUTTONDOWN:
-				if(event.jbutton.button == 0)
-					printf("Camera position: (%f, %f, %f)\n", camera.position().x, camera.position().y, camera.position().z);
 				break;
 			/*
 			case SDL_JOYBUTTONUP:
