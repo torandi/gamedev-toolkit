@@ -23,9 +23,10 @@ const float high_morning = 8;
 const float high_day = 14;
 const float high_evening = 21;
 
-const float time_per_hour=1000.f;
+const float time_per_hour=10.f;
 
-float time_of_day = 14.0; //0->24;
+float time_of_day = 6.0; //0->24;
+
 
 void create_world(Renderer * renderer) {
 	//Skybox
@@ -66,11 +67,6 @@ void create_world(Renderer * renderer) {
 	renderer->render_objects.push_back(new RenderObject("models/nintendo.obj", Renderer::NORMAL_SHADER));//, true, aiProcess_FixInfacingNormals));
 	renderer->render_objects.back()->absolute_move(glm::vec3(-2.0,0.5,0.0));
 
-	//Floor:
-	//renderer->render_objects.push_back(new RenderObject("models/cube.obj", Renderer::NORMAL_SHADER));
-	//renderer->render_objects.back()->scale=glm::vec3(1000.f, 0.2f, 1000.f);
-	//renderer->render_objects.back()->material[0].
-	//renderer->render_objects.back()->absolute_move(glm::vec3(0.0, -0.1, 0.0));
 
 }
 
