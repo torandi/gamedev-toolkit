@@ -69,7 +69,7 @@ public:
 	std::vector<RenderGroup*> render_objects;
 	std::vector<Light*> lights;
 
-
+	static GLuint load_texture(std::string file);
 
 	void render(double dt);
 

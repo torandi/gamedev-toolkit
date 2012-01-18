@@ -84,10 +84,7 @@ void RenderObject::pre_render() {
 			if(last_slash != std::string::npos) 
 				p = p.substr(last_slash+1);
 			full_path = std::string("textures/")+p;
-			printf("Load texture %s\n", full_path.c_str());
-			glimg::ImageSet *pImgSet = glimg::loaders::stb::LoadFromFile(full_path.c_str());
-			mtl_data.texture = glimg::CreateTexture(pImgSet, 0);
-			delete pImgSet;
+			mtl_data.texture = Renderer::load_texture(full_path);
 			mtl_data.attr.extra= 1;//toggle textures on
 		} else {
 			mtl_data.attr.extra= 0; //toggle textures off

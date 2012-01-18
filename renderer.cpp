@@ -185,8 +185,8 @@ void Renderer::load_skybox(std::string skybox_path) {
 	std::string fe = ".jpg"; //file ending
 	std::string skymap_fe = "_skymap.jpg"; //skymap ending
 	for(int i=0; i < 6; ++i) {
-		skybox_texture_[i] = glimg::CreateTexture(glimg::loaders::stb::LoadFromFile((skybox_path+skybox_texture_name[i]+fe).c_str()),0);
-		skybox_skymap_[i] = glimg::CreateTexture(glimg::loaders::stb::LoadFromFile((skybox_path+skybox_texture_name[i]+skymap_fe).c_str()),0);
+		skybox_texture_[i] = load_texture(skybox_path+skybox_texture_name[i]+fe);
+		skybox_skymap_[i] = load_texture(skybox_path+skybox_texture_name[i]+skymap_fe);
 
 		//Set hints:
 		glBindTexture(GL_TEXTURE_2D, skybox_texture_[i]);
@@ -351,4 +351,15 @@ void Renderer::enable_face_culling() {
 void Renderer::disabel_face_culling() {
 	cull_face = false;
 	glDisable(GL_CULL_FACE);
+}
+
+GLuint Renderer::load_texture(std::string file) {
+	const glimg::ImageSet * img_set = glimg::loaders::stb::LoadFromFile(file.c_str());
+	GLuint texture = glimg::CreateTexture(img_set,0);
+	glBindTexture(GL_TEXTURE_2D, texture);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glBindTexture(GL_TEXTURE_2D, 0);
+	delete img_set;
+	return texture;
 }
