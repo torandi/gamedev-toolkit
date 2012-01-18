@@ -80,7 +80,12 @@ public:
 	std::vector<Light*> lights;
 
 	struct shader_material_t {
-		unsigned int useTexture; //Set to 1 to use texture
+		/*
+			The extra parameter is used for different things in different shaders:
+			NORMAL_SHADER: Values: 0/1 Toggle textures on and off
+			LIGHT_SHADER: first bit is 0/1 for texture toggling, rest is [0..MAX_NUM_LIGHTS] My light id
+		*/
+		unsigned int extra;
 		float shininess;
 		float p2[2]; //Padding
 		glm::vec4 diffuse;

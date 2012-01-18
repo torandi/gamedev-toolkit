@@ -10,7 +10,7 @@ layout(std140) uniform Matrices {
 };
 
 layout(std140) uniform Material {
-	uint useTexture;
+	uint extra; //Used to toggle texture in normal shader
 	float shininess; 
 	vec4 diffuse; 
 	vec4 specular; 
@@ -76,8 +76,8 @@ vec4 computeLighting(in light_data light, in vec4 originalColor, in vec3 surface
 void main() {
 	vec4 originalColor; 
 	vec3 surfaceNormal = normalize(frag_normal);
-	if(Mtl.useTexture == 1) {
-		originalColor = texture(tex, tex_coord)*Mtl.diffuse;
+	if(Mtl.extra == 1) {
+		originalColor = texture(tex, tex_coord);
 	} else {
 		originalColor = Mtl.diffuse;
 	}

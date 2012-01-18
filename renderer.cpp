@@ -32,7 +32,7 @@ GLuint Renderer::load_shader(GLenum eShaderType, const std::string &strFilename)
 	std::stringstream shaderData;
 	shaderData << shaderFile.rdbuf();
 	shaderFile.close();
-
+	printf("Compiling shader %s\n", strFilename.c_str());
 	try
 	{
 		return glutil::CompileShader(eShaderType, shaderData.str());

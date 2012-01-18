@@ -85,10 +85,14 @@ void RenderObject::pre_render() {
 			glimg::ImageSet *pImgSet = glimg::loaders::stb::LoadFromFile(full_path.c_str());
 			mtl_data.texture = glimg::CreateTexture(pImgSet, 0);
 			delete pImgSet;
-			mtl_data.attr.useTexture = 1;
+			mtl_data.attr.extra= 1;//toggle textures on
 		} else {
-			mtl_data.attr.useTexture = 0;
+			mtl_data.attr.extra= 0; //toggle textures off
 		}
+
+		aiString name;
+		if(AI_SUCCESS == mtl->Get(AI_MATKEY_NAME, name))
+			printf("Loaded material [%d] %s\n", i, name.data);
 
 		aiColor4D diffuse;
 		aiColor4D specular;

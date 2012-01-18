@@ -1,9 +1,10 @@
 #ifndef LIGHT_H
 #define LIGHT_H
 
-#define GLM_SWIZZLE 
 #include <glm/glm.hpp>
 #include "movable_object.h"
+
+class RenderObject;
 
 class Light : public MovableObject {
 public:
@@ -28,5 +29,7 @@ private:
 
 public:
 	const shader_light_t &shader_light() const;
+
+	void set_id_in_render_object(RenderObject * ro, int id, bool set_colors=false) const;
 };
 #endif
