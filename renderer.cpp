@@ -30,22 +30,43 @@ void Renderer::init_shader(Shader &shader) {
 	shader.texture = glGetUniformLocation(shader.program, "tex");
 	shader.camera_pos= glGetUniformLocation(shader.program, "camera_pos");
 
+	checkForGLErrors((std::string("init shader: local uniforms ")+shader.name).c_str());
+
 	//Global uniforms
 	shader.Matrices = glGetUniformBlockIndex(shader.program, "Matrices");
 	shader.LightsData = glGetUniformBlockIndex(shader.program, "LightsData");
 	shader.Material = glGetUniformBlockIndex(shader.program, "Material");
 
+	checkForGLErrors((std::string("init shader: global uniforms ")+shader.name).c_str());
+
 	//Bind to blocks
-	glUniformBlockBinding(shader.program, shader.Matrices, Shader::MATRICES_BLOCK_INDEX);
-	glUniformBlockBinding(shader.program, shader.LightsData, Shader::LIGHTS_DATA_BLOCK_INDEX);
-	glUniformBlockBinding(shader.program, shader.Material, Shader::MATERIAL_BLOCK_INDEX);
+	if(shader.Matrices!=-1) {
+		glUniformBlockBinding(shader.program, shader.Matrices, Shader::MATRICES_BLOCK_INDEX);
+		checkForGLErrors((std::string("init shader: bind uniform block MATRICES in ")+shader.name).c_str());
+	} else {
+		printf("Not binding global Matrices for %s, probably not used\n", shader.name.c_str());
+	}
+
+	if(shader.LightsData!=-1) {
+		glUniformBlockBinding(shader.program, shader.LightsData, Shader::LIGHTS_DATA_BLOCK_INDEX);
+		checkForGLErrors((std::string("init shader: bind uniform block LIGHTS in ")+shader.name).c_str());
+	} else {
+		printf("Not binding global LightsData for %s, probably not used\n", shader.name.c_str());
+	}
+
+	if(shader.Material!=-1) {
+		glUniformBlockBinding(shader.program, shader.Material, Shader::MATERIAL_BLOCK_INDEX);
+		checkForGLErrors((std::string("init shader: bind uniform block MATERIAL in ")+shader.name).c_str());
+	} else {
+		printf("Not binding global Material for %s, probably not used\n", shader.name.c_str());
+	}
 
 	//Bind texture
 	glUseProgram(shader.program);
 	glUniform1i(shader.texture, 0);
 	glUseProgram(0);
 
-	checkForGLErrors((std::string("init shader ")+shader.name).c_str());
+	checkForGLErrors((std::string("init shader: bind textures")+shader.name).c_str());
 }
 
 Renderer::Renderer(int w, int h, bool fullscreen) {
@@ -75,6 +96,7 @@ Renderer::Renderer(int w, int h, bool fullscreen) {
 	//Load shaders:
 	for(int i=0;i<NUM_SHADERS; ++i) {
 		shaders[i] = Shader::create_shader(shader_files_[i]);
+		checkForGLErrors((std::string("create shader ")+shaders[i].name).c_str());
 		init_shader(shaders[i]);
 	}
 

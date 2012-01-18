@@ -2,11 +2,6 @@ const int maxNumberOfLights = 4;
 
 uniform sampler2D tex;
 
-layout(std140) uniform Matrices {
-	mat4 projection_matrix;
-	mat4 mvp;
-};
-
 layout(std140) uniform Material {
 	uint extra; //Used to toggle texture in normal shader
 	float shininess; 
@@ -15,7 +10,6 @@ layout(std140) uniform Material {
 	vec4 ambient; 
 	vec4 emission; 
 } Mtl;
-
 
 struct light_data {
 	vec4 intensity;

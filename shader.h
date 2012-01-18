@@ -66,11 +66,11 @@ public:
 
 	GLuint program;
 
-	GLuint Matrices;
-	GLuint camera_pos;
-	GLuint LightsData;
-	GLuint Material;
-	GLuint texture;
+	GLint Matrices;
+	GLint camera_pos;
+	GLint LightsData;
+	GLint Material;
+	GLint texture;
 
 	static Shader create_shader(std::string base_name);
 };
