@@ -119,8 +119,11 @@ Renderer::Renderer(int w, int h, bool fullscreen) {
 
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
-	glFrontFace(GL_CW);
+	glFrontFace(GL_CCW);
 
+	//Face culling disabled per default:
+	glDisable(GL_CULL_FACE);
+	cull_face = false;
 
 	glEnable(GL_DEPTH_TEST);
 	glDepthMask(GL_TRUE);
@@ -165,8 +168,6 @@ void Renderer::render(double dt){
 
 	if(skybox_loaded_)
 		render_skybox();
-
-	glDisable(GL_CULL_FACE);
 
 	projectionViewMatrix.Push();
 
@@ -214,7 +215,8 @@ void Renderer::render(double dt){
 
 void Renderer::render_skybox() {
 	glDisable(GL_DEPTH_TEST);
-	glDisable(GL_CULL_FACE);
+	if(cull_face)
+		glDisable(GL_CULL_FACE);
 	
 	glUseProgram(shaders[SKYBOX_SHADER].program);
 
@@ -246,7 +248,9 @@ void Renderer::render_skybox() {
 
 	projectionViewMatrix.Pop();
 
-	glEnable(GL_CULL_FACE);
+	if(cull_face)
+		glEnable(GL_CULL_FACE);
+
 	glEnable(GL_DEPTH_TEST);
 	glUseProgram(0);
 }
@@ -258,4 +262,14 @@ void Renderer::upload_model_matrices() {
 	//Normal matrix:
 	glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4)*2, sizeof(glm::mat4), glm::value_ptr(glm::transpose(glm::inverse(modelMatrix.Top()))));
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
+}
+
+void Renderer::enable_face_culling() {
+	cull_face = true;
+	glEnable(GL_CULL_FACE);
+}
+
+void Renderer::disabel_face_culling() {
+	cull_face = false;
+	glDisable(GL_CULL_FACE);
 }

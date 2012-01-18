@@ -69,7 +69,7 @@ public:
 		bool two_sided;
 
 		void activate(Renderer * renderer);
-		void deactivate();
+		void deactivate(Renderer * renderer);
 	};
 
 	//Set normalize_scale to false to not scale down to 1.0

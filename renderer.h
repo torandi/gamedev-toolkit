@@ -39,6 +39,7 @@ public:
 	
 	float zNear;
 	float zFar;
+	bool cull_face;
 
 	enum shader_program_t {
 		NORMAL_SHADER=0,
@@ -54,6 +55,9 @@ public:
 
 	//Load skybox
 	void load_skybox(std::string skybox_path);
+
+	void enable_face_culling();
+	void disabel_face_culling();
 
 	glutil::MatrixStack modelMatrix;
 	glutil::MatrixStack projectionViewMatrix;

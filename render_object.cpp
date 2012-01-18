@@ -31,6 +31,7 @@ RenderObject::RenderObject(std::string model, Renderer::shader_program_t shader_
 		aiProcess_Triangulate | aiProcess_GenSmoothNormals |
 		aiProcess_JoinIdenticalVertices |  aiProcess_GenUVCoords |
 		aiProcess_OptimizeMeshes | aiProcess_OptimizeGraph  |
+		aiProcess_ImproveCacheLocality |
 		aiProcess_FixInfacingNormals | aiOptions
 		);
 
@@ -215,7 +216,7 @@ void RenderObject::recursive_render(const aiNode* node, double dt, Renderer * re
 
 			glDrawElements(GL_TRIANGLES, md->num_indices, GL_UNSIGNED_INT,0 );
 
-			materials[md->mtl_index].deactivate();
+			materials[md->mtl_index].deactivate(renderer);
 
 			glDisableVertexAttribArray(2);
 			glDisableVertexAttribArray(1);
@@ -249,7 +250,7 @@ const glm::mat4 RenderObject::matrix() const {
 }
 
 void RenderObject::material_t::activate(Renderer * renderer) {
-	if(two_sided)
+	if(two_sided && renderer->cull_face)
 		glDisable(GL_CULL_FACE);
 
 	glBindTexture(GL_TEXTURE_2D, texture);
@@ -261,8 +262,8 @@ void RenderObject::material_t::activate(Renderer * renderer) {
 
 }
 
-void RenderObject::material_t::deactivate() {
-	if(two_sided)
+void RenderObject::material_t::deactivate(Renderer * renderer) {
+	if(two_sided && renderer->cull_face)
 		glEnable(GL_CULL_FACE);
 }
 

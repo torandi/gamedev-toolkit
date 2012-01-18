@@ -6,13 +6,13 @@ CFLAGS  += -I../glsdk/glload/include -I../glsdk/glimg/include -I../glsdk/glm -I.
 LDFLAGS += -L../glsdk/glload/lib -L../glsdk/glimg/lib -L../glsdk/glutil/lib -L../glsdk/glmesh/lib -L ../glsdk/glimg/lib
 LDFLAGS += -lglloadD -lglutilD -lGL -lGLU -lglimgD #-lglmeshD 
 
-all: gamemenu
+all: gamedev
  
 gamemenu: $(OBJS) $(SPRITES)
 	$(CXX) $(OBJS) $(LDFLAGS) -o $@
 
 clean:
-	rm -rf *.o *.d gamemenu
+	rm -rf *.o *.d gamedev
 
 %.o : %.cpp
 	@$(CXX) -MM $(CFLAGS) $< > $*.d
