@@ -27,6 +27,8 @@ class RenderObject : public RenderGroup {
 
 	Renderer::shader_program_t shader_program_;
 
+	//Trims path and loads texture
+	static GLuint load_texture(std::string path);
 public:
 	const aiScene* scene;
 	glm::vec3 scene_min, scene_max, scene_center;

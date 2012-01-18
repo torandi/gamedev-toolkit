@@ -1,9 +1,12 @@
 const int maxNumberOfLights = 4;
 
-uniform sampler2D tex;
+uniform sampler2D tex1;
+uniform sampler2D tex2;
 
 layout(std140) uniform Material {
-	uint extra; //Used to toggle texture in normal shader
+	uint use_texture;
+	uint use_normal_map;
+	uint extra;
 	float shininess; 
 	vec4 diffuse; 
 	vec4 specular; 

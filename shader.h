@@ -38,12 +38,13 @@ public:
 	struct material_t {
 		/*
 			The extra parameter is used for different things in different shaders:
-			NORMAL_SHADER: Values: 0/1 Toggle textures on and off
-			LIGHT_SHADER: first bit is 0/1 for texture toggling, rest is [0..MAX_NUM_LIGHTS] My light id
+			NORMAL_SHADER: No use
+			LIGHT_SHADER: [0..MAX_NUM_LIGHTS] My light id
 		*/
+		unsigned int use_texture;
+		unsigned int use_normal_map;
 		unsigned int extra;
 		float shininess;
-		float p2[2]; //Padding
 		glm::vec4 diffuse;
 		glm::vec4 specular;
 		glm::vec4 ambient;

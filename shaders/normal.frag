@@ -13,8 +13,8 @@ out vec4 outputColor;
 void main() {
 	vec4 originalColor; 
 	vec3 surfaceNormal = normalize(frag_normal);
-	if(Mtl.extra == 1) {
-		originalColor = texture(tex, tex_coord);
+	if(Mtl.use_texture == 1) {
+		originalColor = texture(tex1, tex_coord);
 	} else {
 		originalColor = Mtl.diffuse;
 	}

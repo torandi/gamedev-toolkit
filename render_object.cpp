@@ -67,6 +67,14 @@ RenderObject::RenderObject(std::string model, Renderer::shader_program_t shader_
 	}
 }
 
+GLuint RenderObject::load_texture(std::string path) {
+	size_t last_slash = path.rfind("/");
+	if(last_slash != std::string::npos) 
+		path = path.substr(last_slash+1);
+	std::string full_path = std::string("textures/")+path;
+	return Renderer::load_texture(full_path);
+}
+
 void RenderObject::pre_render() {
 
 	recursive_pre_render(scene->mRootNode);
@@ -76,23 +84,30 @@ void RenderObject::pre_render() {
 		const aiMaterial * mtl = scene->mMaterials[i];
 		material_t mtl_data;
 		aiString path;
-		std::string full_path;
 		if(mtl->GetTextureCount(aiTextureType_DIFFUSE) > 0 && 
 			mtl->GetTexture(aiTextureType_DIFFUSE, 0, &path, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS) {
 			std::string p(path.data);
-			size_t last_slash = p.rfind("/");
-			if(last_slash != std::string::npos) 
-				p = p.substr(last_slash+1);
-			full_path = std::string("textures/")+p;
-			mtl_data.texture = Renderer::load_texture(full_path);
-			mtl_data.attr.extra= 1;//toggle textures on
+			mtl_data.texture = load_texture(p);
+			mtl_data.attr.use_texture = 1;//toggle textures on
+		} else if(mtl->GetTextureCount(aiTextureType_AMBIENT) > 0 && 
+			mtl->GetTexture(aiTextureType_AMBIENT, 0, &path, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS) {
+			std::string p(path.data);
+			mtl_data.texture = load_texture(p);
+			mtl_data.attr.use_texture = 1;//toggle textures on
 		} else {
-			mtl_data.attr.extra= 0; //toggle textures off
+			mtl_data.attr.use_texture = 0; //toggle textures off
 		}
-
+/*
+		//Check for normalmap:
+		if(mtl->GetTextureCount(aiTextureType_DIFFUSE) > 0 && 
+			mtl->GetTexture(aiTextureType_DIFFUSE, 0, &path, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS) {
+			std::string p(path.data);
+			mtl_data.texture = load_texture(p);
+			mtl_data.attr.
+*/
 		aiString name;
 		if(AI_SUCCESS == mtl->Get(AI_MATKEY_NAME, name))
-			printf("Loaded material [%d] %s\n", i, name.data);
+			printf("Loaded material %d %s\n", i, name.data);
 
 		aiColor4D diffuse;
 		aiColor4D specular;
