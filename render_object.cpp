@@ -255,8 +255,8 @@ void RenderObject::material_t::activate(Renderer * renderer) {
 	glBindTexture(GL_TEXTURE_2D, texture);
 
 	//Upload material attributes to shader
-	glBindBuffer(GL_UNIFORM_BUFFER, renderer->shader_globals.materialBuffer);
-	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(Renderer::shader_material_t), &attr);
+	glBindBuffer(GL_UNIFORM_BUFFER, Shader::globals.materialBuffer);
+	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(Shader::material_t), &attr);
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
 }

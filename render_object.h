@@ -65,7 +65,7 @@ public:
 	struct material_t {
 		material_t() : two_sided(false) {};
 		GLuint texture;
-		Renderer::shader_material_t attr;
+		Shader::material_t attr;
 		bool two_sided;
 
 		void activate(Renderer * renderer);

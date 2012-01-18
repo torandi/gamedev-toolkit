@@ -1,4 +1,4 @@
-OBJS = main.o renderer.o render_object.o logic.o input.o camera.o movable_object.o light.o render_group.o move_group.o world.o
+OBJS = main.o renderer.o render_object.o logic.o input.o camera.o movable_object.o light.o render_group.o move_group.o world.o shader.o
 CFLAGS += -Wall `sdl-config --cflags` -g
 LDFLAGS += `sdl-config --libs` -lassimp
 

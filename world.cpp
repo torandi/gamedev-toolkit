@@ -14,6 +14,9 @@ MoveGroup lights[NUM_LIGHTS];
 MoveGroup mario;
 
 void create_world(Renderer * renderer) {
+	//Skybox
+	renderer->load_skybox("skybox");
+
 	//Lights:
 #if NUM_LIGHTS > 1
 	lights_lights[LIGHT_SOURCE0] = new Light(glm::vec3(0.2, 0.2, 0.2), Light::POINT_LIGHT);

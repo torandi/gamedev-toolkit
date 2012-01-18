@@ -8,43 +8,30 @@
 	#include "camera.h"
 	#include "light.h"
 	#include "render_group.h"
+	#include "shader.h"
 
-	#define MAX_NUM_LIGHTS 4
 	#define HALF_LIGHT_DISTANCE 2.f
 
 
 class Renderer {
-public:
-	struct shader_t {
-		GLuint program;
-
-		GLuint Matrices;
-		GLuint camera_pos;
-		GLuint LightsData;
-		GLuint Material;
-		GLuint texture;
-	};
-
-	struct shader_lights_t {
-		unsigned int num_lights;
-		float attenuation;
-		float padding[2];
-		glm::vec4 ambient_intensity;
-		Light::shader_light_t lights[MAX_NUM_LIGHTS];
-	};
-
-
-private:
-
-	static std::string shader_files[];
 
 	int checkForGLErrors( const char *s );
 	GLuint vao;
-	GLuint load_shader(GLenum eShaderType, const std::string &strFilename);
-	GLuint create_program(const std::vector<GLuint> &shaderList);
-	shader_t load_shader_program(std::string file);
 
-	shader_lights_t lightData;
+	void render_skybox();
+
+	Shader::lights_data_t lightData;
+
+	GLuint skybox_buffer_;
+	GLuint skybox_texture_[6];
+
+	void init_shader(Shader &shader);
+
+	bool skybox_loaded_;
+
+	int width_, height_;
+
+	static std::string shader_files_[];
 public:
 
 	Renderer(int w, int h, bool fullscreen);
@@ -55,51 +42,28 @@ public:
 
 	enum shader_program_t {
 		NORMAL_SHADER=0,
-		LIGHT_SOURCE_SHADER=1,
-		NUM_SHADERS=2
+		LIGHT_SOURCE_SHADER,
+		SKYBOX_SHADER,
+		NUM_SHADERS
 	};
 
-	struct shader_globals_t {
-		GLuint matricesBuffer;
-		GLuint lightsBuffer;
-		GLuint materialBuffer;
-	};
-
-	shader_t shaders[NUM_SHADERS];
+	Shader shaders[NUM_SHADERS];
 
 	//Uploads model and normal matrices
 	void upload_model_matrices();
+
+	//Load skybox
+	void load_skybox(std::string skybox_path);
 
 	glutil::MatrixStack modelMatrix;
 	glutil::MatrixStack projectionViewMatrix;
 	float light_attenuation;
 	glm::vec4 ambient_intensity;
 	Camera camera;
-	shader_globals_t shader_globals;
+
 	std::vector<RenderGroup*> render_objects;
 	std::vector<Light*> lights;
 
-	struct shader_material_t {
-		/*
-			The extra parameter is used for different things in different shaders:
-			NORMAL_SHADER: Values: 0/1 Toggle textures on and off
-			LIGHT_SHADER: first bit is 0/1 for texture toggling, rest is [0..MAX_NUM_LIGHTS] My light id
-		*/
-		unsigned int extra;
-		float shininess;
-		float p2[2]; //Padding
-		glm::vec4 diffuse;
-		glm::vec4 specular;
-		glm::vec4 ambient;
-		glm::vec4 emission;
-	};
-
-
-	enum {
-		MATRICES_BLOCK_INDEX = 0,
-		LIGHTS_DATA_BLOCK_INDEX = 1,
-		MATERIAL_BLOCK_INDEX = 2
-	};
 
 
 	void render(double dt);
