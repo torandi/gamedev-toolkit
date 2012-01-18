@@ -179,6 +179,12 @@ void Renderer::load_skybox(std::string skybox_path) {
 	skybox_path+="/";
 	for(int i=0; i < 6; ++i) {
 		skybox_texture_[i] = glimg::CreateTexture(glimg::loaders::stb::LoadFromFile((skybox_path+skybox_texture_name[i]).c_str()),0);
+		glBindTexture(GL_TEXTURE_2D, skybox_texture_[i]);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
 	}
 	skybox_loaded_ = true;
 }
