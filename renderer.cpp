@@ -36,6 +36,7 @@ void Renderer::init_shader(Shader &shader) {
 	shader.Matrices = glGetUniformBlockIndex(shader.program, "Matrices");
 	shader.LightsData = glGetUniformBlockIndex(shader.program, "LightsData");
 	shader.Material = glGetUniformBlockIndex(shader.program, "Material");
+	shader.Camera = glGetUniformBlockIndex(shader.program, "Camera");
 
 	checkForGLErrors((std::string("init shader: global uniforms ")+shader.name).c_str());
 
@@ -59,6 +60,13 @@ void Renderer::init_shader(Shader &shader) {
 		checkForGLErrors((std::string("init shader: bind uniform block MATERIAL in ")+shader.name).c_str());
 	} else {
 		printf("Not binding global Material for %s, probably not used\n", shader.name.c_str());
+	}
+
+	if(shader.Camera!=-1) {
+		glUniformBlockBinding(shader.program, shader.Camera, Shader::CAMERA_BLOCK_INDEX);
+		checkForGLErrors((std::string("init shader: bind uniform block CAMERA in ")+shader.name).c_str());
+	} else {
+		printf("Not binding global Camera for %s, probably not used\n", shader.name.c_str());
 	}
 
 	//Bind texture
@@ -104,18 +112,25 @@ Renderer::Renderer(int w, int h, bool fullscreen) {
 
 	//Setup uniform buffers
 	glGenBuffers(sizeof(Shader::globals_t)/sizeof(GLuint), (GLuint*)&Shader::globals);
+
 	glBindBuffer(GL_UNIFORM_BUFFER, Shader::globals.matricesBuffer);
 	glBufferData(GL_UNIFORM_BUFFER, sizeof(glm::mat4)*3, NULL, GL_STREAM_DRAW);
+
 	glBindBuffer(GL_UNIFORM_BUFFER, Shader::globals.lightsBuffer);
 	glBufferData(GL_UNIFORM_BUFFER, sizeof(Shader::lights_data_t), NULL, GL_STREAM_DRAW);
+
 	glBindBuffer(GL_UNIFORM_BUFFER, Shader::globals.materialBuffer);
 	glBufferData(GL_UNIFORM_BUFFER, sizeof(Shader::material_t), NULL, GL_STREAM_DRAW);
+
+	glBindBuffer(GL_UNIFORM_BUFFER, Shader::globals.cameraBuffer);
+	glBufferData(GL_UNIFORM_BUFFER, sizeof(glm::vec4), NULL, GL_STREAM_DRAW);
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
 	//Bind buffers to blocks:
 	glBindBufferRange(GL_UNIFORM_BUFFER, Shader::MATRICES_BLOCK_INDEX, Shader::globals.matricesBuffer, 0, sizeof(glm::mat4)*2);
 	glBindBufferRange(GL_UNIFORM_BUFFER, Shader::LIGHTS_DATA_BLOCK_INDEX, Shader::globals.lightsBuffer, 0, sizeof(Shader::lights_data_t));
 	glBindBufferRange(GL_UNIFORM_BUFFER, Shader::MATERIAL_BLOCK_INDEX, Shader::globals.materialBuffer, 0, sizeof(Shader::material_t));
+	glBindBufferRange(GL_UNIFORM_BUFFER, Shader::CAMERA_BLOCK_INDEX, Shader::globals.cameraBuffer, 0, sizeof(glm::vec4));
 
 	//Generate skybox buffers:
 
@@ -152,6 +167,8 @@ Renderer::Renderer(int w, int h, bool fullscreen) {
 	glDepthFunc(GL_LEQUAL);
 	glDepthRange(0.0f, 1.0f);
 	glEnable(GL_DEPTH_CLAMP);
+
+	checkForGLErrors("init(): ");
 }
 
 /**
@@ -200,9 +217,15 @@ void Renderer::render(double dt){
 	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(projectionViewMatrix.Top()));
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
-	for(int i=0; i < NUM_SHADERS; ++i) {
-		glUniform3fv(shaders[i].camera_pos,3,  glm::value_ptr(camera.position()));
-	}
+	checkForGLErrors("render(): projection matrix");
+
+	//Upload camera position
+	glBindBuffer(GL_UNIFORM_BUFFER, Shader::globals.cameraBuffer);
+	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::vec3), glm::value_ptr(camera.position()));
+	glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+	checkForGLErrors("render(): camera position");
+
 	//Build lights object:
 	if (lights.size() <= MAX_NUM_LIGHTS) {
 		lightData.num_lights	= lights.size();
@@ -220,11 +243,12 @@ void Renderer::render(double dt){
 	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(Shader::lights_data_t), &lightData);
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
+	checkForGLErrors("render(): lights");
 
 	for(std::vector<RenderGroup*>::iterator it=render_objects.begin(); it!=render_objects.end(); ++it) {
 		(*it)->render(dt, this);
-	}
-
+	}	
+	checkForGLErrors("render(): in model");
 
 	projectionViewMatrix.Pop();
 
@@ -232,7 +256,7 @@ void Renderer::render(double dt){
 
 	SDL_GL_SwapBuffers();
 
-	checkForGLErrors("render(): ");
+	checkForGLErrors("render(): post");
 }
 
 void Renderer::render_skybox() {
@@ -258,10 +282,14 @@ void Renderer::render_skybox() {
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, (void*)(sizeof(float)*3*36) );
 
+	checkForGLErrors("render_skybox(): pre");
+
 	for(int i =0;i<6; ++i) {
 		glBindTexture(GL_TEXTURE_2D, skybox_texture_[i]);
 		glDrawArrays(GL_TRIANGLES, 6*i, 6);
 	}
+
+	checkForGLErrors("render_skybox(): render");
 
 
 	glDisableVertexAttribArray(1);
@@ -275,6 +303,8 @@ void Renderer::render_skybox() {
 
 	glEnable(GL_DEPTH_TEST);
 	glUseProgram(0);
+
+	checkForGLErrors("render_skybox(): post");
 }
 
 void Renderer::upload_model_matrices() {

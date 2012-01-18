@@ -23,4 +23,6 @@ layout(std140) uniform LightsData {
 	light_data lights[maxNumberOfLights];
 } Lgt;
 
-uniform vec3 camera_pos; //The cameras position in world space
+layout(std140) uniform Camera{
+	vec3 camera_pos; //The cameras position in world space
+};

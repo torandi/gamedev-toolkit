@@ -27,6 +27,8 @@ RenderObject::~RenderObject() {
 RenderObject::RenderObject(std::string model, Renderer::shader_program_t shader_program, bool normalize_scale, unsigned int aiOptions) 
 	: RenderGroup(), shader_program_(shader_program) {
 
+	name = model;
+
 	scene = aiImportFile( model.c_str(), 
 		aiProcess_Triangulate | aiProcess_GenSmoothNormals |
 		aiProcess_JoinIdenticalVertices |  aiProcess_GenUVCoords |

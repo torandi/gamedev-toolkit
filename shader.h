@@ -54,12 +54,14 @@ public:
 		GLuint matricesBuffer;
 		GLuint lightsBuffer;
 		GLuint materialBuffer;
+		GLuint cameraBuffer;
 	};
 
 	enum {
 		MATRICES_BLOCK_INDEX = 0,
 		LIGHTS_DATA_BLOCK_INDEX = 1,
-		MATERIAL_BLOCK_INDEX = 2
+		MATERIAL_BLOCK_INDEX = 2,
+		CAMERA_BLOCK_INDEX = 3
 	};
 
 	static globals_t globals;
@@ -70,6 +72,7 @@ public:
 	GLint camera_pos;
 	GLint LightsData;
 	GLint Material;
+	GLint Camera;
 	GLint texture;
 
 	static Shader create_shader(std::string base_name);

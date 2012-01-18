@@ -30,6 +30,7 @@ class RenderObject : public RenderGroup {
 public:
 	const aiScene* scene;
 	glm::vec3 scene_min, scene_max, scene_center;
+	std::string name;
 
 	struct mesh_data_t {
 		mesh_data_t() : num_indices(0) {};
