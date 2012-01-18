@@ -4,6 +4,7 @@
 #include <stdexcept>
 #include <algorithm>
 #include <cstdio>
+#include <cstring>
 #include <string>
 #include <vector>
 
@@ -11,17 +12,83 @@
 #include <glload/gll.hpp>
 #include <glload/gl_3_3.h>
 
+#define PP_PREFIX "#pragma "
+#define PP_INCLUDE "include"
+
 Shader::globals_t Shader::globals;
 
-GLuint Shader::load_shader(GLenum eShaderType, const std::string &strFilename) {
-	std::ifstream shaderFile(strFilename.c_str());
-	std::stringstream shaderData;
+void Shader::load_file(const std::string &filename, std::stringstream &shaderData, std::string included_from) {
+	std::ifstream shaderFile(filename.c_str());
+	if(shaderFile.fail()) {
+		if(included_from.empty())
+			fprintf(stderr, "Shader error: File %s not found\n", filename.c_str());
+		else
+			fprintf(stderr, "Shader error: File %s not found (included from %s)\n", filename.c_str(), included_from.c_str());
+		exit(2);
+	}
 	shaderData << shaderFile.rdbuf();
 	shaderFile.close();
-	printf("Compiling shader %s\n", strFilename.c_str());
+}
+
+std::string Shader::parse_shader(const std::string &filename, std::set<std::string> included_files, std::string included_from) {
+	char buffer[2048];
+
+	std::pair<std::set<std::string>::iterator, bool> ret = included_files.insert(filename);
+	if(ret.second == false) {
+		fprintf(stderr, "Shader error: Found include loop when including %s from %s\n", filename.c_str(), included_from.c_str());
+		exit(2);
+	}
+
+	std::stringstream raw_content;
+	load_file(filename, raw_content, included_from);
+	std::stringstream parsed_content;
+	int linenr = 0;
+	while(!raw_content.eof()) {
+		++linenr;
+		raw_content.getline(buffer, 2048);
+		std::string line(buffer);
+		//Parse preprocessor:
+		if(strncmp(buffer, PP_PREFIX, strlen(PP_PREFIX)) == 0) {
+			line = line.substr(line.find_first_not_of(" ", strlen(PP_PREFIX)));
+			if(line.find(PP_INCLUDE) == 0) {
+				line = line.substr(line.find_first_not_of(" ", strlen(PP_INCLUDE)));
+
+				size_t first_quote = line.find_first_of('"');
+				if(first_quote != std::string::npos) {
+					size_t end_quote = line.find_last_of('"');
+					if(end_quote == std::string::npos || end_quote == first_quote) {
+						fprintf(stderr, "%s\nError in shader preprocessor in %s:%d: Missing closing quote for #include command\n", buffer, filename.c_str(),  linenr);
+						exit(2);
+					}
+					//Trim quotes
+					line = line.substr(first_quote+1, (end_quote - first_quote)-1);
+				}
+
+				//Include the file:
+				char loc[256];
+				sprintf(loc, "%s:%d", filename.c_str(), linenr);
+				parsed_content << parse_shader(SHADER_PATH+line, included_files, std::string(loc));
+			}
+		} else {
+			parsed_content << line << std::endl;
+		}
+	}
+	return parsed_content.str();
+}
+
+GLuint Shader::load_shader(GLenum eShaderType, const std::string &strFilename) {
+	std::string source = parse_shader(strFilename);
 	try {
-		return glutil::CompileShader(eShaderType, shaderData.str());
+		return glutil::CompileShader(eShaderType, source);
 	} catch(glutil::ShaderException &e) {
+		fprintf(stderr, "Shader compile error (%s). Preproccessed source: \n", strFilename.c_str());
+		char buffer[2048];
+		std::stringstream code(source);
+		int linenr=0;
+		while(!code.eof()) {
+			code.getline(buffer, 2048);
+			fprintf(stderr, "%d %s\n", ++linenr, buffer);
+		}
 		fprintf(stderr, "%s\n", e.what());
 		throw;
 	}
@@ -41,6 +108,7 @@ GLuint Shader::create_program(const std::vector<GLuint> &shaderList) {
 Shader Shader::create_shader(std::string base_name) {
 	Shader shader;
 	shader.name = base_name;
+	printf("Compiling shader %s\n", base_name.c_str());
 
 	std::vector<GLuint> shader_list;
 	//Load shaders:
