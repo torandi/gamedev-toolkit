@@ -24,13 +24,14 @@ RenderObject::~RenderObject() {
 	aiReleaseImport(scene);
 }
 
-RenderObject::RenderObject(std::string model, Renderer::shader_program_t shader_program, bool normalize_scale) 
+RenderObject::RenderObject(std::string model, Renderer::shader_program_t shader_program, bool normalize_scale, unsigned int aiOptions) 
 	: RenderGroup(), shader_program_(shader_program) {
 
 	scene = aiImportFile( model.c_str(), 
 		aiProcess_Triangulate | aiProcess_GenSmoothNormals |
 		aiProcess_JoinIdenticalVertices |  aiProcess_GenUVCoords |
-		aiProcess_OptimizeMeshes | aiProcess_OptimizeGraph 
+		aiProcess_OptimizeMeshes | aiProcess_OptimizeGraph  |
+		aiProcess_FixInfacingNormals | aiOptions
 		);
 
 	if(scene != 0) {

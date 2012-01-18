@@ -3,6 +3,7 @@
 #include "renderer.h"
 #include "render_object.h"
 
+#include <assimp/aiPostProcess.h>
 #include <cstdio>
 
 
@@ -14,8 +15,13 @@ MoveGroup mario;
 
 void create_world(Renderer * renderer) {
 	//Lights:
-	lights_lights[LIGHT_SOURCE0] = new Light(glm::vec3(0.8, 0.8, 0.8), Light::POINT_LIGHT);
-	//lights_lights[LIGHT_SOURCE1] = new Light(glm::vec3(0.5, 0.5, 0.5), Light::DIRECTIONAL_LIGHT);
+#if NUM_LIGHTS > 1
+	lights_lights[LIGHT_SOURCE0] = new Light(glm::vec3(0.8, 0.0, 0.0), Light::POINT_LIGHT);
+	lights_lights[LIGHT_SOURCE1] = new Light(glm::vec3(0.0, 0.0, 0.8), Light::POINT_LIGHT);
+	lights_lights[LIGHT_SOURCE2] = new Light(glm::vec3(0.0, 0.8, 0.0), Light::POINT_LIGHT);
+#else
+	lights_lights[0] = new Light(glm::vec3(0.8, 0.8, 0.8), Light::POINT_LIGHT);
+#endif
 
 	for(int i=0; i < NUM_LIGHTS; ++i) {
 		lights_ro[i] = new RenderObject("models/cube.obj", Renderer::NORMAL_SHADER);	
@@ -24,10 +30,8 @@ void create_world(Renderer * renderer) {
 		lights[i].add_object(lights_ro[i]);
 		renderer->render_objects.push_back(lights_ro[i]);
 		renderer->lights.push_back(lights_lights[i]);
+		lights[i].set_position(glm::vec3(1.0, 1.0, 1.0));
 	}
-
-	lights[LIGHT_SOURCE0].set_position(glm::vec3(1.0, 1.0, 1.0));
-	//lights[LIGHT_SOURCE1].set_position(glm::vec3(5.0, -5.0, 5.0));
 
 	//load models:
 
@@ -44,8 +48,8 @@ void create_world(Renderer * renderer) {
 	renderer->render_objects.back()->scale*=3.0f;
 
 	//objects.back().position+=glm::vec3(0.0, 0.0, 0.f);
-/*	renderer->render_objects.push_back(new RenderObject("models/nintendo.obj", Renderer::NORMAL_SHADER));
-	renderer->render_objects.back()->absolute_move(glm::vec3(-2.0,0.0,0.0));*/
+	renderer->render_objects.push_back(new RenderObject("models/nintendo.obj", Renderer::NORMAL_SHADER));//, true, aiProcess_FixInfacingNormals));
+	renderer->render_objects.back()->absolute_move(glm::vec3(-2.0,0.0,0.0));
 }
 
 void update_world(double dt, Renderer * renderer) {
