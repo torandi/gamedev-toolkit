@@ -12,8 +12,7 @@
 #include <glload/gll.hpp>
 #include <glload/gl_3_3.h>
 
-#define PP_PREFIX "#pragma "
-#define PP_INCLUDE "include"
+#define PP_INCLUDE "#include"
 
 Shader::globals_t Shader::globals;
 
@@ -48,27 +47,24 @@ std::string Shader::parse_shader(const std::string &filename, std::set<std::stri
 		raw_content.getline(buffer, 2048);
 		std::string line(buffer);
 		//Parse preprocessor:
-		if(strncmp(buffer, PP_PREFIX, strlen(PP_PREFIX)) == 0) {
-			line = line.substr(line.find_first_not_of(" ", strlen(PP_PREFIX)));
-			if(line.find(PP_INCLUDE) == 0) {
-				line = line.substr(line.find_first_not_of(" ", strlen(PP_INCLUDE)));
+		if(line.find(PP_INCLUDE) == 0) {
+			line = line.substr(line.find_first_not_of(" ", strlen(PP_INCLUDE)));
 
-				size_t first_quote = line.find_first_of('"');
-				if(first_quote != std::string::npos) {
-					size_t end_quote = line.find_last_of('"');
-					if(end_quote == std::string::npos || end_quote == first_quote) {
-						fprintf(stderr, "%s\nError in shader preprocessor in %s:%d: Missing closing quote for #include command\n", buffer, filename.c_str(),  linenr);
-						exit(2);
-					}
-					//Trim quotes
-					line = line.substr(first_quote+1, (end_quote - first_quote)-1);
+			size_t first_quote = line.find_first_of('"');
+			if(first_quote != std::string::npos) {
+				size_t end_quote = line.find_last_of('"');
+				if(end_quote == std::string::npos || end_quote == first_quote) {
+					fprintf(stderr, "%s\nError in shader preprocessor in %s:%d: Missing closing quote for #include command\n", buffer, filename.c_str(),  linenr);
+					exit(2);
 				}
-
-				//Include the file:
-				char loc[256];
-				sprintf(loc, "%s:%d", filename.c_str(), linenr);
-				parsed_content << parse_shader(SHADER_PATH+line, included_files, std::string(loc));
+				//Trim quotes
+				line = line.substr(first_quote+1, (end_quote - first_quote)-1);
 			}
+
+			//Include the file:
+			char loc[256];
+			sprintf(loc, "%s:%d", filename.c_str(), linenr);
+			parsed_content << parse_shader(SHADER_PATH+line, included_files, std::string(loc));
 		} else {
 			parsed_content << line << std::endl;
 		}

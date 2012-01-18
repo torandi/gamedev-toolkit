@@ -1,11 +1,11 @@
 #version 330
-#pragma include "uniforms.frag"
+#include "uniforms.frag"
 
 in vec2 tex_coord;
 in vec3 frag_normal;
 in vec3 world_pos; //my position in world space
 
-#pragma include "light_calculations.frag"
+#include "light_calculations.frag"
 
 out vec4 outputColor;
 
