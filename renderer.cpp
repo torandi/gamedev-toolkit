@@ -28,7 +28,6 @@ void Renderer::init_shader(Shader &shader) {
 
 	//Local uniforms
 	shader.texture = glGetUniformLocation(shader.program, "tex");
-	shader.camera_pos= glGetUniformLocation(shader.program, "camera_pos");
 
 	checkForGLErrors((std::string("init shader: local uniforms ")+shader.name).c_str());
 
@@ -142,6 +141,12 @@ Renderer::Renderer(int w, int h, bool fullscreen) {
 
 	glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxData), skyboxData, GL_STATIC_DRAW);
 
+	//Read skybox skymap uniform
+	glUseProgram(shaders[SKYBOX_SHADER].program);
+
+	shaders[SKYBOX_SHADER].uniform["skymap"] = glGetUniformLocation(shaders[SKYBOX_SHADER].program, "skymap");
+	glUniform1i(shaders[SKYBOX_SHADER].uniform["skymap"], 1);
+
 	glUseProgram(shaders[NORMAL_SHADER].program);
 
 
@@ -177,13 +182,25 @@ Renderer::Renderer(int w, int h, bool fullscreen) {
 void Renderer::load_skybox(std::string skybox_path) {
 	//Load skybox texture:
 	skybox_path+="/";
+	std::string fe = ".jpg"; //file ending
+	std::string skymap_fe = "_skymap.jpg"; //skymap ending
 	for(int i=0; i < 6; ++i) {
-		skybox_texture_[i] = glimg::CreateTexture(glimg::loaders::stb::LoadFromFile((skybox_path+skybox_texture_name[i]).c_str()),0);
+		skybox_texture_[i] = glimg::CreateTexture(glimg::loaders::stb::LoadFromFile((skybox_path+skybox_texture_name[i]+fe).c_str()),0);
+		skybox_skymap_[i] = glimg::CreateTexture(glimg::loaders::stb::LoadFromFile((skybox_path+skybox_texture_name[i]+skymap_fe).c_str()),0);
+
+		//Set hints:
 		glBindTexture(GL_TEXTURE_2D, skybox_texture_[i]);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+		glBindTexture(GL_TEXTURE_2D, skybox_skymap_[i]);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glBindTexture(GL_TEXTURE_2D, 0);
 
 	}
 	skybox_loaded_ = true;
@@ -291,9 +308,13 @@ void Renderer::render_skybox() {
 	checkForGLErrors("render_skybox(): pre");
 
 	for(int i =0;i<6; ++i) {
+		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, skybox_texture_[i]);
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, skybox_skymap_[i]);
 		glDrawArrays(GL_TRIANGLES, 6*i, 6);
 	}
+	glActiveTexture(GL_TEXTURE0);
 
 	checkForGLErrors("render_skybox(): render");
 

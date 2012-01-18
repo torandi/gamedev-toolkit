@@ -24,6 +24,7 @@ class Renderer {
 
 	GLuint skybox_buffer_;
 	GLuint skybox_texture_[6];
+	GLuint skybox_skymap_[6];
 
 	void init_shader(Shader &shader);
 

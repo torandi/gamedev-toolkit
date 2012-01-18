@@ -12,7 +12,7 @@
 #define REF_FPS 30
 #define REF_DT (1.0/REF_FPS)
 
-bool fullscreen = false;
+bool fullscreen =false;
 
 Renderer * renderer;
 

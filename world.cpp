@@ -23,9 +23,9 @@ const float high_morning = 8;
 const float high_day = 14;
 const float high_evening = 21;
 
-const float time_per_hour=10.f;
+const float time_per_hour=1000.f;
 
-float time_of_day = 0.0; //0->24;
+float time_of_day = 14.0; //0->24;
 
 void create_world(Renderer * renderer) {
 	//Skybox
