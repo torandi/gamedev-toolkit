@@ -36,8 +36,6 @@ void create_world(Renderer * renderer) {
 
 	//load models:
 
-	renderer->render_objects.push_back(new RenderObject("models/ninja.b3d", Renderer::NORMAL_SHADER));
-	renderer->render_objects.back()->absolute_move(glm::vec3(0.0,0.0,5.0));
 	renderer->render_objects.push_back(new RenderObject("models/earth.obj", Renderer::NORMAL_SHADER));
 	renderer->render_objects.back()->absolute_move(glm::vec3(0.0,3.0,0.0));
 
