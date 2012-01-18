@@ -1,1 +1,7 @@
-This is in the long run supposed to be a menu program for choosing which emulated game to start, but at the moment it is just a model loader.
+A toolkit for loading and rendering a 3d world.
+
+Dependencies:
+Unofficial OpenGL Software Development Kit: http://glsdk.sourceforge.net/
+Open Asset Import Library: http://assimp.sourceforge.net/
+
+The glsdk doesn't have a make install commando, specify path to it in the Makefile (GLSDK_PATH)
