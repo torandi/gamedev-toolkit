@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 #include <set>
+#include <map>
 
 #include "light.h"
 
@@ -74,6 +75,8 @@ public:
 	GLint Material;
 	GLint Camera;
 	GLint texture;
+
+	std::map<std::string, GLint> uniform; //For shader specific uniforms
 
 	static Shader create_shader(std::string base_name);
 };

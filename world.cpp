@@ -13,15 +13,28 @@ MoveGroup lights[NUM_LIGHTS];
 
 MoveGroup mario;
 
+const glm::vec3 night_light = glm::vec3(0.0, 0.15, 0.15);
+const glm::vec3 morning_light = glm::vec3(0.6, 0.3, 0.3);
+const glm::vec3 day_light = glm::vec3(0.8, 0.6, 0.6);
+const glm::vec3 evening_light = glm::vec3(0.5, 0.2, 0.2);
+
+const float high_night = 2;
+const float high_morning = 8;
+const float high_day = 14;
+const float high_evening = 21;
+
+const float time_per_hour=10.f;
+
+float time_of_day = 0.0; //0->24;
+
 void create_world(Renderer * renderer) {
 	//Skybox
 	renderer->load_skybox("skybox");
 
 	//Lights:
 #if NUM_LIGHTS > 1
-	lights_lights[LIGHT_SOURCE0] = new Light(glm::vec3(0.2, 0.2, 0.2), Light::POINT_LIGHT);
-	lights_lights[LIGHT_SOURCE1] = new Light(glm::vec3(0.0, 0.0, 0.8), Light::POINT_LIGHT);
-	lights_lights[LIGHT_SOURCE2] = new Light(glm::vec3(1.0, 1.0, 0.0), Light::POINT_LIGHT);
+	lights_lights[LIGHT_SOURCE0] = new Light(glm::vec3(0.9, 0.6, 0.2), Light::POINT_LIGHT);
+	lights_lights[LIGHT_SOURCE1] = new Light(glm::vec3(0.9, 0.6, 0.2), Light::POINT_LIGHT);
 #else
 	lights_lights[0] = new Light(glm::vec3(0.8, 0.8, 0.8), Light::POINT_LIGHT);
 #endif
@@ -52,9 +65,58 @@ void create_world(Renderer * renderer) {
 	//objects.back().position+=glm::vec3(0.0, 0.0, 0.f);
 	renderer->render_objects.push_back(new RenderObject("models/nintendo.obj", Renderer::NORMAL_SHADER));//, true, aiProcess_FixInfacingNormals));
 	renderer->render_objects.back()->absolute_move(glm::vec3(-2.0,0.0,0.0));
+
+
 }
 
 void update_world(double dt, Renderer * renderer) {
 	//printf("Light pos: (%f, %f, %f)\n", lights_ro[LIGHT_SOURCE1]->position().x, lights_ro[LIGHT_SOURCE1]->position().y, lights_ro[LIGHT_SOURCE1]->position().z);
 	mario.absolute_rotate(glm::vec3(1.0, 1.0, 1.0), dt*20.f);
+
+	time_of_day+=dt/time_per_hour;
+	time_of_day = fmod(time_of_day, 24.f);
+	
+	const glm::vec3 * v1, *v2;
+	float t1, t2;
+
+	if(time_of_day > high_evening || time_of_day < high_night) {
+		v1 = &evening_light;
+		t1 = high_evening;
+	} else if(time_of_day > high_day)  {
+		v1 = &day_light;
+		t1 = high_day;
+	} else if(time_of_day > high_morning) {
+		v1 = &morning_light;
+		t1 = high_morning;
+	} else {
+		v1 = &night_light;
+		t1 = high_night;
+	}
+
+	if(time_of_day <= high_night || time_of_day > high_evening) {
+		v2 = &night_light;
+		t2 = high_night;
+	} else if(time_of_day <= high_morning) {
+		v2 = &morning_light;
+		t2 = high_morning;
+	} else if(time_of_day <= high_day) {
+		v2 = &day_light;
+		t2 = high_day;
+	} else {
+		v2 = &evening_light;
+		t2 = high_evening;
+	}
+
+	//Fade amient light:
+	printf("Current time: %.2f checkpoint: %f->%f\n", time_of_day, t1, t2);
+	float total = t2-t1;
+	float pos = time_of_day-t1;
+	if(t2 == high_night) {
+		total=24.f-t1+t2;
+		if(time_of_day > t1)
+			pos = time_of_day - t1;
+		else
+			pos = time_of_day + (24.f-t1);
+	}
+	renderer->ambient_intensity = glm::mix(*v1, *v2, pos/total);
 }

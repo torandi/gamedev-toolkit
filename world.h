@@ -5,13 +5,11 @@
 	#include "render_object.h"
 	#include "light.h"
 
-	#define NUM_LIGHTS 3
+	#define NUM_LIGHTS 2
 
 	enum {
 		LIGHT_SOURCE0,
 		LIGHT_SOURCE1,
-		LIGHT_SOURCE2,
-		SUPER_MARIO
 	};
 
 	extern Light *lights_lights[NUM_LIGHTS]; //The actual lights

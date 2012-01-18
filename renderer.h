@@ -10,7 +10,7 @@
 	#include "render_group.h"
 	#include "shader.h"
 
-	#define HALF_LIGHT_DISTANCE 2.f
+	#define HALF_LIGHT_DISTANCE 1.5f
 
 
 class Renderer {
@@ -62,7 +62,7 @@ public:
 	glutil::MatrixStack modelMatrix;
 	glutil::MatrixStack projectionViewMatrix;
 	float light_attenuation;
-	glm::vec4 ambient_intensity;
+	glm::vec3 ambient_intensity;
 	Camera camera;
 
 	std::vector<RenderGroup*> render_objects;
