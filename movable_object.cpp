@@ -44,7 +44,7 @@ void MovableObject::relative_move(const glm::vec3 &move) {
 
 void MovableObject::absolute_rotate(const glm::vec3 &axis, const float &angle) {
 	rotation_matrix_dirty_ = true;
-	orientation_ = glm::rotate(orientation_, angle, orient_vector(axis*1.f));
+	orientation_ = glm::rotate(orientation_, angle, orient_vector(axis*-1.f));
 }
 
 void MovableObject::absolute_move(const glm::vec3 &move) {

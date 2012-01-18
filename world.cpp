@@ -34,8 +34,8 @@ void create_world(Renderer * renderer) {
 
 	//Lights:
 #if NUM_LIGHTS > 1
-	lights_lights[LIGHT_SOURCE0] = new Light(glm::vec3(0.9, 0.6, 0.2), Light::POINT_LIGHT);
-	lights_lights[LIGHT_SOURCE1] = new Light(glm::vec3(0.9, 0.6, 0.2), Light::POINT_LIGHT);
+	lights_lights[LIGHT_SOURCE0] = new Light(glm::vec3(0.6, 0.6, 0.6), Light::POINT_LIGHT);
+	lights_lights[LIGHT_SOURCE1] = new Light(glm::vec3(0.6, 0.6, 0.6), Light::POINT_LIGHT);
 #else
 	lights_lights[0] = new Light(glm::vec3(0.8, 0.8, 0.8), Light::POINT_LIGHT);
 #endif
@@ -54,11 +54,12 @@ void create_world(Renderer * renderer) {
 	//load models:
 
 	//renderer->render_objects.push_back(new RenderObject("models/ninja.3ds", Renderer::NORMAL_SHADER));
-	renderer->render_objects.back()->absolute_move(glm::vec3(0.0,0.6,0.0));
+	//renderer->render_objects.back()->absolute_move(glm::vec3(0.0,0.6,0.0));
 
 	RenderObject * m = new RenderObject("models/mario_obj.obj", Renderer::NORMAL_SHADER);
 
 	mario.add_object(m);
+	m->absolute_move(glm::vec3(-4.0, 0.0, 0.0));
 
 	renderer->render_objects.push_back(m);
 	renderer->render_objects.back()->scale*=3.0f;
@@ -67,6 +68,18 @@ void create_world(Renderer * renderer) {
 	renderer->render_objects.push_back(new RenderObject("models/nintendo.obj", Renderer::NORMAL_SHADER));//, true, aiProcess_FixInfacingNormals));
 	renderer->render_objects.back()->absolute_move(glm::vec3(-2.0,0.5,0.0));
 
+
+	renderer->render_objects.push_back(new RenderObject("models/sonic.obj", Renderer::NORMAL_SHADER));
+	renderer->render_objects.back()->absolute_move(glm::vec3(5.0,0.0,0.0));
+	renderer->render_objects.back()->scale*=5.f;
+
+	renderer->render_objects.push_back(new RenderObject("models/wall.obj", Renderer::NORMAL_SHADER));
+	renderer->render_objects.back()->absolute_move(glm::vec3(0.0,0.0,0.0));
+	renderer->render_objects.back()->relative_rotate(glm::vec3(1.0,0.0,0.0),90);
+	renderer->render_objects.back()->relative_rotate(glm::vec3(0.0,0.0,1.0),90);
+	renderer->render_objects.back()->scale*=5.f;
+
+	lights[LIGHT_SOURCE0].set_position(glm::vec3(-1.0, 1.0, -2.0));
 
 }
 
@@ -108,8 +121,7 @@ void update_world(double dt, Renderer * renderer) {
 		t2 = high_evening;
 	}
 
-	//Fade amient light:
-	printf("Current time: %.2f checkpoint: %f->%f\n", time_of_day, t1, t2);
+	//Fade ambient light:
 	float total = t2-t1;
 	float pos = time_of_day-t1;
 	if(t2 == high_night) {

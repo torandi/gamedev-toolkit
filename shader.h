@@ -75,7 +75,8 @@ public:
 	GLint LightsData;
 	GLint Material;
 	GLint Camera;
-	GLint texture;
+	GLint texture1;
+	GLint texture2;
 
 	std::map<std::string, GLint> uniform; //For shader specific uniforms
 

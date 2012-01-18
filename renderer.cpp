@@ -27,7 +27,8 @@ std::string Renderer::shader_files_[] = {
 void Renderer::init_shader(Shader &shader) {
 
 	//Local uniforms
-	shader.texture = glGetUniformLocation(shader.program, "tex");
+	shader.texture1 = glGetUniformLocation(shader.program, "tex1");
+	shader.texture2 = glGetUniformLocation(shader.program, "tex2");
 
 	checkForGLErrors((std::string("init shader: local uniforms ")+shader.name).c_str());
 
@@ -70,7 +71,8 @@ void Renderer::init_shader(Shader &shader) {
 
 	//Bind texture
 	glUseProgram(shader.program);
-	glUniform1i(shader.texture, 0);
+	glUniform1i(shader.texture1, 0);
+	glUniform1i(shader.texture2, 1);
 	glUseProgram(0);
 
 	checkForGLErrors((std::string("init shader: bind textures")+shader.name).c_str());
@@ -141,13 +143,6 @@ Renderer::Renderer(int w, int h, bool fullscreen) {
 
 	glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxData), skyboxData, GL_STATIC_DRAW);
 
-	//Read skybox skymap uniform
-	glUseProgram(shaders[SKYBOX_SHADER].program);
-
-	shaders[SKYBOX_SHADER].uniform["skymap"] = glGetUniformLocation(shaders[SKYBOX_SHADER].program, "skymap");
-	glUniform1i(shaders[SKYBOX_SHADER].uniform["skymap"], 1);
-
-	glUseProgram(shaders[NORMAL_SHADER].program);
 
 
 	glUseProgram(0);
@@ -354,6 +349,7 @@ void Renderer::disabel_face_culling() {
 }
 
 GLuint Renderer::load_texture(std::string file) {
+	printf("Loading texture %s\n", file.c_str());
 	const glimg::ImageSet * img_set = glimg::loaders::stb::LoadFromFile(file.c_str());
 	GLuint texture = glimg::CreateTexture(img_set,0);
 	glBindTexture(GL_TEXTURE_2D, texture);

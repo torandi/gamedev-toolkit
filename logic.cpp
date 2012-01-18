@@ -34,7 +34,7 @@ void logic(double dt, Renderer * renderer) {
 	float y = get_hat_up_down(0)*MOVE_SPEED*dt;
 	float z;
 	if(button_down(5))
-		y = -normalized_axis_value(1)*MOVE_SPEED*dt;
+		y = normalized_axis_value(1)*MOVE_SPEED*dt;
 	else
 		z = -normalized_axis_value(1)*MOVE_SPEED*dt;
 	float rx = -normalized_axis_value(4)*ROTATION_SPEED*dt;

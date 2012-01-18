@@ -30,11 +30,11 @@ RenderObject::RenderObject(std::string model, Renderer::shader_program_t shader_
 	name = model;
 
 	scene = aiImportFile( model.c_str(), 
-		aiProcess_Triangulate | aiProcess_GenSmoothNormals |
-		aiProcess_JoinIdenticalVertices |  aiProcess_GenUVCoords |
+		aiProcess_Triangulate /*| aiProcess_GenSmoothNormals |
+		aiProcess_JoinIdenticalVertices |  
 		aiProcess_OptimizeMeshes | aiProcess_OptimizeGraph  |
 		aiProcess_ImproveCacheLocality |
-		aiProcess_FixInfacingNormals | aiOptions
+		aiProcess_FixInfacingNormals | aiOptions*/
 		);
 
 	if(scene != 0) {
@@ -97,14 +97,16 @@ void RenderObject::pre_render() {
 		} else {
 			mtl_data.attr.use_texture = 0; //toggle textures off
 		}
-/*
+	
 		//Check for normalmap:
-		if(mtl->GetTextureCount(aiTextureType_DIFFUSE) > 0 && 
-			mtl->GetTexture(aiTextureType_DIFFUSE, 0, &path, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS) {
+		if(mtl->GetTextureCount(aiTextureType_HEIGHT) > 0 && 
+			mtl->GetTexture(aiTextureType_HEIGHT, 0, &path, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS) {
 			std::string p(path.data);
-			mtl_data.texture = load_texture(p);
-			mtl_data.attr.
-*/
+			mtl_data.normal_map = load_texture(p);
+			mtl_data.attr.use_normal_map = 1;
+			printf("Using normal map: %s\n", p.c_str());
+		}
+
 		aiString name;
 		if(AI_SUCCESS == mtl->Get(AI_MATKEY_NAME, name))
 			printf("Loaded material %d %s\n", i, name.data);
@@ -267,7 +269,15 @@ void RenderObject::material_t::activate(Renderer * renderer) {
 	if(two_sided && renderer->cull_face)
 		glDisable(GL_CULL_FACE);
 
-	glBindTexture(GL_TEXTURE_2D, texture);
+	if(attr.use_texture) {
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, texture);
+	}
+	
+	if(attr.use_normal_map) {
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, normal_map);
+	}
 
 	//Upload material attributes to shader
 	glBindBuffer(GL_UNIFORM_BUFFER, Shader::globals.materialBuffer);
