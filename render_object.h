@@ -44,24 +44,19 @@ public:
 
 
 	struct vertex_t {
-		float pos_x;
-		float pos_y;
-		float pos_z;
-		float texCoord_x;
-		float texCoord_y;
-		float normal_x;
-		float normal_y;
-		float normal_z;
+		glm::vec3 pos;
+		glm::vec2 texCoord;
+		glm::vec3 normal;
+		glm::vec3 tangent;
+		glm::vec3 binormal;
 
-		vertex_t(const aiVector3D* pos,const  aiVector3D* texCoord,const  aiVector3D* normal) {
-			pos_x = pos->x;
-			pos_y = pos->y;
-			pos_z = pos->z;
-			texCoord_x = texCoord->x;
-			texCoord_y = texCoord->y;
-			normal_x = normal->x;
-			normal_y = normal->y;
-			normal_z = normal->z;
+		vertex_t(const aiVector3D* pos_,const  aiVector3D* texCoord_,
+					const aiVector3D* normal_, const aiVector3D * tangent_, const aiVector3D * binormal_) {
+			pos = glm::vec3(pos_->x,pos_->y, pos_->z);
+			texCoord = glm::vec2(texCoord_->x,texCoord_->y);
+			normal = glm::vec3(normal_->x, normal_->y, normal_->z);
+			tangent = glm::vec3(tangent_->x, tangent_->y, tangent_->z);
+			binormal = glm::vec3(binormal_->x, binormal_->y, binormal_->z);
 		}
 	};
 

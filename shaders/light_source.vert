@@ -4,6 +4,8 @@
 layout (location = 0) in vec4 position;
 layout (location = 1) in vec2 texCoord;
 layout (location = 2) in vec3 normal;
+layout (location = 3) in vec3 tangent;
+layout (location = 4) in vec3 binormal;
 
 out vec2 tex_coord;
 out vec3 frag_normal;

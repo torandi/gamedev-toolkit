@@ -3,7 +3,9 @@
 
 layout (location = 0) in vec4 position;
 layout (location = 1) in vec2 texCoord;
-layout (location = 2) in vec3 normal;
+layout (location = 2) in vec4 normal;
+layout (location = 3) in vec4 tangent;
+layout (location = 3) in vec4 binormal;
 
 out vec2 tex_coord;
 out vec3 frag_normal;
@@ -11,9 +13,9 @@ out vec3 world_pos;
 
 void main() {
 	vec4 w_pos = modelMatrix * position;
-	world_pos = vec3(w_pos);
+	world_pos = w_pos.xyz;
 	gl_Position = projectionViewMatrix *  w_pos;
 	tex_coord = texCoord;
-	frag_normal = vec3(normalMatrix * vec4(normal,1.0));
+	frag_normal = (normalMatrix * normal).xyz;
 }
 

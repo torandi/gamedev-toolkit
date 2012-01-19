@@ -13,9 +13,9 @@ out vec4 outputColor;
 void main() {
 	vec4 originalColor; 
 	vec3 surfaceNormal;
-	if(Mtl.use_normal_map==1)
+/*	if(Mtl.use_normal_map==1)
 		surfaceNormal = normalize(texture(tex2, tex_coord).xyz * 2.0 - 1.0);
-	else
+	else*/
 		surfaceNormal = normalize(frag_normal);
 	
 	if(Mtl.use_texture == 1) {

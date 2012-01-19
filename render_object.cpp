@@ -30,11 +30,12 @@ RenderObject::RenderObject(std::string model, Renderer::shader_program_t shader_
 	name = model;
 
 	scene = aiImportFile( model.c_str(), 
-		aiProcess_Triangulate /*| aiProcess_GenSmoothNormals |
+		aiProcess_Triangulate | aiProcess_GenSmoothNormals |
 		aiProcess_JoinIdenticalVertices |  
 		aiProcess_OptimizeMeshes | aiProcess_OptimizeGraph  |
-		aiProcess_ImproveCacheLocality |
-		aiProcess_FixInfacingNormals | aiOptions*/
+		aiProcess_ImproveCacheLocality | aiProcess_GenUVCoords |
+		aiProcess_ValidateDataStructure | aiProcess_FixInfacingNormals |
+		aiProcess_CalcTangentSpace | aiOptions
 		);
 
 	if(scene != 0) {
@@ -169,9 +170,18 @@ void RenderObject::recursive_pre_render(const aiNode* node) {
 			const aiVector3D* pos = &(mesh->mVertices[n]);
 			const aiVector3D* texCoord = mesh->HasTextureCoords(0) ? &(mesh->mTextureCoords[0][n]) : &zero_3d;
 			const aiVector3D* normal = &(mesh->mNormals[n]);
+			const aiVector3D* tangent, *binormal;
+			if(mesh->HasTangentsAndBitangents()) {
+				tangent = &(mesh->mTangents[n]);
+				binormal = &(mesh->mBitangents[n]);
+			} else {
+				tangent = &zero_3d;
+				binormal= &zero_3d;
+			}
+			//HasTangentsAndBitangents
 			if(!mesh->HasNormals())
 				normal = &zero_3d;
-			vertexData.push_back(vertex_t(pos, texCoord, normal));
+			vertexData.push_back(vertex_t(pos, texCoord, normal, tangent, binormal));
 		}
 
 		for(unsigned int n = 0 ; n<mesh->mNumFaces; ++n) {
@@ -224,9 +234,14 @@ void RenderObject::recursive_render(const aiNode* node, double dt, Renderer * re
 			glEnableVertexAttribArray(0);
 			glEnableVertexAttribArray(1);
 			glEnableVertexAttribArray(2);
+			glEnableVertexAttribArray(3);
+			glEnableVertexAttribArray(4);
+
 			glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_t), 0);
-			glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(vertex_t), (const GLvoid*) (sizeof(float)*3));
-			glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_t), (const GLvoid*) (sizeof(float)*5));
+			glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(vertex_t), (const GLvoid*) (sizeof(glm::vec3)));
+			glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_t), (const GLvoid*) (sizeof(glm::vec3)+sizeof(glm::vec2)));
+			glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_t), (const GLvoid*) (2*sizeof(glm::vec3)+sizeof(glm::vec2)));
+			glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_t), (const GLvoid*) (3*sizeof(glm::vec3)+sizeof(glm::vec2)));
 
 			materials[md->mtl_index].activate(renderer);
 
@@ -234,6 +249,8 @@ void RenderObject::recursive_render(const aiNode* node, double dt, Renderer * re
 
 			materials[md->mtl_index].deactivate(renderer);
 
+			glDisableVertexAttribArray(4);
+			glDisableVertexAttribArray(3);
 			glDisableVertexAttribArray(2);
 			glDisableVertexAttribArray(1);
 			glDisableVertexAttribArray(0);
