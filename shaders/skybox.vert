@@ -1,13 +1,13 @@
 #version 330
-#include "uniforms.vert"
+#include "uniforms.glsl"
 
-layout (location = 0) in vec4 position;
-layout (location = 1) in vec2 texCoord;
+layout (location = 0) in vec4 in_position;
+layout (location = 1) in vec2 in_texcoord;
 
-out vec2 tex_coord;
+out vec2 texcoord;
 
 void main() {
-	gl_Position = projectionViewMatrix * position;
-	tex_coord = texCoord;
+	gl_Position = projectionViewMatrix * in_position;
+	texcoord = in_texcoord;
 }
 

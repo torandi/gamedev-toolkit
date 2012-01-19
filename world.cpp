@@ -34,14 +34,14 @@ void create_world(Renderer * renderer) {
 
 	//Lights:
 #if NUM_LIGHTS > 1
-	lights_lights[LIGHT_SOURCE0] = new Light(glm::vec3(0.6, 0.6, 0.6), Light::POINT_LIGHT);
+	lights_lights[LIGHT_SOURCE0] = new Light(glm::vec3(0.8, 0.8, 0.8), Light::POINT_LIGHT);
 	lights_lights[LIGHT_SOURCE1] = new Light(glm::vec3(0.6, 0.6, 0.6), Light::POINT_LIGHT);
 #else
 	lights_lights[0] = new Light(glm::vec3(0.8, 0.8, 0.8), Light::POINT_LIGHT);
 #endif
 
 	for(int i=0; i < NUM_LIGHTS; ++i) {
-		lights_ro[i] = new RenderObject("models/cube.obj", Renderer::LIGHT_SOURCE_SHADER);	
+		lights_ro[i] = new RenderObject("models/cube.obj", Renderer::NORMAL_SHADER);	
 		lights_lights[i]->set_id_in_render_object(lights_ro[i], i, true);
 		lights_ro[i]->scale*=0.25f;
 		lights[i].add_object(lights_lights[i]);
@@ -66,14 +66,15 @@ void create_world(Renderer * renderer) {
 
 	//objects.back().position+=glm::vec3(0.0, 0.0, 0.f);
 	renderer->render_objects.push_back(new RenderObject("models/nintendo.obj", Renderer::NORMAL_SHADER));//, true, aiProcess_FixInfacingNormals));
-	renderer->render_objects.back()->absolute_move(glm::vec3(-2.0,0.5,0.0));
+	renderer->render_objects.back()->absolute_move(glm::vec3(-7.0,0.5,0.0));
 
 
 	renderer->render_objects.push_back(new RenderObject("models/sonic.obj", Renderer::NORMAL_SHADER));
 	renderer->render_objects.back()->absolute_move(glm::vec3(5.0,0.0,0.0));
 	renderer->render_objects.back()->scale*=5.f;
 
-	renderer->render_objects.push_back(new RenderObject("models/wall.obj", Renderer::NORMAL_SHADER));
+	//renderer->render_objects.push_back(new RenderObject("models/wall.obj", Renderer::NORMAL_SHADER));
+	renderer->render_objects.push_back(new RenderObject("models/fleur.obj", Renderer::NORMAL_SHADER));
 	renderer->render_objects.back()->absolute_move(glm::vec3(0.0,0.0,2.0));
 	renderer->render_objects.back()->scale*=5.f;
 

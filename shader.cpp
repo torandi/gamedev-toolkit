@@ -20,9 +20,9 @@ void Shader::load_file(const std::string &filename, std::stringstream &shaderDat
 	std::ifstream shaderFile(filename.c_str());
 	if(shaderFile.fail()) {
 		if(included_from.empty())
-			fprintf(stderr, "Shader error: File %s not found\n", filename.c_str());
+			fprintf(stderr, "Shader preprocessor error: File %s not found\n", filename.c_str());
 		else
-			fprintf(stderr, "Shader error: File %s not found (included from %s)\n", filename.c_str(), included_from.c_str());
+			fprintf(stderr, "Shader preprocessor error: File %s not found (included from %s)\n", filename.c_str(), included_from.c_str());
 		exit(2);
 	}
 	shaderData << shaderFile.rdbuf();
@@ -34,7 +34,7 @@ std::string Shader::parse_shader(const std::string &filename, std::set<std::stri
 
 	std::pair<std::set<std::string>::iterator, bool> ret = included_files.insert(filename);
 	if(ret.second == false) {
-		fprintf(stderr, "Shader error: Found include loop when including %s from %s\n", filename.c_str(), included_from.c_str());
+		fprintf(stderr, "Shader preprocessor error: Found include loop when including %s from %s\n", filename.c_str(), included_from.c_str());
 		exit(2);
 	}
 
@@ -54,7 +54,7 @@ std::string Shader::parse_shader(const std::string &filename, std::set<std::stri
 			if(first_quote != std::string::npos) {
 				size_t end_quote = line.find_last_of('"');
 				if(end_quote == std::string::npos || end_quote == first_quote) {
-					fprintf(stderr, "%s\nError in shader preprocessor in %s:%d: Missing closing quote for #include command\n", buffer, filename.c_str(),  linenr);
+					fprintf(stderr, "%s\nShader preprocessor error in %s:%d: Missing closing quote for #include command\n", buffer, filename.c_str(),  linenr);
 					exit(2);
 				}
 				//Trim quotes
@@ -85,7 +85,7 @@ GLuint Shader::load_shader(GLenum eShaderType, const std::string &strFilename) {
 			code.getline(buffer, 2048);
 			fprintf(stderr, "%d %s\n", ++linenr, buffer);
 		}
-		fprintf(stderr, "%s\n", e.what());
+		fprintf(stderr, "Error in shader %s: %s\n",strFilename.c_str(),  e.what());
 		throw;
 	}
 }

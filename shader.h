@@ -36,14 +36,15 @@ public:
 	};
 
 	struct material_t {
+		material_t() : extra(-1) {};
 		/*
 			The extra parameter is used for different things in different shaders:
-			NORMAL_SHADER: No use
-			LIGHT_SHADER: [0..MAX_NUM_LIGHTS] My light id
+			NORMAL_SHADER: Set extra to [1..MAX_NUM_LIGHTS+1] to specify that we are rendering a light (id+1, < 1 indicates that this is not a light)
+			SKYBOX_SHADER: No use
 		*/
 		unsigned int use_texture;
 		unsigned int use_normal_map;
-		unsigned int extra;
+		int extra;
 		float shininess;
 		glm::vec4 diffuse;
 		glm::vec4 specular;

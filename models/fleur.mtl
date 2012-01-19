@@ -1,0 +1,35 @@
+# Blender MTL File: 'fleurOptonl.blend'
+# Material Count: 3
+newmtl Material.007_corpoDefinitivoOpt.pn
+Ns 96.078431
+Ka 0.000000 0.000000 0.000000
+Kd 1.000000 1.000000 1.000000
+Ks 0.000000 0.000000 0.000000
+Ni 1.000000
+d 1.000000
+illum 1
+map_Kd corpoDefinitivoOpt.png
+
+
+newmtl Material_capgonnacol.png
+Ns 96.078431
+Ka 0.000000 0.000000 0.000000
+Kd 1.000000 1.000000 1.000000
+Ks 0.000000 0.000000 0.000000
+Ni 1.000000
+d 0.000000
+illum 1
+map_Kd capgonnacol.png
+map_d capgonnaAlph.png
+
+
+newmtl capelli_nuoviCap.png
+Ns 317.647059
+Ka 0.000000 0.000000 0.000000
+Kd 0.810040 0.932067 0.990000
+Ks 0.000000 0.000000 0.000000
+Ni 1.000000
+d 0.000000
+illum 1
+map_d capgonnaAlph.png
+map_Bump capgonnacol.png

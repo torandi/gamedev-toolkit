@@ -33,6 +33,6 @@ void Light::set_id_in_render_object(RenderObject * ro, int id, bool set_colors) 
 			it->attr.specular = glm::vec4(intensity,1.f);
 			it->attr.emission = glm::vec4(intensity,1.f);
 		}
-		it->attr.extra = id;
+		it->attr.extra = id+1;
 	}
 }

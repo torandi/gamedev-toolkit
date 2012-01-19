@@ -1,9 +1,9 @@
 #version 330
-#include "uniforms.frag"
+#include "uniforms.glsl"
 
-in vec2 tex_coord;
-out vec4 outputColor;
+in vec2 texcoord;
+out vec4 ocolor;
 
 void main() {
-	outputColor = texture(tex1, tex_coord)*Lgt.ambient_intensity*(1.0f+texture(tex2, tex_coord));
+	ocolor = texture(tex1, texcoord)*Lgt.ambient_intensity*(1.0f+texture(tex2, texcoord));
 }

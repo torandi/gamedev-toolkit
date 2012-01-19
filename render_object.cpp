@@ -144,6 +144,7 @@ void RenderObject::pre_render() {
 			mtl_data.attr.shininess = 0.0f;
 			mtl_data.attr.specular = glm::vec4(0.f, 0.f, 0.f, 0.f);
 		}
+		printf("Set shininess to %f\n", mtl_data.attr.shininess);
 		max = 1;
 		int two_sided;
 		if((AI_SUCCESS == aiGetMaterialIntegerArray(mtl, AI_MATKEY_TWOSIDED, &two_sided, &max)) && two_sided)
@@ -170,18 +171,17 @@ void RenderObject::recursive_pre_render(const aiNode* node) {
 			const aiVector3D* pos = &(mesh->mVertices[n]);
 			const aiVector3D* texCoord = mesh->HasTextureCoords(0) ? &(mesh->mTextureCoords[0][n]) : &zero_3d;
 			const aiVector3D* normal = &(mesh->mNormals[n]);
-			const aiVector3D* tangent, *binormal;
+			const aiVector3D* tangent, *bitangent;
 			if(mesh->HasTangentsAndBitangents()) {
 				tangent = &(mesh->mTangents[n]);
-				binormal = &(mesh->mBitangents[n]);
+				bitangent= &(mesh->mBitangents[n]);
 			} else {
 				tangent = &zero_3d;
-				binormal= &zero_3d;
+				bitangent = &zero_3d;
 			}
-			//HasTangentsAndBitangents
 			if(!mesh->HasNormals())
 				normal = &zero_3d;
-			vertexData.push_back(vertex_t(pos, texCoord, normal, tangent, binormal));
+			vertexData.push_back(vertex_t(pos, texCoord, normal, tangent, bitangent));
 		}
 
 		for(unsigned int n = 0 ; n<mesh->mNumFaces; ++n) {

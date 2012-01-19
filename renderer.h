@@ -44,7 +44,6 @@ public:
 
 	enum shader_program_t {
 		NORMAL_SHADER=0,
-		LIGHT_SOURCE_SHADER,
 		SKYBOX_SHADER,
 		NUM_SHADERS
 	};

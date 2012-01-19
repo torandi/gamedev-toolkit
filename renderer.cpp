@@ -20,7 +20,6 @@
 
 std::string Renderer::shader_files_[] = {
 	"normal",
-	"light_source",
 	"skybox"
 };
 
