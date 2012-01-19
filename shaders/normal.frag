@@ -58,5 +58,6 @@ void main() {
 		}
 	}
 
+
 	ocolor= clamp(accumLighting,0.0, 1.0);
 }

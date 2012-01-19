@@ -73,8 +73,10 @@ void create_world(Renderer * renderer) {
 	renderer->render_objects.back()->absolute_move(glm::vec3(5.0,0.0,0.0));
 	renderer->render_objects.back()->scale*=5.f;
 
-	//renderer->render_objects.push_back(new RenderObject("models/wall.obj", Renderer::NORMAL_SHADER));
 	renderer->render_objects.push_back(new RenderObject("models/fleur.obj", Renderer::NORMAL_SHADER));
+	renderer->render_objects.back()->absolute_move(glm::vec3(0.0,0.0,12.0));
+	renderer->render_objects.back()->scale*=5.f;
+	renderer->render_objects.push_back(new RenderObject("models/wall.obj", Renderer::NORMAL_SHADER));
 	renderer->render_objects.back()->absolute_move(glm::vec3(0.0,0.0,2.0));
 	renderer->render_objects.back()->scale*=5.f;
 
