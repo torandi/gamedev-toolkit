@@ -118,12 +118,12 @@ const float skyboxData[] = {
 };
 
 const char * skybox_texture_name[] {
-	"front",
-	"back",
-	"left",
-	"right",
-	"top",
-	"bottom"
+	"front_alpha.png",
+	"back_alpha.png",
+	"left_alpha.png",
+	"right_alpha.png",
+	"top_alpha.png",
+	"bottom_alpha.png"
 };
 
 #endif

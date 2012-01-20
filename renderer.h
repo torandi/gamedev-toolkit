@@ -9,6 +9,7 @@
 	#include "light.h"
 	#include "render_group.h"
 	#include "shader.h"
+	#include "texture.h"	
 
 	#define HALF_LIGHT_DISTANCE 1.5f
 
@@ -23,17 +24,14 @@ class Renderer {
 	Shader::lights_data_t lightData;
 
 	GLuint skybox_buffer_;
-	GLuint skybox_texture_;
-	GLuint skybox_skymap_;
 
 	void init_shader(Shader &shader);
-
-	bool skybox_loaded_;
 
 	int width_, height_;
 
 	static std::string shader_files_[];
 public:
+	Texture * skybox_texture;
 
 	Renderer(int w, int h, bool fullscreen);
 	~Renderer();

@@ -113,7 +113,7 @@ public:
 	 * The frame to loop back to is not changed (0 from the begining)
 	 * If end_frame is -1 end_frame will be set to animation durration.
 	 */
-	bool start_animation(int anim=0, double start_frame=-1, double end_frame=-1, anim_end_behaviour_t end_behaviour=ANIM_RESET);
+	bool start_animation(unsigned int anim=0, double start_frame=-1, double end_frame=-1, anim_end_behaviour_t end_behaviour=ANIM_RESET);
 	/*
 	 * Set endframe to != -1 to wait to given frame until stop, otherwise it will stop instantly
 	 * Set set_frame to set that frame now (or after end_frame). Set set_frame to -1 to return to non animation behaviour

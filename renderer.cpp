@@ -7,6 +7,8 @@
 
 #include "skybox.h"
 
+#include "texture.h"
+
 #include <glload/gll.hpp>
 #include <glload/gl_3_3.h>
 #include <glm/glm.hpp>
@@ -87,7 +89,7 @@ Renderer::Renderer(int w, int h, bool fullscreen) {
 	light_attenuation = 1.f/pow(HALF_LIGHT_DISTANCE,2);
 	ambient_intensity = glm::vec3(0.1f,0.1f,0.1f);
 
-	skybox_loaded_ = false;
+	skybox_texture = NULL;
 
 	width_ = w;
 	height_ = h;
@@ -184,53 +186,17 @@ void Renderer::load_skybox(std::string skybox_path) {
 
 	//Load skybox texture:
 	skybox_path+="/";
-	std::string fe = "_alpha.png"; //file ending
-	std::string skymap_fe = "_skymap.jpg"; //skymap ending
 
-	//skybox_texture_[i] = load_texture(skybox_path+skybox_texture_name[i]+fe);
-	//skybox_skymap_[i] = load_texture(skybox_path+skybox_texture_name[i]+skymap_fe);
-
-	glimg::ImageSet * textures[6];
-
+	std::vector<std::string> files;
 	for(int i=0; i < 6; ++i) {
-		textures[i]  = glimg::loaders::stb::LoadFromFile(skybox_path+skybox_texture_name[i]+fe);
+		files.push_back(skybox_path+skybox_texture_name[i]);
 	}
+	
+	skybox_texture = new Texture(files, false);
+	skybox_texture->bind();
+	skybox_texture->set_clamp_params();
+	skybox_texture->unbind();
 
-	glGenTextures(1, &skybox_texture_);
-	glGenTextures(1, &skybox_skymap_);
-
-	glBindTexture(GL_TEXTURE_2D_ARRAY, skybox_texture_);
-	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-
-	checkForGLErrors("load_skybox(): params");
-
-	glimg::OpenGLPixelTransferParams fmt = glimg::GetUploadFormatType(textures[0]->GetFormat(), 0); 
-
-	glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, textures[0]->GetFormat().Components(), textures[0]->GetDimensions().width, 
-		textures[0]->GetDimensions().height, 8, 0,   fmt.format,  fmt.type, NULL);
-
-	checkForGLErrors("load_skybox(): create");
-
-	for(int i=0; i < 6; ++i) {
-		glPixelStorei(GL_UNPACK_ALIGNMENT, textures[i]->GetFormat().LineAlign());
-		glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, i, textures[i]->GetDimensions().width, textures[i]->GetDimensions().height,
-		1, fmt.format,  fmt.type, textures[i]->GetImageArray(0));
-		checkForGLErrors("load_skybox(): set");
-	}
-
-	glBindTexture(GL_TEXTURE_2D_ARRAY, skybox_skymap_);
-	/*glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);*/
-
-
-	glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
-
-	skybox_loaded_ = true;
 }
 
 Renderer::~Renderer() { }
@@ -255,7 +221,7 @@ void Renderer::render(double dt){
 	glClear(GL_COLOR_BUFFER_BIT);
 	glClear(GL_DEPTH_BUFFER_BIT);
 
-	if(skybox_loaded_)
+	if(skybox_texture != NULL)
 		render_skybox();
 
 	projectionViewMatrix.Push();
@@ -333,18 +299,11 @@ void Renderer::render_skybox() {
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, (void*)(sizeof(float)*3*36) );
 
 	checkForGLErrors("render_skybox(): pre");
-/*
-	for(int i =0;i<6; ++i) {
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, skybox_texture_[i]);
-		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, skybox_skymap_[i]);
-		glDrawArrays(GL_TRIANGLES, 6*i, 6);
-	}
-*/
 	
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D_ARRAY, skybox_texture_);
+
+	skybox_texture->bind();
+
 	glDrawArrays(GL_TRIANGLES, 0, 36);
 
 

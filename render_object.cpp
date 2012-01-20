@@ -119,8 +119,8 @@ void RenderObject::run_animation(double dt) {
 	}
 }
 
-bool RenderObject::start_animation(int anim, double start_frame, double end_frame, anim_end_behaviour_t end_behaviour) {
-	if(!scene->HasAnimations() || anim < 0 || anim >= scene->mNumAnimations) 
+bool RenderObject::start_animation(unsigned int anim, double start_frame, double end_frame, anim_end_behaviour_t end_behaviour) {
+	if(!scene->HasAnimations() || anim >= scene->mNumAnimations) 
 		return false;
 	current_animation_ = anim;
 	run_animation_ = true;
@@ -348,7 +348,7 @@ void RenderObject::recursive_render(const aiNode* node, double dt, Renderer * re
 		//Translation:
 			//Find next keyframe:
 			next_keyframe = na->mNumPositionKeys-1;
-			for(int i=0; i< na->mNumPositionKeys; ++i) {
+			for(unsigned int i=0; i< na->mNumPositionKeys; ++i) {
 				if(na->mPositionKeys[i].mTime > current_frame_) {
 					next_keyframe = i;
 					break;
@@ -376,7 +376,7 @@ void RenderObject::recursive_render(const aiNode* node, double dt, Renderer * re
 		//Rotation
 			//Find next keyframe:
 			next_keyframe = na->mNumRotationKeys-1;
-			for(int i=0; i<na->mNumRotationKeys; ++i) {
+			for(unsigned int i=0; i<na->mNumRotationKeys; ++i) {
 				if(na->mRotationKeys[i].mTime > current_frame_) {
 					next_keyframe = i;
 					break;
@@ -406,7 +406,7 @@ void RenderObject::recursive_render(const aiNode* node, double dt, Renderer * re
 		//Scaling
 			//Find next keyframe:
 			next_keyframe = na->mNumScalingKeys-1;
-			for(int i=0; i<na->mNumScalingKeys; ++i) {
+			for(unsigned int i=0; i<na->mNumScalingKeys; ++i) {
 				if(na->mScalingKeys[i].mTime > current_frame_) {
 					next_keyframe = i;
 					break;

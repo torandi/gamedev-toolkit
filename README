@@ -1,7 +1,8 @@
 A toolkit for loading and rendering a 3d world.
 
 Dependencies:
-Unofficial OpenGL Software Development Kit: http://glsdk.sourceforge.net/
-Open Asset Import Library: http://assimp.sourceforge.net/
+Unofficial OpenGL Software Development Kit: http://glsdk.sourceforge.net/ - Only glm, glload, glutil and glimg
+Open Asset Import Library: http://assimp.sourceforge.net/ (without boost)
+SDL with SDL_image
 
-The glsdk doesn't have a make install commando, specify path to it in the Makefile (GLSDK_PATH)
+The glsdk doesn't have a make install command, specify path to it in the Makefile (GLSDK_PATH)
