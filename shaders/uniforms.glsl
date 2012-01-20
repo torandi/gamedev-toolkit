@@ -1,4 +1,7 @@
+#extension GL_EXT_gpu_shader4 : enable
+
 const int maxNumberOfLights = 4;
+const uint true_uint = uint(1);
 
 uniform sampler2D tex1;
 uniform sampler2D tex2;

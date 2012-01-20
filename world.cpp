@@ -76,8 +76,8 @@ void create_world(Renderer * renderer) {
 	renderer->render_objects.push_back(new RenderObject("models/wall.obj", Renderer::NORMAL_SHADER));
 	renderer->render_objects.back()->absolute_move(glm::vec3(-10.0,0.0,2.0));
 	renderer->render_objects.back()->scale*=5.f;
-	renderer->render_objects.push_back(new RenderObject("models/cube_textured.obj", Renderer::NORMAL_SHADER));
-	renderer->render_objects.back()->absolute_move(glm::vec3(0.0,0.0,2.0));
+	//renderer->render_objects.push_back(new RenderObject("models/cube_textured.obj", Renderer::NORMAL_SHADER));
+	//renderer->render_objects.back()->absolute_move(glm::vec3(0.0,0.0,2.0));
 
 	lights[LIGHT_SOURCE0].set_position(glm::vec3(-1.0, 1.0, -2.0));
 

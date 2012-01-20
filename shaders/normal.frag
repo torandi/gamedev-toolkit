@@ -15,7 +15,7 @@ out vec4 ocolor;
 void main() {
 
 	//If the extra parameter is >= 1 it indicates we are rendering a light with id (extra-1)
-	int my_light_id = Mtl.extra -1;
+	int my_light_id = Mtl.extra - 1;
 
 	vec3 norm_normal, norm_tangent, norm_bitangent;
 	norm_normal = normalize(normal);
@@ -31,18 +31,18 @@ void main() {
 
 	vec4 originalColor; 
 	vec3 normal_map = vec3(0.0, 0.0, 1.0);
-	if(Mtl.use_normal_map==1) {
+	if(Mtl.use_normal_map==true_uint) {
 		normal_map = normalize(texture(tex2, texcoord).xyz * 2.0 - 1.0);
 	}
 	
-	if(Mtl.use_texture == 1) {
+	if(Mtl.use_texture == true_uint) {
 		originalColor = texture(tex1, texcoord);
 	} else {
 		originalColor = Mtl.diffuse;
 	}
 	vec4 accumLighting = originalColor * Lgt.ambient_intensity;
 
-	for(int light = 0; light < Lgt.num_lights; ++light) {
+	for(int light = 0; uint(light) < Lgt.num_lights; ++light) {
 		if(light != my_light_id) {
 			vec3 light_distance = Lgt.lights[light].position.xyz - position;
 			vec3 dir = normalize(light_distance);

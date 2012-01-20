@@ -5,6 +5,7 @@
 	#include <SDL/SDL.h>
 
 	extern bool keys[SDLK_LAST];
+	extern SDL_Joystick *joy;
 
 	void init_input();
 	void cleanup_input();
