@@ -3,10 +3,12 @@
 #include "renderer.h"
 #include <string>
 #include <cstdio>
+#include <algorithm>
 
 #include <assimp/assimp.h>
 #include <assimp/aiScene.h>
 #include <assimp/aiPostProcess.h>
+#include <glm/gtc/quaternion.hpp>
 #include <glm/glm.hpp>
 #include <glimg/glimg.h>
 
@@ -28,6 +30,10 @@ RenderObject::RenderObject(std::string model, Renderer::shader_program_t shader_
 	: RenderGroup(), shader_program_(shader_program) {
 
 	name = model;
+	current_animation_ = -1;
+	run_animation_ = false;
+	current_frame_ = 0;
+	loop_back_frame_ = 0;
 
 	scene = aiImportFile( model.c_str(), 
 		aiProcess_Triangulate | aiProcess_GenSmoothNormals |
@@ -39,7 +45,7 @@ RenderObject::RenderObject(std::string model, Renderer::shader_program_t shader_
 		);
 
 	if(scene != 0) {
-		printf("Loaded model %s: \nMeshes: %d\nTextures: %d\nMaterials: %d\n",model.c_str(), scene->mNumMeshes, scene->mNumTextures, scene->mNumMaterials);
+		printf("Loaded model %s: \nMeshes: %d\nTextures: %d\nMaterials: %d\nAnimations: %d\n",model.c_str(), scene->mNumMeshes, scene->mNumTextures, scene->mNumMaterials, scene->mNumAnimations);
 
 		//Get bounds:
 		aiVector3D s_min, s_max;
@@ -61,11 +67,98 @@ RenderObject::RenderObject(std::string model, Renderer::shader_program_t shader_
 		normalization_matrix_ = normMatrix.Top();
 
 		pre_render();
-
-
+/*
+		if(scene->HasAnimations()) {
+			printf("Animation data:\n");
+			for(unsigned int i=0; i < scene->mNumAnimations; ++i) {
+				aiAnimation * anim = scene->mAnimations[i];
+				printf("Name: %s, Bone Channels: %d, Mesh channels: %d, tps: %f, duration: %f\n", anim->mName.data, anim->mNumChannels, anim->mNumMeshChannels, anim->mTicksPerSecond, anim->mDuration);
+				for(unsigned int n=0; n<anim->mNumChannels; ++n) {
+					aiNodeAnim * na = anim->mChannels[n];
+					printf("nodeAnim: Node name: %s, position keys: %d, rotation keys: %d, scaling keys: %d\n", na->mNodeName.data, na->mNumPositionKeys, na->mNumRotationKeys, na->mNumScalingKeys);
+				}
+			}
+		}
+*/
 	} else {
 		printf("Failed to load model %s\n", model.c_str());
 	}
+}
+
+void RenderObject::run_animation(double dt) {
+	if(current_animation_ != -1) {
+		double tps = scene->mAnimations[current_animation_]->mTicksPerSecond;
+		tps = (tps == 0) ? 50.0 : tps;
+		current_frame_ += tps*dt;
+		if(current_frame_ >= end_frame_) {
+			switch(anim_end_behaviour_) {
+				case ANIM_LOOP:
+					current_frame_ = loop_back_frame_;
+					break;
+				case ANIM_STOP_AT_END:
+					current_frame_ = end_frame_;
+					run_animation_ = false;
+					break;
+				case ANIM_STOP_AT_START:
+					current_frame_ = loop_back_frame_;
+					run_animation_ = false;
+					break;
+				case ANIM_STOP_AT_END_AND_GO_TO_POST_FRAME:
+					current_frame_ = post_frame_;
+					run_animation_ = false;
+					break;
+				case ANIM_RESET:
+					current_frame_ = 0;
+					run_animation_ = false;
+					current_animation_ = -1;
+					break;
+			}	
+		}	
+	} else {
+		fprintf(stderr, "Error! Running animation with current_animation_ == -1! in model %s\n", name.c_str());
+	}
+}
+
+bool RenderObject::start_animation(int anim, double start_frame, double end_frame, anim_end_behaviour_t end_behaviour) {
+	if(!scene->HasAnimations() || anim < 0 || anim >= scene->mNumAnimations) 
+		return false;
+	current_animation_ = anim;
+	run_animation_ = true;
+	if(start_frame != -1) {
+		current_frame_ = start_frame;
+		loop_back_frame_ = start_frame;
+	}
+	if(end_frame == -1)
+		end_frame_ = scene->mAnimations[current_animation_]->mDuration;
+	else
+		end_frame_ = end_frame;
+
+	anim_end_behaviour_ = end_behaviour;	
+	return true;
+}
+
+bool RenderObject::stop_animation(double end_frame, double stop_frame) {
+	if(!run_animation_)
+		return false;
+	if(end_frame == -1) {
+		//Stop now
+		run_animation_ = false;
+		if(stop_frame > -1)
+			current_frame_ = stop_frame;
+		else if(stop_frame == -1)
+			current_animation_ = -1;
+	} else {
+		end_frame_ = end_frame;
+		if(stop_frame > -1) {
+			post_frame_ = stop_frame;
+			anim_end_behaviour_ = ANIM_STOP_AT_END_AND_GO_TO_POST_FRAME;
+		} else if(stop_frame == -1) {
+			anim_end_behaviour_ = ANIM_RESET;
+		} else {
+			anim_end_behaviour_ = ANIM_STOP_AT_END;
+		}
+	}
+	return true;
 }
 
 GLuint RenderObject::load_texture(std::string path) {
@@ -79,6 +172,7 @@ GLuint RenderObject::load_texture(std::string path) {
 void RenderObject::pre_render() {
 
 	recursive_pre_render(scene->mRootNode);
+
 
 	//Init materials:
 	for(unsigned int i= 0; i < scene->mNumMaterials; ++i) {
@@ -157,9 +251,34 @@ void RenderObject::pre_render() {
 
 void RenderObject::recursive_pre_render(const aiNode* node) {
 	const aiVector3D zero_3d(0.0f,0.0f,0.0f);
-	
+
+	node_data_t nd;
+	nd.name = node->mName;
+	//Find animation:
+
+	if(scene->HasAnimations()) {
+		nd.animations = new aiNodeAnim*[scene->mNumAnimations];
+		for(unsigned int i=0; i < scene->mNumAnimations; ++i) {
+			nd.animations[i] = NULL;
+			aiAnimation * anim = scene->mAnimations[i];
+			for(unsigned int n=0; n<anim->mNumChannels; ++n) {
+				aiNodeAnim * na = anim->mChannels[n];
+				if(na->mNodeName == node->mName) {
+					nd.animations[i] = na;
+					break;
+				}
+			}
+
+		}
+	} else {
+		nd.animations = NULL;
+	}
 	for(unsigned int i=0; i<node->mNumMeshes; ++i) {
 		const aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
+		printf("Bones in %s#%s: %d\n", node->mName.data,mesh->mName.data, mesh->mNumBones);
+		for(unsigned int b = 0; b< mesh->mNumBones; ++b) {
+			printf("Name: %s, affect num vertexes: %d\n", mesh->mBones[b]->mName.data, mesh->mBones[b]->mNumWeights);
+		}
 		mesh_data_t md;
 
 		md.mtl_index = mesh->mMaterialIndex;
@@ -209,6 +328,8 @@ void RenderObject::recursive_pre_render(const aiNode* node) {
 		mesh_data[mesh] = md;
 	}
 
+	node_data_[node] = nd;
+
 	for(unsigned int i=0; i<node->mNumChildren; ++i) {
 		recursive_pre_render(node->mChildren[i]);
 	}
@@ -216,10 +337,104 @@ void RenderObject::recursive_pre_render(const aiNode* node) {
 
 void RenderObject::recursive_render(const aiNode* node, double dt, Renderer * renderer) {
 	renderer->modelMatrix.Push();
+	
+	node_data_t nd = node_data_[node];
 
-	aiMatrix4x4 m = node->mTransformation; 	
-	aiTransposeMatrix4(&m);
-	renderer->modelMatrix *= glm::make_mat4((float*)&m);
+	//Run animation or apply default transform
+	if(run_animation_ && nd.animations !=NULL && nd.animations[current_animation_] != NULL) {
+		aiNodeAnim * na = nd.animations[current_animation_];
+		int next_keyframe;
+	
+		//Translation:
+			//Find next keyframe:
+			next_keyframe = na->mNumPositionKeys-1;
+			for(int i=0; i< na->mNumPositionKeys; ++i) {
+				if(na->mPositionKeys[i].mTime > current_frame_) {
+					next_keyframe = i;
+					break;
+				}
+			}
+			glm::vec3 translation; //Translation to apply
+			if(next_keyframe == 0) {
+				//no keyframe before this one
+				translation = glm::make_vec3((float*)&na->mPositionKeys[next_keyframe].mValue);
+			} else {
+				glm::vec3 prev, next;
+				float blend; 
+				aiVectorKey &k_prev = na->mPositionKeys[next_keyframe-1];
+				aiVectorKey &k_next = na->mPositionKeys[next_keyframe];
+				prev = glm::make_vec3((float*)&k_prev.mValue);
+				next = glm::make_vec3((float*)&k_next.mValue);
+				float interval = k_next.mTime - k_prev.mTime;
+				float pos = current_frame_ - k_prev.mTime;
+				blend = pos/interval;
+				blend = std::min(blend, 1.f);
+				translation = glm::mix(prev, next, blend);
+			}
+			renderer->modelMatrix.Translate(translation);
+
+		//Rotation
+			//Find next keyframe:
+			next_keyframe = na->mNumRotationKeys-1;
+			for(int i=0; i<na->mNumRotationKeys; ++i) {
+				if(na->mRotationKeys[i].mTime > current_frame_) {
+					next_keyframe = i;
+					break;
+				}
+			}
+			aiQuaternion rotation; //Rotation to apply
+			if(next_keyframe == 0) {
+				//no keyframe before this one
+				rotation = na->mRotationKeys[next_keyframe].mValue;
+			} else {
+				float blend; 
+				aiQuatKey &k_prev = na->mRotationKeys[next_keyframe-1];
+				aiQuatKey &k_next = na->mRotationKeys[next_keyframe];
+				float interval = k_next.mTime - k_prev.mTime;
+				float pos = current_frame_ - k_prev.mTime;
+				blend = pos/interval;
+				blend = std::min(blend, 1.f);
+				aiQuaternion::Interpolate(rotation, k_prev.mValue, k_next.mValue, blend); 
+			}
+			glm::fquat q;
+			q.x = rotation.x;
+			q.y = rotation.y;
+			q.z = rotation.z;
+			q.w = rotation.w;
+			renderer->modelMatrix *= glm::mat4_cast(q);
+
+		//Scaling
+			//Find next keyframe:
+			next_keyframe = na->mNumScalingKeys-1;
+			for(int i=0; i<na->mNumScalingKeys; ++i) {
+				if(na->mScalingKeys[i].mTime > current_frame_) {
+					next_keyframe = i;
+					break;
+				}
+			}
+			glm::vec3 scaling; //scaling to apply
+			if(next_keyframe == 0) {
+				//no keyframe before this one
+				scaling = glm::make_vec3((float*)&na->mScalingKeys[next_keyframe].mValue);
+			} else {
+				glm::vec3 prev, next;
+				float blend; 
+				aiVectorKey & k_prev = na->mScalingKeys[next_keyframe-1];
+				aiVectorKey & k_next = na->mScalingKeys[next_keyframe];
+				prev = glm::make_vec3((float*)&k_prev.mValue);
+				next = glm::make_vec3((float*)&k_next.mValue);
+				float interval = k_next.mTime - k_prev.mTime;
+				float pos = current_frame_ - k_prev.mTime;
+				blend = pos/interval;
+				blend = std::min(blend, 1.f);
+				scaling = glm::mix(prev, next, blend);
+			}
+			renderer->modelMatrix.Scale(scaling);
+	} else {
+		aiMatrix4x4 m = node->mTransformation; 	
+		aiTransposeMatrix4(&m);
+		renderer->modelMatrix *= glm::make_mat4((float*)&m);
+	}
 
 	renderer->upload_model_matrices();
 
@@ -267,6 +482,9 @@ void RenderObject::recursive_render(const aiNode* node, double dt, Renderer * re
 }
 
 void RenderObject::render(double dt, Renderer * renderer) {
+
+	if(run_animation_)
+		run_animation(dt);
 
 	glUseProgram(renderer->shaders[shader_program_].program);
 

@@ -14,7 +14,15 @@
 #include "render_group.h"
 
 class RenderObject : public RenderGroup {
-
+public:
+	enum anim_end_behaviour_t {
+		ANIM_LOOP,
+		ANIM_STOP_AT_END, //stop at end frame
+		ANIM_STOP_AT_START, //stop at start frame (after first loop)
+		ANIM_STOP_AT_END_AND_GO_TO_POST_FRAME, //stop at post_frame_ (set by stop_animation)
+		ANIM_RESET //After end frame, stop and return to default look
+	};
+private:
 	glm::mat4 normalization_matrix_;
 
 	void get_bounding_box_for_node (const struct aiNode* nd,	struct aiVector3D* min, struct aiVector3D* max, struct aiMatrix4x4* trafo);
@@ -29,10 +37,30 @@ class RenderObject : public RenderGroup {
 
 	//Trims path and loads texture
 	static GLuint load_texture(std::string path);
+
+	double current_frame_;
+	int current_animation_;
+	bool run_animation_;
+	double loop_back_frame_;
+	double post_frame_; //Frame to stop at if ANIM_STOP_AT_POST_FRAME is specified
+	double end_frame_;
+	anim_end_behaviour_t anim_end_behaviour_;
+	
+	struct node_data_t {
+		aiNodeAnim ** animations;
+		aiString name;
+	};
+
+	std::map<const aiNode*, node_data_t> node_data_;
+
+	//Updates the current_frame and other animation statuses
+	void run_animation(double dt);
+
 public:
 	const aiScene* scene;
 	glm::vec3 scene_min, scene_max, scene_center;
 	std::string name;
+	double anim_speed;
 
 	struct mesh_data_t {
 		mesh_data_t() : num_indices(0) {};
@@ -41,6 +69,7 @@ public:
 		unsigned int num_indices;
 		unsigned int mtl_index;
 	};
+
 
 
 	struct vertex_t {
@@ -79,6 +108,21 @@ public:
 
 	std::map<const aiMesh*, mesh_data_t > mesh_data;
 
+	/*
+	 * If start_frame is -1 the animation will start from the current frame (0 from the begining)
+	 * The frame to loop back to is not changed (0 from the begining)
+	 * If end_frame is -1 end_frame will be set to animation durration.
+	 */
+	bool start_animation(int anim=0, double start_frame=-1, double end_frame=-1, anim_end_behaviour_t end_behaviour=ANIM_RESET);
+	/*
+	 * Set endframe to != -1 to wait to given frame until stop, otherwise it will stop instantly
+	 * Set set_frame to set that frame now (or after end_frame). Set set_frame to -1 to return to non animation behaviour
+	 * Leave set_frame at -2 to stop at end_frame
+	 * Returns true if an anmiation was running
+	*/
+	bool stop_animation(double end_frame=-1, double set_frame=-2);
+	float current_frame() { return current_frame_; };
+	bool is_animating() { return run_animation_; };
 
 	void pre_render();
 	void recursive_pre_render(const aiNode* node);
