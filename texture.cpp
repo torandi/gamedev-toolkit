@@ -1,10 +1,10 @@
+#include "renderer.h"
 #include "texture.h"
 
 #include <SDL/SDL.h>
 #include <SDL/SDL_image.h>
 #include <vector>
 #include <string>
-#include <GL/gl.h>
 #include <cassert>
 
 GLuint Texture::cube_map_index_[6] = {
@@ -23,6 +23,7 @@ Texture::Texture(const std::string &path) :
 	_num_textures(1)
 	{
 	_filenames = new std::string[_num_textures];
+	_filenames[0] = path;
 	_texture_type = GL_TEXTURE_2D;
 	load_texture();
 }
@@ -62,6 +63,7 @@ int Texture::height() const {
 void Texture::bind() const {
 	assert(_texture != (unsigned int)-1);
 	glBindTexture(_texture_type, _texture);
+	Renderer::checkForGLErrors("Texture::bind()");
 }
 
 void Texture::unbind() const {
@@ -78,25 +80,31 @@ void Texture::load_texture() {
 	SDL_Surface ** images = new SDL_Surface*[_num_textures];
 	for(unsigned int i=0; i < _num_textures; ++i) {
 		images[i] = load_image(_filenames[i]);
+		printf("Loaded SDL image %s, size %dx%d\n", _filenames[i].c_str(), images[0]->w, images[0]->h);
 	}
 	_width = images[0]->w;
 	_height = images[0]->h;
 
 	//Generate texture:
 	glGenTextures(1, &_texture);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	
 	bind();	
+	Renderer::checkForGLErrors("load_texture(): gen buffer");
+
 
 	switch(_texture_type) {
 		case GL_TEXTURE_2D:
 			//One texture only:
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, images[0]->w, images[0]->h, 0, GL_RGBA, GL_UNSIGNED_BYTE, images[0]->pixels );
+			glTexParameteri(_texture_type, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			glTexParameteri(_texture_type, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _width, _height, 0, GL_RGBA, GL_UNSIGNED_BYTE, images[0]->pixels );
+			Renderer::checkForGLErrors("load_texture(): write GL_TEXTURE_2D data");
 			break;
 		case GL_TEXTURE_2D_ARRAY:
 			//Generate the array:
+			glTexParameteri(_texture_type, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			glTexParameteri(_texture_type, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 			glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGBA, _width, _height, _num_textures, 0,   GL_RGBA,  GL_UNSIGNED_BYTE, NULL);
+			Renderer::checkForGLErrors("load_texture(): gen 2d array buffer");
 
 			//Fill the array with data:
 			for(unsigned int i=0; i < _num_textures; ++i) {
@@ -108,10 +116,14 @@ void Texture::load_texture() {
 			set_clamp_params();
 			for(int i=0; i < 6; ++i) {
 				glTexImage2D(cube_map_index_[i], 0, GL_RGBA, _width,_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, images[i]->pixels );
+				Renderer::checkForGLErrors("load_texture(): Fill cube map");
 			}
 			break;
+		default:
+			fprintf(stderr, "Error! Invalid texture type encountered when loading textures, exiting (Texture::load_texture()");
+			exit(3);
 	}
-	
+
 	unbind();
 
 	//Free images:
@@ -134,8 +146,8 @@ SDL_Surface * Texture::load_image(const std::string &path) {
 	/* Load image using SDL Image */
 	SDL_Surface* surface = IMG_Load(path.c_str());
 	if ( !surface ){
-	  fprintf(stderr, "Failed to load texture at %s\n", path.c_str());
-	  exit(1);
+		fprintf(stderr, "Failed to load texture at %s\n", path.c_str());
+		exit(1);
 	}
 
 	/* To properly support all formats the surface must be copied to a new
@@ -159,11 +171,11 @@ SDL_Surface * Texture::load_image(const std::string &path) {
 			0x0000FF00,
 			0x000000FF
 #endif
-	);
+			);
 
 	if ( !rgba_surface ) {
-	  fprintf(stderr, "Failed to create RGBA surface\n");
-	  exit(1);
+		fprintf(stderr, "Failed to create RGBA surface\n");
+		exit(1);
 	}
 
 	/* Save the alpha blending attributes */
@@ -180,15 +192,6 @@ SDL_Surface * Texture::load_image(const std::string &path) {
 		SDL_SetAlpha(surface, saved_flags, saved_alpha);
 	}
 
-	/* Generate texture and copy pixels to it */
-/*	glGenTextures(1, &_texture);
-	glBindTexture(GL_TEXTURE_2D, _texture);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, rgba_surface->w, rgba_surface->h, 0, GL_RGBA, GL_UNSIGNED_BYTE, rgba_surface->pixels );
-*/
-	//SDL_FreeSurface(rgba_surface);
-	SDL_FreeSurface(surface);
 	return rgba_surface;
 }
 

@@ -16,7 +16,6 @@
 
 class Renderer {
 
-	int checkForGLErrors( const char *s );
 	GLuint vao;
 
 	void render_skybox();
@@ -45,6 +44,8 @@ public:
 		SKYBOX_SHADER,
 		NUM_SHADERS
 	};
+
+	static int checkForGLErrors( const char *s );
 
 	Shader shaders[NUM_SHADERS];
 

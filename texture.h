@@ -3,7 +3,7 @@
 
 #include <string>
 #include <vector>
-#include <GL/gl.h>
+#include <glload/gl_3_3.h>
 #include <SDL/SDL_image.h>
 
 class Texture  {

@@ -36,7 +36,7 @@ private:
 	Renderer::shader_program_t shader_program_;
 
 	//Trims path and loads texture
-	static GLuint load_texture(std::string path);
+	static Texture * load_texture(std::string path);
 
 	double current_frame_;
 	int current_animation_;
@@ -91,8 +91,8 @@ public:
 
 	struct material_t {
 		material_t() : two_sided(false) {};
-		GLuint texture;
-		GLuint normal_map;
+		Texture * texture;
+		Texture * normal_map;
 		Shader::material_t attr;
 		bool two_sided;
 

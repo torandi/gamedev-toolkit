@@ -1,6 +1,7 @@
 #include "render_object.h"
 #include "render_group.h"
 #include "renderer.h"
+#include "texture.h"
 #include <string>
 #include <cstdio>
 #include <algorithm>
@@ -161,12 +162,12 @@ bool RenderObject::stop_animation(double end_frame, double stop_frame) {
 	return true;
 }
 
-GLuint RenderObject::load_texture(std::string path) {
+Texture * RenderObject::load_texture(std::string path) {
 	size_t last_slash = path.rfind("/");
 	if(last_slash != std::string::npos) 
 		path = path.substr(last_slash+1);
 	std::string full_path = std::string("textures/")+path;
-	return Renderer::load_texture(full_path);
+	return new Texture(full_path);
 }
 
 void RenderObject::pre_render() {
@@ -506,12 +507,12 @@ void RenderObject::material_t::activate(Renderer * renderer) {
 
 	if(attr.use_texture) {
 		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, texture);
+		texture->bind();
 	}
 	
 	if(attr.use_normal_map) {
 		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, normal_map);
+		normal_map->bind();
 	}
 
 	//Upload material attributes to shader
