@@ -184,7 +184,7 @@ void Renderer::load_skybox(std::string skybox_path) {
 
 	//Load skybox texture:
 	skybox_path+="/";
-	std::string fe = ".jpg"; //file ending
+	std::string fe = "_alpha.png"; //file ending
 	std::string skymap_fe = "_skymap.jpg"; //skymap ending
 
 	//skybox_texture_[i] = load_texture(skybox_path+skybox_texture_name[i]+fe);

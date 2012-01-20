@@ -1,0 +1,7 @@
+#!/bin/bash
+composite -compose CopyOpacity front_skymap.jpg front.jpg front_alpha.png 
+composite -compose CopyOpacity back_skymap.jpg back.jpg back_alpha.png 
+composite -compose CopyOpacity left_skymap.jpg left.jpg left_alpha.png 
+composite -compose CopyOpacity right_skymap.jpg right.jpg right_alpha.png 
+composite -compose CopyOpacity top_skymap.jpg top.jpg top_alpha.png 
+composite -compose CopyOpacity bottom_skymap.jpg bottom.jpg bottom_alpha.png 
