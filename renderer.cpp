@@ -13,7 +13,6 @@
 #include <glload/gl_3_3.h>
 #include <glm/glm.hpp>
 #include <glutil/MatrixStack.h>
-#include <glimg/glimg.h>
 #include <vector>
 #include <cstdio>
 #include <algorithm>
@@ -149,7 +148,6 @@ Renderer::Renderer(int w, int h, bool fullscreen) {
 	glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxData), skyboxData, GL_STATIC_DRAW);
 
 
-
 	glUseProgram(0);
 
 	/* setup opengl */
@@ -177,6 +175,9 @@ Renderer::Renderer(int w, int h, bool fullscreen) {
 	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	checkForGLErrors("init(): ");
+
+	glBindTexture(GL_TEXTURE_2D, 0);
+	glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
 }
 
 /**
@@ -199,7 +200,9 @@ void Renderer::load_skybox(std::string skybox_path) {
 
 }
 
-Renderer::~Renderer() { }
+Renderer::~Renderer() {
+	delete skybox_texture;		
+}
 
 int Renderer::checkForGLErrors( const char *s )
 {
@@ -306,7 +309,6 @@ void Renderer::render_skybox() {
 
 	glDrawArrays(GL_TRIANGLES, 0, 36);
 
-
 	checkForGLErrors("render_skybox(): render");
 
 
@@ -342,16 +344,4 @@ void Renderer::enable_face_culling() {
 void Renderer::disabel_face_culling() {
 	cull_face = false;
 	glDisable(GL_CULL_FACE);
-}
-
-GLuint Renderer::load_texture(std::string file) {
-	printf("Loading texture %s\n", file.c_str());
-	const glimg::ImageSet * img_set = glimg::loaders::stb::LoadFromFile(file.c_str());
-	GLuint texture = glimg::CreateTexture(img_set,0);
-	glBindTexture(GL_TEXTURE_2D, texture);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glBindTexture(GL_TEXTURE_2D, 0);
-	delete img_set;
-	return texture;
 }

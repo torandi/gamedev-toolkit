@@ -11,7 +11,6 @@
 #include <assimp/aiPostProcess.h>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/glm.hpp>
-#include <glimg/glimg.h>
 
 #define aisgl_min(x,y) (x<y?x:y)
 #define aisgl_max(x,y) (y>x?y:x)
@@ -25,6 +24,17 @@ void RenderObject::color4_to_vec4(const struct aiColor4D *c, glm::vec4 &target) 
 
 RenderObject::~RenderObject() {
 	aiReleaseImport(scene);
+	for(std::map<const aiMesh*, mesh_data_t>::iterator it=mesh_data.begin(); it!=mesh_data.end(); ++it) {
+		glDeleteBuffers(1, &it->second.vb);
+		glDeleteBuffers(1, &it->second.ib);
+	}
+
+	for(std::vector<material_t>::iterator it=materials.begin(); it!=materials.end(); ++it) {
+		if(it->texture != NULL)
+			delete it->texture;
+		if(it->normal_map != NULL)
+			delete it->normal_map;
+	}
 }
 
 RenderObject::RenderObject(std::string model, Renderer::shader_program_t shader_program, bool normalize_scale, unsigned int aiOptions) 
@@ -201,11 +211,12 @@ void RenderObject::pre_render() {
 			mtl_data.normal_map = load_texture(p);
 			mtl_data.attr.use_normal_map = 1;
 			printf("Using normal map: %s\n", p.c_str());
+		} else {
+			mtl_data.attr.use_normal_map = 0;
 		}
 
 		aiString name;
-		if(AI_SUCCESS == mtl->Get(AI_MATKEY_NAME, name))
-			printf("Loaded material %d %s\n", i, name.data);
+		mtl->Get(AI_MATKEY_NAME, name);
 
 		aiColor4D diffuse;
 		aiColor4D specular;
@@ -239,7 +250,6 @@ void RenderObject::pre_render() {
 			mtl_data.attr.shininess = 0.0f;
 			mtl_data.attr.specular = glm::vec4(0.f, 0.f, 0.f, 0.f);
 		}
-		printf("Set shininess to %f\n", mtl_data.attr.shininess);
 		max = 1;
 		int two_sided;
 		if((AI_SUCCESS == aiGetMaterialIntegerArray(mtl, AI_MATKEY_TWOSIDED, &two_sided, &max)) && two_sided)
@@ -276,10 +286,6 @@ void RenderObject::recursive_pre_render(const aiNode* node) {
 	}
 	for(unsigned int i=0; i<node->mNumMeshes; ++i) {
 		const aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-		printf("Bones in %s#%s: %d\n", node->mName.data,mesh->mName.data, mesh->mNumBones);
-		for(unsigned int b = 0; b< mesh->mNumBones; ++b) {
-			printf("Name: %s, affect num vertexes: %d\n", mesh->mBones[b]->mName.data, mesh->mBones[b]->mNumWeights);
-		}
 		mesh_data_t md;
 
 		md.mtl_index = mesh->mMaterialIndex;
@@ -460,8 +466,10 @@ void RenderObject::recursive_render(const aiNode* node, double dt, Renderer * re
 			glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_t), (const GLvoid*) (3*sizeof(glm::vec3)+sizeof(glm::vec2)));
 
 			materials[md->mtl_index].activate(renderer);
+			Renderer::checkForGLErrors("RenderObject::activate material");
 
 			glDrawElements(GL_TRIANGLES, md->num_indices, GL_UNSIGNED_INT,0 );
+			Renderer::checkForGLErrors("RenderObject::render()");
 
 			materials[md->mtl_index].deactivate(renderer);
 
@@ -504,6 +512,7 @@ const glm::mat4 RenderObject::matrix() const {
 void RenderObject::material_t::activate(Renderer * renderer) {
 	if(two_sided && renderer->cull_face)
 		glDisable(GL_CULL_FACE);
+	
 
 	if(attr.use_texture) {
 		glActiveTexture(GL_TEXTURE0);
@@ -525,6 +534,16 @@ void RenderObject::material_t::activate(Renderer * renderer) {
 void RenderObject::material_t::deactivate(Renderer * renderer) {
 	if(two_sided && renderer->cull_face)
 		glEnable(GL_CULL_FACE);
+
+	if(attr.use_texture) {
+		glActiveTexture(GL_TEXTURE0);
+		texture->unbind();
+	}
+	
+	if(attr.use_normal_map) {
+		glActiveTexture(GL_TEXTURE1);
+		normal_map->unbind();
+	}
 }
 
 

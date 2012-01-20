@@ -1,12 +1,13 @@
 GLSDK_PATH = ../glsdk
 
 OBJS = main.o renderer.o render_object.o logic.o input.o camera.o movable_object.o light.o render_group.o move_group.o world.o shader.o texture.o
-CFLAGS += -Wall `sdl-config --cflags` -g -std=c++0x
-LDFLAGS += `sdl-config --libs` -lassimp -lSDL_image
 
-CFLAGS  += -I$(GLSDK_PATH)/glload/include -I$(GLSDK_PATH)/glimg/include -I$(GLSDK_PATH)/glm -I$(GLSDK_PATH)/glutil/include -I$(GLSDK_PATH)/glmesh/include  -I $(GLSDK_PATH)/glimg/include
-LDFLAGS += -L$(GLSDK_PATH)/glload/lib -L$(GLSDK_PATH)/glutil/lib -L$(GLSDK_PATH)/glmesh/lib -L $(GLSDK_PATH)/glimg/lib
-LDFLAGS += -lglloadD -lglutilD -lGL -lGLU -lglimgD 
+INCLUDES =  -I$(GLSDK_PATH)/glload/include -I$(GLSDK_PATH)/glm -I$(GLSDK_PATH)/glutil/include  -I$(GLSDK_PATH)/glimg/include
+LIB_PATHS = -L$(GLSDK_PATH)/glload/lib -L$(GLSDK_PATH)/glutil/lib -L$(GLSDK_PATH)/glimg/lib
+
+CFLAGS += $(INCLUDES) -Wall `sdl-config --cflags` -g -std=c++0x
+LDFLAGS += $(LIB_PATHS) `sdl-config --libs` -lassimp -lglloadD -lglutilD -lGL -lGLU  -lglimgD
+
 
 all: gamedev
  

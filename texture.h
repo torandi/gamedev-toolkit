@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 #include <glload/gl_3_3.h>
-#include <SDL/SDL_image.h>
+#include <glimg/glimg.h>
 
 class Texture  {
 	public:
@@ -32,7 +32,7 @@ class Texture  {
 		//Get texture number on open gl
 		GLuint texture() const; 
 
-		static SDL_Surface * load_image(const std::string &path);
+		static glimg::ImageSet * load_image(const std::string &path);
 
 		/* 
 		 * Requires the texture to be bound!
@@ -42,6 +42,9 @@ class Texture  {
 		void set_clamp_params();
 
 	private:
+		//Copy not allowed (no body implemented, intentional!)
+		Texture(const Texture &other);
+
 		void load_texture();
 		void free_texture();
 

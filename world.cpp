@@ -53,13 +53,7 @@ void create_world(Renderer * renderer) {
 
 	//load models:
 
-/*	RenderObject * m = new RenderObject("models/mario_obj.obj", Renderer::NORMAL_SHADER);
 
-	mario.add_object(m);
-	m->absolute_move(glm::vec3(-4.0, 0.0, 0.0));
-
-	renderer->render_objects.push_back(m);
-	renderer->render_objects.back()->scale*=3.0f;
 
 	//objects.back().position+=glm::vec3(0.0, 0.0, 0.f);
 	renderer->render_objects.push_back(new RenderObject("models/nintendo.obj", Renderer::NORMAL_SHADER));//, true, aiProcess_FixInfacingNormals));
@@ -72,15 +66,22 @@ void create_world(Renderer * renderer) {
 
 	renderer->render_objects.push_back(new RenderObject("models/fleur.obj", Renderer::NORMAL_SHADER));
 	renderer->render_objects.back()->absolute_move(glm::vec3(0.0,0.0,12.0));
-	renderer->render_objects.back()->scale*=5.f;*/
+	renderer->render_objects.back()->scale*=5.f;
 	renderer->render_objects.push_back(new RenderObject("models/wall.obj", Renderer::NORMAL_SHADER));
-	renderer->render_objects.back()->absolute_move(glm::vec3(0.0,0.0,2.0));
-	renderer->render_objects.back()->scale*=5.f;/*
-	//renderer->render_objects.push_back(new RenderObject("models/cube_textured.obj", Renderer::NORMAL_SHADER));
-	//renderer->render_objects.back()->absolute_move(glm::vec3(0.0,0.0,2.0));
+	renderer->render_objects.back()->absolute_move(glm::vec3(-5.0,0.0,5.0));
+	renderer->render_objects.back()->scale*=5.f;
+	/*renderer->render_objects.push_back(new RenderObject("models/cube_textured.obj", Renderer::NORMAL_SHADER));
+	renderer->render_objects.back()->absolute_move(glm::vec3(0.0,0.0,2.0));*/
+
+	RenderObject * m = new RenderObject("models/mario_obj.obj", Renderer::NORMAL_SHADER);
+
+	mario.add_object(m);
+	m->absolute_move(glm::vec3(0.0, 2.0, 0.0));
+	renderer->render_objects.push_back(m);
+	renderer->render_objects.back()->scale*=3.0f;
 
 	lights[LIGHT_SOURCE0].set_position(glm::vec3(-1.0, 1.0, -2.0));
-*/
+
 }
 
 void update_world(double dt, Renderer * renderer) {

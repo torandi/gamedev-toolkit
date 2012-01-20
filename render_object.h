@@ -12,6 +12,7 @@
 
 #include "renderer.h"
 #include "render_group.h"
+#include "texture.h"
 
 class RenderObject : public RenderGroup {
 public:
@@ -90,11 +91,10 @@ public:
 	};
 
 	struct material_t {
-		material_t() : two_sided(false) {};
-		Texture * texture;
-		Texture * normal_map;
+		material_t() : two_sided(false), texture(NULL), normal_map(NULL) {};
 		Shader::material_t attr;
 		bool two_sided;
+		Texture * texture, *normal_map;
 
 		void activate(Renderer * renderer);
 		void deactivate(Renderer * renderer);
