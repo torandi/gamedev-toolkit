@@ -28,6 +28,8 @@ void Renderer::init_shader(Shader &shader) {
 	//Local uniforms
 	shader.texture1 = glGetUniformLocation(shader.program, "tex1");
 	shader.texture2 = glGetUniformLocation(shader.program, "tex2");
+	shader.texture_array1 = glGetUniformLocation(shader.program, "tex_array1");
+	shader.texture_array2 = glGetUniformLocation(shader.program, "tex_array2");
 
 	checkForGLErrors((std::string("init shader: local uniforms ")+shader.name).c_str());
 
@@ -72,6 +74,8 @@ void Renderer::init_shader(Shader &shader) {
 	glUseProgram(shader.program);
 	glUniform1i(shader.texture1, 0);
 	glUniform1i(shader.texture2, 1);
+	glUniform1i(shader.texture_array1, 0);
+	glUniform1i(shader.texture_array2, 1);
 	glUseProgram(0);
 
 	checkForGLErrors((std::string("init shader: bind textures")+shader.name).c_str());
@@ -174,29 +178,55 @@ Renderer::Renderer(int w, int h, bool fullscreen) {
  * skybox_path is the path to the folder with the skybox textures
  */
 void Renderer::load_skybox(std::string skybox_path) {
+
 	//Load skybox texture:
 	skybox_path+="/";
 	std::string fe = ".jpg"; //file ending
 	std::string skymap_fe = "_skymap.jpg"; //skymap ending
+
+	//skybox_texture_[i] = load_texture(skybox_path+skybox_texture_name[i]+fe);
+	//skybox_skymap_[i] = load_texture(skybox_path+skybox_texture_name[i]+skymap_fe);
+
+	glimg::ImageSet * textures[6];
+
 	for(int i=0; i < 6; ++i) {
-		skybox_texture_[i] = load_texture(skybox_path+skybox_texture_name[i]+fe);
-		skybox_skymap_[i] = load_texture(skybox_path+skybox_texture_name[i]+skymap_fe);
-
-		//Set hints:
-		glBindTexture(GL_TEXTURE_2D, skybox_texture_[i]);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-
-		glBindTexture(GL_TEXTURE_2D, skybox_skymap_[i]);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glBindTexture(GL_TEXTURE_2D, 0);
-
+		textures[i]  = glimg::loaders::stb::LoadFromFile(skybox_path+skybox_texture_name[i]+fe);
 	}
+
+	glGenTextures(1, &skybox_texture_);
+	glGenTextures(1, &skybox_skymap_);
+
+	glBindTexture(GL_TEXTURE_2D_ARRAY, skybox_texture_);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+	checkForGLErrors("load_skybox(): params");
+
+	glimg::OpenGLPixelTransferParams fmt = glimg::GetUploadFormatType(textures[0]->GetFormat(), 0); 
+
+	glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, textures[0]->GetFormat().Components(), textures[0]->GetDimensions().width, 
+		textures[0]->GetDimensions().height, 8, 0,   fmt.format,  fmt.type, NULL);
+
+	checkForGLErrors("load_skybox(): create");
+
+	for(int i=0; i < 6; ++i) {
+		glPixelStorei(GL_UNPACK_ALIGNMENT, textures[i]->GetFormat().LineAlign());
+		glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, i, textures[i]->GetDimensions().width, textures[i]->GetDimensions().height,
+		1, fmt.format,  fmt.type, textures[i]->GetImageArray(0));
+		checkForGLErrors("load_skybox(): set");
+	}
+
+	glBindTexture(GL_TEXTURE_2D_ARRAY, skybox_skymap_);
+	/*glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);*/
+
+
+	glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
+
 	skybox_loaded_ = true;
 }
 
@@ -297,10 +327,10 @@ void Renderer::render_skybox() {
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, (void*)(sizeof(float)*3*36) );
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, (void*)(sizeof(float)*3*36) );
 
 	checkForGLErrors("render_skybox(): pre");
-
+/*
 	for(int i =0;i<6; ++i) {
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, skybox_texture_[i]);
@@ -308,7 +338,12 @@ void Renderer::render_skybox() {
 		glBindTexture(GL_TEXTURE_2D, skybox_skymap_[i]);
 		glDrawArrays(GL_TRIANGLES, 6*i, 6);
 	}
+*/
+	
 	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D_ARRAY, skybox_texture_);
+	glDrawArrays(GL_TRIANGLES, 0, 36);
+
 
 	checkForGLErrors("render_skybox(): render");
 

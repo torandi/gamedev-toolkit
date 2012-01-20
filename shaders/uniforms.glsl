@@ -3,6 +3,9 @@ const int maxNumberOfLights = 4;
 uniform sampler2D tex1;
 uniform sampler2D tex2;
 
+uniform sampler2DArray tex_array1;
+uniform sampler2DArray tex_array2;
+
 layout(std140) uniform Matrices {
 	mat4 projectionViewMatrix;
 	mat4 modelMatrix;

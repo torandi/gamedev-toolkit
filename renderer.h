@@ -23,8 +23,8 @@ class Renderer {
 	Shader::lights_data_t lightData;
 
 	GLuint skybox_buffer_;
-	GLuint skybox_texture_[6];
-	GLuint skybox_skymap_[6];
+	GLuint skybox_texture_;
+	GLuint skybox_skymap_;
 
 	void init_shader(Shader &shader);
 
