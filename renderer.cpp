@@ -171,6 +171,9 @@ Renderer::Renderer(int w, int h, bool fullscreen) {
 	glDepthRange(0.0f, 1.0f);
 	glEnable(GL_DEPTH_CLAMP);
 
+	glEnable (GL_BLEND); 
+	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
 	checkForGLErrors("init(): ");
 }
 
