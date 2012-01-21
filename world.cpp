@@ -3,6 +3,8 @@
 #include "renderer.h"
 #include "render_object.h"
 
+#include "terrain.h"
+
 #include <assimp/aiPostProcess.h>
 #include <cstdio>
 
@@ -32,6 +34,11 @@ void create_world(Renderer * renderer) {
 	//Skybox
 	renderer->load_skybox("skybox");
 
+	Terrain * t = new Terrain ("valley");
+	//t->absolute_move(glm::vec3(-t->width()/2.0f, 0, t->height()/2.0f));
+
+	renderer->render_objects.push_back(t);
+
 	//Lights:
 #if NUM_LIGHTS > 1
 	lights_lights[LIGHT_SOURCE0] = new Light(glm::vec3(0.8, 0.8, 0.8), Light::POINT_LIGHT);
@@ -52,7 +59,7 @@ void create_world(Renderer * renderer) {
 	}
 
 	//load models:
-
+/*
 
 
 	//objects.back().position+=glm::vec3(0.0, 0.0, 0.f);
@@ -70,8 +77,8 @@ void create_world(Renderer * renderer) {
 	renderer->render_objects.push_back(new RenderObject("models/wall.obj", Renderer::NORMAL_SHADER));
 	renderer->render_objects.back()->absolute_move(glm::vec3(-5.0,0.0,5.0));
 	renderer->render_objects.back()->scale*=5.f;
-	/*renderer->render_objects.push_back(new RenderObject("models/cube_textured.obj", Renderer::NORMAL_SHADER));
-	renderer->render_objects.back()->absolute_move(glm::vec3(0.0,0.0,2.0));*/
+	*renderer->render_objects.push_back(new RenderObject("models/cube_textured.obj", Renderer::NORMAL_SHADER));
+	renderer->render_objects.back()->absolute_move(glm::vec3(0.0,0.0,2.0));
 
 	RenderObject * m = new RenderObject("models/mario_obj.obj", Renderer::NORMAL_SHADER);
 
@@ -79,9 +86,11 @@ void create_world(Renderer * renderer) {
 	m->absolute_move(glm::vec3(0.0, 2.0, 0.0));
 	renderer->render_objects.push_back(m);
 	renderer->render_objects.back()->scale*=3.0f;
-
+**/
 	lights[LIGHT_SOURCE0].set_position(glm::vec3(-1.0, 1.0, -2.0));
 
+
+	
 }
 
 void update_world(double dt, Renderer * renderer) {

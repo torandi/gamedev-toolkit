@@ -21,7 +21,8 @@
 
 std::string Renderer::shader_files_[] = {
 	"normal",
-	"skybox"
+	"skybox",
+	"terrain"
 };
 
 void Renderer::init_shader(Shader &shader) {

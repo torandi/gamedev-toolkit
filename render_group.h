@@ -18,7 +18,7 @@ public:
 
 	RenderGroup* operator[](int index) const;
 
-	void add_object(RenderGroup* obj);
+	virtual void add_object(RenderGroup* obj);
 
 	virtual void render(double dt, Renderer * renderer);
 	virtual const glm::mat4 matrix() const;

@@ -42,6 +42,7 @@ public:
 	enum shader_program_t {
 		NORMAL_SHADER=0,
 		SKYBOX_SHADER,
+		TERRAIN_SHADER,
 		NUM_SHADERS
 	};
 

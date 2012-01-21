@@ -503,6 +503,8 @@ void RenderObject::render(double dt, Renderer * renderer) {
 	recursive_render(scene->mRootNode, dt, renderer);		
 
 	renderer->modelMatrix.Pop();
+
+	glUseProgram(0);
 }
 
 const glm::mat4 RenderObject::matrix() const {
