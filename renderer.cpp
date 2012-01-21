@@ -289,7 +289,7 @@ void Renderer::render_skybox() {
 	projectionViewMatrix.Push();
 	projectionViewMatrix.SetIdentity();
 	projectionViewMatrix.Perspective(45.0f, width_/(float)height_, -0.5, 0.5);
-	projectionViewMatrix.LookAt(glm::vec3(0.0), camera.look_at(), glm::vec3(0.0, 1.0, 0.0));
+	projectionViewMatrix.LookAt(glm::vec3(0.0), camera.look_at()-camera.position(), glm::vec3(0.0, 1.0, 0.0));
 
 	//Upload projection matrix:
 	glBindBuffer(GL_UNIFORM_BUFFER, Shader::globals.matricesBuffer);
