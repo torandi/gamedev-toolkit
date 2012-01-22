@@ -27,6 +27,7 @@ void Shader::load_file(const std::string &filename, std::stringstream &shaderDat
 	}
 	shaderData << shaderFile.rdbuf();
 	shaderFile.close();
+	printf("Loaded %s\n", filename.c_str());
 }
 
 std::string Shader::parse_shader(const std::string &filename, std::set<std::string> included_files, std::string included_from) {
@@ -109,6 +110,11 @@ Shader Shader::create_shader(std::string base_name) {
 	std::vector<GLuint> shader_list;
 	//Load shaders:
 	shader_list.push_back(load_shader(GL_VERTEX_SHADER, SHADER_PATH+base_name+VERT_SHADER_EXTENTION));
+	//Check if geometry shader exists:
+	std::string geom_shader = SHADER_PATH+base_name+GEOM_SHADER_EXTENTION;
+	std::ifstream file(geom_shader.c_str());
+	if(file)
+		shader_list.push_back(load_shader(GL_GEOMETRY_SHADER, geom_shader));
 	shader_list.push_back(load_shader(GL_FRAGMENT_SHADER, SHADER_PATH+base_name+FRAG_SHADER_EXTENTION));
 	
 	shader.program = create_program(shader_list);

@@ -1,19 +1,26 @@
 #include "terrain.h"
 #include "texture.h"
 #include "renderer.h"
+#include "mesh.h"
 
 #include <SDL/SDL.h>
 #include <SDL/SDL_image.h>
 #include <glm/glm.hpp>
 #include <string>
+#include <vector>
 
-Terrain::Terrain(const std::string folder) : RenderGroup(), folder_(folder) {
+Terrain::~Terrain() {
+	if(mesh_ != NULL)
+		delete mesh_;
+}
+
+Terrain::Terrain(const std::string folder) : RenderGroup(), folder_(folder), mesh_(NULL) {
 	horizontal_scale_ = 1.0f;
 	vertical_scale_ = 100.f;
 	heightmap_ = load_image();
 	generate_terrain();	
 
-	position_-=glm::vec3(0.0, 100.0, 0.0);
+	position_-=glm::vec3(width_*horizontal_scale_, vertical_scale_, height_*horizontal_scale_/2.0)/2.0f;
 	SDL_FreeSurface(heightmap_);
 }
 
@@ -21,67 +28,43 @@ void Terrain::generate_terrain() {
 	int numVertices = width_*height_;
 
 	printf("Generating terrain...\n");
-	
-	//Build heightmap:
 
-	map_ = new float[numVertices];
 
+	std::vector<Mesh::vertex_t> vertices(numVertices);
 	for(int y=0; y<height_; ++y) {
 		for(int x=0; x<width_; ++x) {
-			int i = y * width_ + x;
-			glm::vec4 color = get_pixel_color(x, y);
-			map_[i] = vertical_scale_*height_from_color(color);
-		}
-	}
-
-
-	
-	vertex_t * vertex_data = new vertex_t[numVertices];
-	for(int y=0; y<height_; ++y) {
-		for(int x=0; x<width_; ++x) {
-			vertex_t v;
+			Mesh::vertex_t v;
 			int i = y * width_ + x;
 			glm::vec4 color = get_pixel_color(x, y);
 			v.position = glm::vec3(horizontal_scale_*x, vertical_scale_*height_from_color(color), horizontal_scale_*y);
-			v.texCoord = glm::vec2(v.position.x/2.0f, v.position.z/2.0f);
-			vertex_data[i] = v;
+			v.texCoord = glm::vec2(v.position.x/2.0, v.position.z/2.0);
+			vertices[i] = v;
 		}
 	}
 
-
 	int indexCount = (height_ - 1 ) * (width_ -1) * 6;
 
-	GLuint * indices  = new GLuint[indexCount];
+	std::vector<unsigned int> indices(indexCount);
 	//build indices
 	for(int x=0; x<width_- 1; ++x) {
 		for(int y=0; y<height_- 1; ++y) {
 			int i = y * (width_-1) + x;
 			indices[i*6 + 0] = x + y*width_;
-			indices[i*6 + 1] = (x + 1) + y*width_;
-			indices[i*6 + 2] = x + (y+1)*width_;
+			indices[i*6 + 1] = x + (y+1)*width_;
+			indices[i*6 + 2] = (x + 1) + y*width_;
 			indices[i*6 + 3] = x + (y+1)*width_;
 			indices[i*6 + 4] = (x+1) + (y+1)*width_;
 			indices[i*6 + 5] = (x + 1) + y*width_;
 		}
 	}
-	printf("Terrain generated, uploading to graphic memory.\n");
+	printf("Terrain generated, creating mesh\n");
 
-	num_triangles_ = indexCount/3;
+	mesh_ = new Mesh(vertices, indices);
 
-	//Upload data:
-	glGenBuffers(1, &vb_);
-	glGenBuffers(1, &ib_);
-
-	glBindBuffer(GL_ARRAY_BUFFER, vb_);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertex_t)*numVertices, vertex_data, GL_STATIC_DRAW);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib_);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint)*indexCount, indices, GL_STATIC_DRAW);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
-	delete vertex_data;
-	delete indices;
+	mesh_->generate_normals();
+	mesh_->generate_tangents_and_bitangents();
+	mesh_->ortonormalize_tangent_space();
+	mesh_->generate_vbos();
 }
 
 float Terrain::height_from_color(const glm::vec4 &color) {
@@ -182,22 +165,13 @@ void Terrain::render(double dt, Renderer * renderer) {
 	renderer->modelMatrix.ApplyMatrix(matrix());
 
 	renderer->upload_model_matrices();
-	
-	glBindBuffer(GL_ARRAY_BUFFER, vb_);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib_);
 
-	glEnableVertexAttribArray(0);
-	glEnableVertexAttribArray(1);
+	mesh_->render();
 
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_t), 0);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(vertex_t), (const GLvoid*) (sizeof(glm::vec3)));
-
-	glDrawElements(GL_TRIANGLES, num_triangles_, GL_UNSIGNED_INT, 0);	
-	
-	glDisableVertexAttribArray(1);
-	glDisableVertexAttribArray(0);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	//Render debug:
+	glLineWidth(2.0f);
+	glUseProgram(renderer->shaders[Renderer::DEBUG_SHADER].program);
+	mesh_->render();
 
 	renderer->modelMatrix.Pop();
 

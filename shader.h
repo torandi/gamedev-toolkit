@@ -13,6 +13,7 @@
 #define SHADER_PATH "shaders/"
 #define VERT_SHADER_EXTENTION ".vert"
 #define FRAG_SHADER_EXTENTION ".frag"
+#define GEOM_SHADER_EXTENTION ".geom"
 
 #define MAX_NUM_LIGHTS 4
 

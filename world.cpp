@@ -31,11 +31,13 @@ float time_of_day = 6.0; //0->24;
 
 
 void create_world(Renderer * renderer) {
+
+	renderer->camera.set_position(glm::vec3(0.0, -7.0, 0.0));
+
 	//Skybox
 	renderer->load_skybox("skybox");
 
 	Terrain * t = new Terrain ("valley");
-	//t->absolute_move(glm::vec3(-t->width()/2.0f, 0, t->height()/2.0f));
 
 	renderer->render_objects.push_back(t);
 
@@ -44,7 +46,7 @@ void create_world(Renderer * renderer) {
 	lights_lights[LIGHT_SOURCE0] = new Light(glm::vec3(0.8, 0.8, 0.8), Light::POINT_LIGHT);
 	lights_lights[LIGHT_SOURCE1] = new Light(glm::vec3(0.6, 0.6, 0.6), Light::POINT_LIGHT);
 #else
-	lights_lights[0] = new Light(glm::vec3(0.8, 0.8, 0.8), Light::POINT_LIGHT);
+	lights_lights[0] = new Light(glm::vec3(0.8, 0.8, 0.8), Light::DIRECTIONAL_LIGHT);
 #endif
 
 	for(int i=0; i < NUM_LIGHTS; ++i) {
@@ -55,7 +57,7 @@ void create_world(Renderer * renderer) {
 		lights[i].add_object(lights_ro[i]);
 		renderer->render_objects.push_back(lights_ro[i]);
 		renderer->lights.push_back(lights_lights[i]);
-		lights[i].set_position(glm::vec3(1.0, 1.0, 1.0));
+		lights[i].set_position(glm::vec3(0.0, -9.0, 0.0));
 	}
 
 	//load models:

@@ -5,7 +5,7 @@
 	#include "render_object.h"
 	#include "light.h"
 
-	#define NUM_LIGHTS 2
+	#define NUM_LIGHTS 1
 
 	enum {
 		LIGHT_SOURCE0,
