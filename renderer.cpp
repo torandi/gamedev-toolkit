@@ -20,9 +20,10 @@
 #include <GL/glu.h>
 
 std::string Renderer::shader_files_[] = {
-	"normal",
+	"standard",
 	"skybox",
-	"terrain"
+	"terrain",
+	"debug"
 };
 
 void Renderer::init_shader(Shader &shader) {
@@ -94,7 +95,7 @@ Renderer::Renderer(int w, int h, bool fullscreen) {
 	width_ = w;
 	height_ = h;
 
-	camera.set_position(glm::vec3(0.0, 0.0, -2.5));
+	camera.set_position(glm::vec3(0.0, 0.0, 0.0));
 
   	/* create window */
   	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK);
