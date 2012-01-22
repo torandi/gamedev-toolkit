@@ -31,13 +31,13 @@ layout(std140) uniform Material {
 } Mtl;
 
 struct light_data {
+	float attenuation;
 	vec4 intensity;
 	vec4 position;
 };
 
 layout(std140) uniform LightsData {
 	uint num_lights;
-	float light_attenuation;
 	vec4 ambient_intensity;
 	light_data lights[maxNumberOfLights];
 } Lgt;

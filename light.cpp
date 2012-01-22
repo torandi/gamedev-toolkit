@@ -24,6 +24,9 @@ const Light::shader_light_t &Light::shader_light() const {
 	return shader_light_;
 }
 
+void Light::set_half_light_distance(float hld) {
+	shader_light_.attenuation = 1.f/pow(hld,2);
+}
 
 void Light::set_id_in_render_object(RenderObject * ro, int id, bool set_colors) const {
 	for(std::vector<RenderObject::material_t>::iterator it=ro->materials.begin(); it!=ro->materials.end(); ++it) {

@@ -30,8 +30,7 @@ public:
 
 	struct lights_data_t {
 		unsigned int num_lights;
-		float attenuation;
-		float padding[2];
+		float padding[3];
 		glm::vec4 ambient_intensity;
 		Light::shader_light_t lights[MAX_NUM_LIGHTS];
 	};

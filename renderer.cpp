@@ -87,7 +87,6 @@ void Renderer::init_shader(Shader &shader) {
 Renderer::Renderer(int w, int h, bool fullscreen) {
 	float zNear = 1.0f;
 	float zFar = 1000.0f;
-	light_attenuation = 1.f/pow(HALF_LIGHT_DISTANCE,2);
 	ambient_intensity = glm::vec3(0.1f,0.1f,0.1f);
 
 	skybox_texture = NULL;
@@ -254,7 +253,6 @@ void Renderer::render(double dt){
 		lightData.num_lights = MAX_NUM_LIGHTS;
 		fprintf(stderr, "Warning! There are more than %d lights. Only the %d first ligths will be used!\n", MAX_NUM_LIGHTS, MAX_NUM_LIGHTS);
 	}
-	lightData.attenuation = light_attenuation;
 	lightData.ambient_intensity =  glm::vec4(ambient_intensity, 1.f);
 	for(unsigned int i=0; i < lightData.num_lights; ++i) {
 		lightData.lights[i] = lights[i]->shader_light();

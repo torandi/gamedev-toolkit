@@ -11,7 +11,6 @@
 	#include "shader.h"
 	#include "texture.h"	
 
-	#define HALF_LIGHT_DISTANCE 1.5f
 
 
 class Renderer {
@@ -62,7 +61,6 @@ public:
 
 	glutil::MatrixStack modelMatrix;
 	glutil::MatrixStack projectionViewMatrix;
-	float light_attenuation;
 	glm::vec3 ambient_intensity;
 	Camera camera;
 
