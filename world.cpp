@@ -25,19 +25,22 @@ const float high_morning = 8;
 const float high_day = 14;
 const float high_evening = 21;
 
-const float time_per_hour=10.f;
+const float time_per_hour=1.f;
 
-float time_of_day = 6.0; //0->24;
+float time_of_day = 12.0; //0->24;
 
 
 void create_world(Renderer * renderer) {
 
-	renderer->camera.set_position(glm::vec3(0.0, -7.0, 0.0));
+	Terrain::init_terrain(renderer);
+
+	renderer->camera.set_position(glm::vec3(0.0, -7.5, 0.0));
 
 	//Skybox
 	renderer->load_skybox("skybox");
 
-	Terrain * t = new Terrain ("valley");
+	Terrain * t = new Terrain ("valley",1.f, 100.f);
+	t->start_height = 20.f;
 
 	renderer->render_objects.push_back(t);
 
@@ -46,7 +49,8 @@ void create_world(Renderer * renderer) {
 	lights_lights[LIGHT_SOURCE0] = new Light(glm::vec3(0.8, 0.8, 0.8), Light::POINT_LIGHT);
 	lights_lights[LIGHT_SOURCE1] = new Light(glm::vec3(0.6, 0.6, 0.6), Light::POINT_LIGHT);
 #else
-	lights_lights[0] = new Light(glm::vec3(0.8, 0.8, 0.8), Light::DIRECTIONAL_LIGHT);
+	lights_lights[0] = new Light(glm::vec3(0.8, 0.8, 0.8), Light::POINT_LIGHT);
+	lights_lights[0]->set_half_light_distance(100.f);
 #endif
 
 	for(int i=0; i < NUM_LIGHTS; ++i) {
@@ -57,18 +61,18 @@ void create_world(Renderer * renderer) {
 		lights[i].add_object(lights_ro[i]);
 		renderer->render_objects.push_back(lights_ro[i]);
 		renderer->lights.push_back(lights_lights[i]);
-		lights[i].set_position(glm::vec3(0.0, -9.0, 0.0));
+		lights[i].set_position(glm::vec3(5.0, -9.0, 5.0));
 	}
 
 	//load models:
-/*
 
 
 	//objects.back().position+=glm::vec3(0.0, 0.0, 0.f);
 	renderer->render_objects.push_back(new RenderObject("models/nintendo.obj", Renderer::NORMAL_SHADER));//, true, aiProcess_FixInfacingNormals));
-	renderer->render_objects.back()->absolute_move(glm::vec3(-7.0,0.5,0.0));
+	renderer->render_objects.back()->set_position(glm::vec3(-1.0,-7.0,0.0));
 
 
+/*
 	renderer->render_objects.push_back(new RenderObject("models/sonic.obj", Renderer::NORMAL_SHADER));
 	renderer->render_objects.back()->absolute_move(glm::vec3(5.0,0.0,0.0));
 	renderer->render_objects.back()->scale*=5.f;

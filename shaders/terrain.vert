@@ -1,6 +1,9 @@
 #version 330
 #include "uniforms.glsl"
 
+uniform float vertical_scale;
+uniform float start_height;
+
 layout (location = 0) in vec4 in_position;
 layout (location = 1) in vec2 in_texcoord;
 layout (location = 2) in vec4 in_normal;
@@ -12,8 +15,11 @@ out vec3 normal;
 out vec3 tangent;
 out vec3 bitangent;
 out vec2 texcoord;
+out float height;
 
 void main() {
+	height = (in_position.y - start_height)/(vertical_scale-start_height);
+
 	vec4 w_pos = modelMatrix * in_position;
 	position = w_pos.xyz;
 	gl_Position = projectionViewMatrix *  w_pos;

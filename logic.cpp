@@ -8,8 +8,8 @@
 
 #define LIGHT_ROTATION_SPEED M_PI/8.f
 
-#define MOVE_SPEED 10.f
-#define ROTATION_SPEED 40.f
+#define MOVE_SPEED 100.f
+#define ROTATION_SPEED 50.f
 
 float cam_rot = 0;
 float lit_rot = 0;
@@ -45,7 +45,7 @@ void logic(double dt, Renderer * renderer) {
 		else
 			z = -normalized_axis_value(1)*MOVE_SPEED*dt;
 		rx = -normalized_axis_value(4)*ROTATION_SPEED*dt;
-		ry = (normalized_trigger_value(5) - normalized_trigger_value(2))*ROTATION_SPEED*dt;
+		ry = -(normalized_trigger_value(5) - normalized_trigger_value(2))*2.0*ROTATION_SPEED*dt;
 		rz = normalized_axis_value(3)*ROTATION_SPEED*dt;
 	} else {
 		z = (keys[SDLK_COMMA]-keys[SDLK_o])*MOVE_SPEED*dt;

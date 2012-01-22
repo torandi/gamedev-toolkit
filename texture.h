@@ -52,7 +52,7 @@ class Texture  {
 		GLuint _texture;
 		int _width;
 		int _height;
-		const unsigned int _num_textures;
+		unsigned int _num_textures;
 		GLuint _texture_type;
 
 		static GLuint cube_map_index_[6];

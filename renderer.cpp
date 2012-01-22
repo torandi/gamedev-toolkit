@@ -26,6 +26,11 @@ std::string Renderer::shader_files_[] = {
 	"debug"
 };
 
+void Renderer::load_shader_uniform_location(shader_program_t shader, std::string uniform_name) {
+	shaders[shader].uniform[uniform_name] = glGetUniformLocation(shaders[shader].program, uniform_name.c_str());
+	checkForGLErrors((std::string("load uniform ")+uniform_name+"from shader "+shaders[shader].name).c_str());
+}
+
 void Renderer::init_shader(Shader &shader) {
 
 	//Local uniforms
@@ -288,7 +293,7 @@ void Renderer::render_skybox() {
 	projectionViewMatrix.Push();
 	projectionViewMatrix.SetIdentity();
 	projectionViewMatrix.Perspective(45.0f, width_/(float)height_, -0.5, 0.5);
-	projectionViewMatrix.LookAt(glm::vec3(0.0), camera.look_at()-camera.position(), glm::vec3(0.0, 1.0, 0.0));
+	projectionViewMatrix.LookAt(glm::vec3(0.0), camera.look_at()-camera.position(), camera.up());
 
 	//Upload projection matrix:
 	glBindBuffer(GL_UNIFORM_BUFFER, Shader::globals.matricesBuffer);
@@ -310,6 +315,8 @@ void Renderer::render_skybox() {
 	glDrawArrays(GL_TRIANGLES, 0, 36);
 
 	checkForGLErrors("render_skybox(): render");
+
+	skybox_texture->unbind();
 
 
 	glDisableVertexAttribArray(1);

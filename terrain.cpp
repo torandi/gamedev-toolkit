@@ -9,16 +9,38 @@
 #include <string>
 #include <vector>
 
+#define RENDER_DEBUG 0
+
+const char * Terrain::texture_files_[] = {
+	"dirt.png",
+	"sand.png",
+	"grass.jpg",
+	"mountain.jpg",
+	"snow.jpg"
+};
+
+#define TEXTURE_LEVELS 5
+
+void Terrain::init_terrain(Renderer * renderer) {
+	renderer->load_shader_uniform_location(Renderer::TERRAIN_SHADER, "vertical_scale");
+	renderer->load_shader_uniform_location(Renderer::TERRAIN_SHADER, "start_height");
+}
+
 Terrain::~Terrain() {
 	if(mesh_ != NULL)
 		delete mesh_;
 }
 
-Terrain::Terrain(const std::string folder) : RenderGroup(), folder_(folder), mesh_(NULL) {
-	horizontal_scale_ = 1.0f;
-	vertical_scale_ = 100.f;
+Terrain::Terrain(const std::string folder, float horizontal_scale, float vertical_scale) :
+		RenderGroup(), folder_(folder+"/"),
+		horizontal_scale_(horizontal_scale),
+		vertical_scale_(vertical_scale),
+		mesh_(NULL),
+		start_height(0.f)
+		{
 	heightmap_ = load_image();
 	generate_terrain();	
+	load_textures();
 
 	position_-=glm::vec3(width_*horizontal_scale_, vertical_scale_, height_*horizontal_scale_/2.0)/2.0f;
 	SDL_FreeSurface(heightmap_);
@@ -61,10 +83,26 @@ void Terrain::generate_terrain() {
 
 	mesh_ = new Mesh(vertices, indices);
 
+	printf("Generating normals\n");
 	mesh_->generate_normals();
+	printf("Generating tangents\n");
 	mesh_->generate_tangents_and_bitangents();
+	printf("Ortonormalizing tangent space\n");
 	mesh_->ortonormalize_tangent_space();
+	printf("Uploading to gfx memory\n");
 	mesh_->generate_vbos();
+}
+
+void Terrain::load_textures() {
+	std::vector<std::string> textures;
+	for(unsigned int i=0;i<TEXTURE_LEVELS;++i) {
+		textures.push_back(folder_+texture_files_[i]);
+	}
+	texture_ = new Texture(textures, false);
+	texture_->bind();
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	texture_->unbind();
 }
 
 float Terrain::height_from_color(const glm::vec4 &color) {
@@ -114,7 +152,7 @@ glm::vec4 Terrain::get_pixel_color(int x, int y) {
 
 SDL_Surface * Terrain::load_image() {
 	/* Load image using SDL Image */
-	std::string heightmap = folder_+"/heightmap.png";
+	std::string heightmap = folder_+"heightmap.png";
 	SDL_Surface* surface = IMG_Load(heightmap.c_str());
 	if ( !surface ){
 	  fprintf(stderr, "Failed to load heightmap at %s\n", heightmap.c_str());
@@ -160,6 +198,13 @@ SDL_Surface * Terrain::load_image() {
 void Terrain::render(double dt, Renderer * renderer) {
 	glUseProgram(renderer->shaders[Renderer::TERRAIN_SHADER].program);
 
+	glUniform1f(renderer->shaders[Renderer::TERRAIN_SHADER].uniform["vertical_scale"], vertical_scale_);
+	glUniform1f(renderer->shaders[Renderer::TERRAIN_SHADER].uniform["start_height"], start_height);
+
+	glActiveTexture(GL_TEXTURE0);
+
+	texture_->bind();
+
 	renderer->modelMatrix.Push();
 
 	renderer->modelMatrix.ApplyMatrix(matrix());
@@ -168,12 +213,18 @@ void Terrain::render(double dt, Renderer * renderer) {
 
 	mesh_->render();
 
+#if RENDER_DEBUG
 	//Render debug:
 	glLineWidth(2.0f);
 	glUseProgram(renderer->shaders[Renderer::DEBUG_SHADER].program);
+
+
 	mesh_->render();
+#endif
 
 	renderer->modelMatrix.Pop();
+
+	texture_->unbind();
 
 	glUseProgram(0);
 }
