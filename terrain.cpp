@@ -68,12 +68,12 @@ Terrain::Terrain(const std::string folder, float horizontal_scale, float vertica
 }
 
 void Terrain::generate_terrain() {
-	int numVertices = width_*height_;
+	unsigned long numVertices = width_*height_;
 
 	printf("Generating terrain...\n");
+	printf("Word size: %dx%d\n", width_, height_);
 
 	map_ = new float[numVertices];
-
 	std::vector<Mesh::vertex_t> vertices(numVertices);
 	for(int y=0; y<height_; ++y) {
 		for(int x=0; x<width_; ++x) {
@@ -87,8 +87,7 @@ void Terrain::generate_terrain() {
 			vertices[i] = v;
 		}
 	}
-
-	int indexCount = (height_ - 1 ) * (width_ -1) * 6;
+	unsigned long indexCount = (height_ - 1 ) * (width_ -1) * 6;
 
 	std::vector<unsigned int> indices(indexCount);
 	//build indices
@@ -120,7 +119,7 @@ void Terrain::generate_terrain() {
 void Terrain::generate_water() {
 	std::vector<unsigned int> indices;
 	std::vector<Mesh::vertex_t> vertices;
-	int vi=0;
+	unsigned long vi=0;
 	for(int y=0; y<height_-1; ++y) {
 		for(int x=0; x<width_-1; ++x) {
 			if(is_square_below_water(x, y)) {
@@ -256,7 +255,6 @@ SDL_Surface * Terrain::load_image() {
 	  fprintf(stderr, "Failed to load heightmap at %s\n", heightmap.c_str());
 	  exit(1);
 	}
-
 	SDL_Surface* rgba_surface = SDL_CreateRGBSurface(
 			SDL_SWSURFACE,
 			surface->w, surface->h,
