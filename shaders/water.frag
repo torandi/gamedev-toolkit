@@ -30,6 +30,10 @@ void main() {
 	vec3 normal_map = vec3(0.0, 0.0, 1.0);
 
 	//normal_map = normalize(texture(tex2, texcoord).xyz * 2.0 - 1.0);
+
+	vec3 r = reflect(camera_direction, norm_normal);
+	originalColor = textureCube(skybox, r);
+	originalColor.a = 0.5;
 	/*
 	vec4 accumLighting = originalColor * Lgt.ambient_intensity;
 
