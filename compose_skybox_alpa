@@ -1,7 +1,15 @@
 #!/bin/bash
-composite -compose CopyOpacity front_skymap.jpg front.jpg front_alpha.png 
-composite -compose CopyOpacity back_skymap.jpg back.jpg back_alpha.png 
-composite -compose CopyOpacity left_skymap.jpg left.jpg left_alpha.png 
-composite -compose CopyOpacity right_skymap.jpg right.jpg right_alpha.png 
-composite -compose CopyOpacity top_skymap.jpg top.jpg top_alpha.png 
-composite -compose CopyOpacity bottom_skymap.jpg bottom.jpg bottom_alpha.png 
+composite -compose CopyOpacity front_skymap.jpg front.jpg front_skybox.png 
+composite -compose CopyOpacity back_skymap.jpg back.jpg back_skybox.png 
+composite -compose CopyOpacity left_skymap.jpg left.jpg left_skybox.png 
+composite -compose CopyOpacity right_skymap.jpg right.jpg right_skybox.png 
+composite -compose CopyOpacity top_skymap.jpg top.jpg top_skybox.png 
+composite -compose CopyOpacity bottom_skymap.jpg bottom.jpg bottom_skybox.png 
+
+
+convert front_skybox.png -flip -flop front_skybox.png 
+convert back_skybox.png -flip -flop back_skybox.png 
+convert left_skybox.png -flip -flop left_skybox.png 
+convert right_skybox.png -flip -flop right_skybox.png 
+convert top_skybox.png -flip -flop top_skybox.png 
+convert bottom_skybox.png -flip -flop bottom_skybox.png 

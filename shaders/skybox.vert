@@ -9,7 +9,7 @@ out vec3 texcoord;
 void main() {
 	gl_Position = projectionViewMatrix * in_position;
 	texcoord = in_texcoord;
-	texcoord.x-=0.5;
+/*	texcoord.x-=0.5;
 	texcoord.y-=0.5;
 	if(in_texcoord.z==0.f) {
 		texcoord.z = 0.5;
@@ -31,7 +31,7 @@ void main() {
 	} else if(in_texcoord.z == 5.f) {
 		texcoord.z = texcoord.y;
 		texcoord.y = -0.5;
-	}
+	}*/
 
 }
 

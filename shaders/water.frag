@@ -8,6 +8,7 @@ in vec3 bitangent;
 in vec2 texcoord;
 in float height;
 
+#include "skybox_color.glsl"
 #include "light_calculations.glsl"
 
 out vec4 ocolor;
@@ -29,8 +30,9 @@ void main() {
 
 	//normal_map = normalize(texture(tex2, texcoord).xyz * 2.0 - 1.0);
 
-	vec3 r = reflect(camera_direction, norm_normal);
-	vec4 originalColor = textureCube(skybox, r);
+	vec3 r = reflect(-camera_direction, norm_normal);
+	vec4 originalColor;
+	originalColor.rgb = skybox_color(r);
 	originalColor.a = 0.5;
 	/*
 	vec4 accumLighting = originalColor * Lgt.ambient_intensity;

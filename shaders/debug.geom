@@ -2,10 +2,10 @@
 #include "uniforms.glsl"
 
 #define RENDER_TANGENT 0
-#define RENDER_NORMAL 0
+#define RENDER_NORMAL 1
 #define RENDER_BITANGENT 0
 
-const vec4 wireframe_color = vec4(1.0f);
+const vec4 wireframe_color = vec4(0,1.0f,0,1);
 
 layout (triangles) in;
 layout (line_strip, max_vertices = 42) out;
