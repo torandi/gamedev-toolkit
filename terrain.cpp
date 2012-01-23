@@ -85,6 +85,10 @@ Terrain::~Terrain() {
 		delete map_;
 	if(texture_!= NULL)
 		delete texture_;
+	if(normal_map_!= NULL)
+		delete normal_map_;
+	if(specular_map_!= NULL)
+		delete specular_map_;
 }
 
 Terrain::Terrain(const std::string folder, float horizontal_scale, float vertical_scale, float water_level) :
@@ -95,6 +99,8 @@ Terrain::Terrain(const std::string folder, float horizontal_scale, float vertica
 		terrain_mesh_(NULL),
 		water_mesh_(NULL),
 		texture_(NULL),
+		specular_map_(NULL),
+		normal_map_(NULL),
 		water_level_(water_level),
 		texture_scale_(128.0f) ,
 		num_waves_(1),
