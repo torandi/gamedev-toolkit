@@ -23,6 +23,7 @@ std::string Renderer::shader_files_[] = {
 	"standard",
 	"skybox",
 	"terrain",
+	"water",
 	"debug"
 };
 

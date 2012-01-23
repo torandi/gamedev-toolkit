@@ -11,6 +11,8 @@
 
 #define RENDER_DEBUG 0
 
+#define TEXTURE_SCALE 2.0f
+
 const char * Terrain::texture_files_[] = {
 	"dirt.dds",
 	"sand.dds",
@@ -28,26 +30,37 @@ void Terrain::init_terrain(Renderer * renderer) {
 	glUseProgram(renderer->shaders[Renderer::TERRAIN_SHADER].program);
 
 	glSamplerParameteri(renderer->shaders[Renderer::TERRAIN_SHADER].texture_array1, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glSamplerParameteri(renderer->shaders[Renderer::TERRAIN_SHADER].texture_array1, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
+	glSamplerParameteri(renderer->shaders[Renderer::TERRAIN_SHADER].texture_array1, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	glSamplerParameterf(renderer->shaders[Renderer::TERRAIN_SHADER].texture_array1, GL_TEXTURE_MAX_ANISOTROPY_EXT, 4.0f);
 
 	glUseProgram(0);
 }
 
 Terrain::~Terrain() {
-	if(mesh_ != NULL)
-		delete mesh_;
+	if(terrain_mesh_ != NULL)
+		delete terrain_mesh_;
+	if(water_mesh_ != NULL)
+		delete water_mesh_;
+	if(map_ != NULL)
+		delete map_;
+	if(texture_!= NULL)
+		delete texture_;
 }
 
-Terrain::Terrain(const std::string folder, float horizontal_scale, float vertical_scale) :
+Terrain::Terrain(const std::string folder, float horizontal_scale, float vertical_scale, float water_level) :
 		RenderGroup(), folder_(folder+"/"),
 		horizontal_scale_(horizontal_scale),
 		vertical_scale_(vertical_scale),
-		mesh_(NULL),
+		map_(NULL),
+		terrain_mesh_(NULL),
+		water_mesh_(NULL),
+		texture_(NULL),
+		water_level_(water_level),
 		start_height(0.f)
 		{
 	heightmap_ = load_image();
 	generate_terrain();	
+	generate_water();
 	load_textures();
 
 	position_-=glm::vec3(width_*horizontal_scale_, vertical_scale_, height_*horizontal_scale_/2.0)/2.0f;
@@ -59,6 +72,7 @@ void Terrain::generate_terrain() {
 
 	printf("Generating terrain...\n");
 
+	map_ = new float[numVertices];
 
 	std::vector<Mesh::vertex_t> vertices(numVertices);
 	for(int y=0; y<height_; ++y) {
@@ -66,8 +80,10 @@ void Terrain::generate_terrain() {
 			Mesh::vertex_t v;
 			int i = y * width_ + x;
 			glm::vec4 color = get_pixel_color(x, y);
-			v.position = glm::vec3(horizontal_scale_*x, vertical_scale_*height_from_color(color), horizontal_scale_*y);
-			v.texCoord = glm::vec2(v.position.x/2.0, v.position.z/2.0);
+			float h = height_from_color(color);
+			map_[i] =  h*vertical_scale_;
+			v.position = glm::vec3(horizontal_scale_*x, vertical_scale_*h, horizontal_scale_*y);
+			v.texCoord = glm::vec2(v.position.x/TEXTURE_SCALE, v.position.z/TEXTURE_SCALE);
 			vertices[i] = v;
 		}
 	}
@@ -89,16 +105,62 @@ void Terrain::generate_terrain() {
 	}
 	printf("Terrain generated, creating mesh\n");
 
-	mesh_ = new Mesh(vertices, indices);
+	terrain_mesh_ = new Mesh(vertices, indices);
 
 	printf("Generating normals\n");
-	mesh_->generate_normals();
+	terrain_mesh_->generate_normals();
 	printf("Generating tangents\n");
-	mesh_->generate_tangents_and_bitangents();
+	terrain_mesh_->generate_tangents_and_bitangents();
 	printf("Ortonormalizing tangent space\n");
-	mesh_->ortonormalize_tangent_space();
+	terrain_mesh_->ortonormalize_tangent_space();
 	printf("Uploading to gfx memory\n");
-	mesh_->generate_vbos();
+	terrain_mesh_->generate_vbos();
+}
+
+void Terrain::generate_water() {
+	std::vector<unsigned int> indices;
+	std::vector<Mesh::vertex_t> vertices;
+	int vi=0;
+	for(int y=0; y<height_-1; ++y) {
+		for(int x=0; x<width_-1; ++x) {
+			if(is_square_below_water(x, y)) {
+				Mesh::vertex_t v;
+				glm::vec3 base_pos = glm::vec3(horizontal_scale_*x, water_level_, horizontal_scale_*y);
+				glm::vec2 base_uv = glm::vec2(v.position.x/TEXTURE_SCALE, v.position.z/TEXTURE_SCALE);
+				for(int i=0;i<2;++i) {
+					v.position = base_pos;
+					v.texCoord = base_uv;
+					v.position.x+=i*horizontal_scale_;
+					v.texCoord.x+=i*horizontal_scale_/TEXTURE_SCALE; 
+					for(int j=0;j<2;++j) {
+						v.position.z+=j*horizontal_scale_;
+						v.texCoord.y+=j*horizontal_scale_/TEXTURE_SCALE; 
+						vertices.push_back(v);
+					}
+				}
+				indices.push_back(vi);
+				indices.push_back(vi+1);
+				indices.push_back(vi+2);
+				indices.push_back(vi+1);
+				indices.push_back(vi+3);
+				indices.push_back(vi+2);
+				vi+=4;
+			}
+		}
+	}
+
+	printf("Water generated, %d squares was under water, creating mesh\n", (int)(vertices.size()/4));
+
+	water_mesh_ = new Mesh(vertices, indices);
+
+	printf("Generating normals\n");
+	water_mesh_->generate_normals();
+	printf("Generating tangents\n");
+	water_mesh_->generate_tangents_and_bitangents();
+	printf("Ortonormalizing tangent space\n");
+	water_mesh_->ortonormalize_tangent_space();
+	printf("Uploading to gfx memory\n");
+	water_mesh_->generate_vbos();
 }
 
 void Terrain::load_textures() {
@@ -161,6 +223,31 @@ glm::vec4 Terrain::get_pixel_color(int x, int y) {
 	return color;	
 }
 
+float Terrain::get_height_at(int x, int y) {
+	return map_[y*width_ + x];
+}
+
+float Terrain::get_height_at(float x_, float y_) {
+	int x = (int) (x_/horizontal_scale_);
+	int y = (int) (y_/horizontal_scale_);
+	float dx = (x_/horizontal_scale_) - x;
+	float dy = (y_/horizontal_scale_) - y;
+	float height=0;
+	height += (1.0-dx) * (1.0-dy) * map_[y*width_ + x];
+	height += dx * (1.0-dy) * map_[y*width_ + x+1];
+	height += (1.0-dx) * dy * map_[(y+1)*width_ + x];
+	height += dx * dy * map_[(y+1)*width_ + x+1];
+	return height;
+}
+
+bool Terrain::is_square_below_water(int x, int y) {
+	return ((get_height_at(x, y) < water_level_) ||
+		(get_height_at(x+1, y) < water_level_) ||
+		(get_height_at(x, y+1) < water_level_) ||
+		(get_height_at(x+1, y+1) < water_level_));
+}
+
+
 SDL_Surface * Terrain::load_image() {
 	/* Load image using SDL Image */
 	std::string heightmap = folder_+"heightmap.png";
@@ -222,7 +309,11 @@ void Terrain::render(double dt, Renderer * renderer) {
 
 	renderer->upload_model_matrices();
 
-	mesh_->render();
+	terrain_mesh_->render();
+
+	glUseProgram(renderer->shaders[Renderer::WATER_SHADER].program);
+
+	water_mesh_->render();
 
 #if RENDER_DEBUG
 	//Render debug:
@@ -230,7 +321,8 @@ void Terrain::render(double dt, Renderer * renderer) {
 	glUseProgram(renderer->shaders[Renderer::DEBUG_SHADER].program);
 
 
-	mesh_->render();
+	terrain_mesh_->render();
+	water_mesh_->render();
 #endif
 
 	renderer->modelMatrix.Pop();

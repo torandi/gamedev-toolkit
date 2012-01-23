@@ -39,7 +39,7 @@ void create_world(Renderer * renderer) {
 	//Skybox
 	renderer->load_skybox("skybox");
 
-	Terrain * t = new Terrain ("valley",1.f, 100.f);
+	Terrain * t = new Terrain ("valley",1.f, 100.f, 40.0f);
 	t->start_height = 30.f;
 
 	renderer->render_objects.push_back(t);
@@ -66,13 +66,12 @@ void create_world(Renderer * renderer) {
 
 	//load models:
 
-
+/*
 	//objects.back().position+=glm::vec3(0.0, 0.0, 0.f);
 	renderer->render_objects.push_back(new RenderObject("models/nintendo.obj", Renderer::NORMAL_SHADER));//, true, aiProcess_FixInfacingNormals));
 	renderer->render_objects.back()->set_position(glm::vec3(-1.0,-7.0,0.0));
 
 
-/*
 	renderer->render_objects.push_back(new RenderObject("models/sonic.obj", Renderer::NORMAL_SHADER));
 	renderer->render_objects.back()->absolute_move(glm::vec3(5.0,0.0,0.0));
 	renderer->render_objects.back()->scale*=5.f;
