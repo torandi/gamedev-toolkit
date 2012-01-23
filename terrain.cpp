@@ -12,11 +12,11 @@
 #define RENDER_DEBUG 0
 
 const char * Terrain::texture_files_[] = {
-	"dirt.png",
-	"sand.png",
-	"grass.jpg",
-	"mountain.jpg",
-	"snow.jpg"
+	"dirt.dds",
+	"sand.dds",
+	"grass.dds",
+	"mountain.dds",
+	"snow.dds"
 };
 
 #define TEXTURE_LEVELS 5
@@ -24,6 +24,13 @@ const char * Terrain::texture_files_[] = {
 void Terrain::init_terrain(Renderer * renderer) {
 	renderer->load_shader_uniform_location(Renderer::TERRAIN_SHADER, "vertical_scale");
 	renderer->load_shader_uniform_location(Renderer::TERRAIN_SHADER, "start_height");
+	
+	glUseProgram(renderer->shaders[Renderer::TERRAIN_SHADER].program);
+
+	glSamplerParameteri(renderer->shaders[Renderer::TERRAIN_SHADER].texture_array1, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glSamplerParameteri(renderer->shaders[Renderer::TERRAIN_SHADER].texture_array1, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
+
+	glUseProgram(0);
 }
 
 Terrain::~Terrain() {
@@ -102,6 +109,10 @@ void Terrain::load_textures() {
 	texture_->bind();
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_BASE_LEVEL, 0);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAX_LEVEL, texture_->mipmap_count());
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAX_LEVEL, 6);
+	printf("Mipmap count: %d\n", texture_->mipmap_count());
 	texture_->unbind();
 }
 

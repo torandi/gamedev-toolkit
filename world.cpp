@@ -17,7 +17,7 @@ MoveGroup mario;
 
 const glm::vec3 night_light = glm::vec3(0.0, 0.15, 0.15);
 const glm::vec3 morning_light = glm::vec3(0.6, 0.3, 0.3);
-const glm::vec3 day_light = glm::vec3(0.8, 0.6, 0.6);
+const glm::vec3 day_light = glm::vec3(0.6, 0.6, 0.6);
 const glm::vec3 evening_light = glm::vec3(0.5, 0.2, 0.2);
 
 const float high_night = 2;
@@ -25,9 +25,9 @@ const float high_morning = 8;
 const float high_day = 14;
 const float high_evening = 21;
 
-const float time_per_hour=1.f;
+const float time_per_hour=10.f;
 
-float time_of_day = 12.0; //0->24;
+float time_of_day = 14.0; //0->24;
 
 
 void create_world(Renderer * renderer) {

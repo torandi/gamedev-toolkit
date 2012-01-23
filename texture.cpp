@@ -19,7 +19,8 @@ Texture::Texture(const std::string &path) :
 	_texture(-1),
 	_width(0),
 	_height(0),
-	_num_textures(1)
+	_num_textures(1),
+	_mipmap_count(1)
 	{
 	_filenames = new std::string[_num_textures];
 	_filenames[0] = path;
@@ -90,26 +91,47 @@ void Texture::load_texture() {
 	glTexParameteri(_texture_type, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	Renderer::checkForGLErrors("load_texture(): gen buffer");
 
-	glimg::OpenGLPixelTransferParams fmt = glimg::GetUploadFormatType(images[0]->GetFormat(), 0); 
+	glimg::OpenGLPixelTransferParams fmt;
 
 	switch(_texture_type) {
 		case GL_TEXTURE_2D:
 			//One texture only:
 			glPixelStorei(GL_UNPACK_ALIGNMENT, images[0]->GetFormat().LineAlign());
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _width, _height, 0, fmt.format, fmt.type, images[0]->GetImageArray(0) );
+
+			_mipmap_count = images[0]->GetMipmapCount();
+
+			for(unsigned int mipmap_lvl=0; mipmap_lvl<_mipmap_count; ++mipmap_lvl) {
+				const glimg::SingleImage &img = images[0]->GetImage(mipmap_lvl, 0, 0);
+				const glimg::Dimensions &dim = img.GetDimensions();
+				fmt = glimg::GetUploadFormatType(img.GetFormat(), 0); 
+				glTexImage2D(GL_TEXTURE_2D, mipmap_lvl, GL_RGBA, dim.width, dim.height, 
+					0, fmt.format, fmt.type, img.GetImageData() );
+			}
 			Renderer::checkForGLErrors("load_texture(): write GL_TEXTURE_2D data");
 			break;
 		case GL_TEXTURE_2D_ARRAY:
+			 fmt = glimg::GetUploadFormatType(images[0]->GetFormat(), 0); 
 			//Generate the array:
 			glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGBA, _width, _height,
 				_num_textures, 0,   fmt.format,  fmt.type, NULL);
 			Renderer::checkForGLErrors("load_texture(): gen 2d array buffer");
 
+			_mipmap_count = images[0]->GetMipmapCount();
+
 			//Fill the array with data:
 			for(unsigned int i=0; i < _num_textures; ++i) {
 				//											, lvl, x, y, z, width, height, depth
 				glPixelStorei(GL_UNPACK_ALIGNMENT, images[i]->GetFormat().LineAlign());
-				glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, i, _width, _height, 1, fmt.format,  fmt.type , images[i]->GetImageArray(0));
+				if(_mipmap_count > images[i]->GetMipmapCount())
+					_mipmap_count = images[i]->GetMipmapCount(); //Find smallest value
+
+				for(unsigned int mipmap_lvl=0; mipmap_lvl<_mipmap_count; ++mipmap_lvl) {
+					const glimg::SingleImage &img = images[i]->GetImage(mipmap_lvl, 0, 0);
+					const glimg::Dimensions &dim = img.GetDimensions();
+					fmt = glimg::GetUploadFormatType(img.GetFormat(), 0); 
+					glTexSubImage3D(GL_TEXTURE_2D_ARRAY, mipmap_lvl, 0, 0, i, dim.width, dim.height, 1, fmt.format,  fmt.type,
+						img.GetImageData());
+				}
 			}
 			break;
 		case GL_TEXTURE_CUBE_MAP:
@@ -144,7 +166,13 @@ void Texture::set_clamp_params() {
 }
 
 glimg::ImageSet * Texture::load_image(const std::string &path) {
-	return glimg::loaders::stb::LoadFromFile(path.c_str());
+	//Check file format:
+	if(path.substr(path.length()-4) == ".dds") {
+		printf("Using dds loader for %s\n",path.c_str());
+		return glimg::loaders::dds::LoadFromFile(path.c_str());
+	} else {
+		return glimg::loaders::stb::LoadFromFile(path.c_str());
+	}
 }
 
 void Texture::free_texture(){

@@ -5,8 +5,8 @@ const int num_height_levels = 5;
 
 const float height_levels[num_height_levels] = {
 	0.0,
-	0.3,
-	0.4,
+	0.1,
+	0.2,
 	0.5,
 	0.8
 };

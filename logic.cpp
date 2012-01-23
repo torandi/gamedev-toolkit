@@ -8,7 +8,7 @@
 
 #define LIGHT_ROTATION_SPEED M_PI/8.f
 
-#define MOVE_SPEED 100.f
+#define MOVE_SPEED 80.f
 #define ROTATION_SPEED 50.f
 
 float cam_rot = 0;

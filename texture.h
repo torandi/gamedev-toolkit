@@ -41,6 +41,8 @@ class Texture  {
 		 */
 		void set_clamp_params();
 
+		unsigned int mipmap_count() { return _mipmap_count; };
+
 	private:
 		//Copy not allowed (no body implemented, intentional!)
 		Texture(const Texture &other);
@@ -53,6 +55,7 @@ class Texture  {
 		int _width;
 		int _height;
 		unsigned int _num_textures;
+		unsigned int _mipmap_count;
 		GLuint _texture_type;
 
 		static GLuint cube_map_index_[6];
