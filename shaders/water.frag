@@ -1,7 +1,7 @@
 #version 330
 #include "uniforms.glsl"
 
-const vec3 water_tint = vec3(0.7, 1.0, 0.9);
+const vec3 water_tint = vec3(0.8, 1.0, 1.0);
 
 in vec3 position;
 in vec3 normal;
@@ -16,6 +16,8 @@ in float height;
 out vec4 ocolor;
 
 void main() {
+	vec4 specular=vec4(1.0);
+
 	vec3 norm_normal, norm_tangent, norm_bitangent;
 	norm_normal = normalize(normal);
 	norm_tangent = normalize(tangent);
@@ -35,8 +37,7 @@ void main() {
 	vec3 r = reflect(-camera_direction, norm_normal);
 	vec4 originalColor;
 	originalColor.rgb = skybox_color(r)*water_tint;
-	originalColor.a = 0.7;
-	/*
+	
 	vec4 accumLighting = originalColor * Lgt.ambient_intensity;
 
 	for(int light = 0; uint(light) < Lgt.num_lights; ++light) {
@@ -47,13 +48,14 @@ void main() {
 		light_dir.x = dot(dir, norm_tangent);
 		light_dir.y = dot(dir, norm_bitangent);
 		light_dir.z = dot(dir, norm_normal);
-
-		accumLighting += computeLighting(Lgt.lights[light], originalColor, normal_map, light_dir, camera_dir, light_distance);
-	//	accumLighting += computeLighting(Lgt.lights[light], originalColor, norm_normal, dir, camera_direction, light_distance);
+		accumLighting += computeLighting(
+				Lgt.lights[light], originalColor, normal_map,
+				light_dir, camera_dir, light_distance, 
+				64.0, specular, 1.0,
+				true, true);
 	}
 
 	ocolor= clamp(accumLighting,0.0, 1.0);
-*/
-	ocolor = originalColor;
+	ocolor.a = 0.5;
 	
 }
