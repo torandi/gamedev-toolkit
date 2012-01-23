@@ -11,7 +11,6 @@ const float height_levels[num_height_levels] = {
 	0.8
 };
 
-
 in vec3 position;
 in vec3 normal;
 in vec3 tangent;

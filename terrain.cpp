@@ -11,14 +11,12 @@
 
 #define RENDER_DEBUG 0
 
-#define TEXTURE_SCALE 2.0f
-
 const char * Terrain::texture_files_[] = {
-	"dirt.dds",
-	"sand.dds",
-	"grass.dds",
-	"mountain.dds",
-	"snow.dds"
+	"dirt.jpg",
+	"sand.jpg",
+	"grass.jpg",
+	"mountain.jpg",
+	"snow.jpg"
 };
 
 #define TEXTURE_LEVELS 5
@@ -30,8 +28,9 @@ void Terrain::init_terrain(Renderer * renderer) {
 	glUseProgram(renderer->shaders[Renderer::TERRAIN_SHADER].program);
 
 	glSamplerParameteri(renderer->shaders[Renderer::TERRAIN_SHADER].texture_array1, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glSamplerParameteri(renderer->shaders[Renderer::TERRAIN_SHADER].texture_array1, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	glSamplerParameterf(renderer->shaders[Renderer::TERRAIN_SHADER].texture_array1, GL_TEXTURE_MAX_ANISOTROPY_EXT, 4.0f);
+	glSamplerParameteri(renderer->shaders[Renderer::TERRAIN_SHADER].texture_array1, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	//glSamplerParameteri(renderer->shaders[Renderer::TERRAIN_SHADER].texture_array1, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	//glSamplerParameterf(renderer->shaders[Renderer::TERRAIN_SHADER].texture_array1, GL_TEXTURE_MAX_ANISOTROPY_EXT, 4.0f);
 
 	glUseProgram(0);
 }
@@ -56,6 +55,7 @@ Terrain::Terrain(const std::string folder, float horizontal_scale, float vertica
 		water_mesh_(NULL),
 		texture_(NULL),
 		water_level_(water_level),
+		texture_scale_(128.0f) ,
 		start_height(0.f)
 		{
 	heightmap_ = load_image();
@@ -83,7 +83,7 @@ void Terrain::generate_terrain() {
 			float h = height_from_color(color);
 			map_[i] =  h*vertical_scale_;
 			v.position = glm::vec3(horizontal_scale_*x, vertical_scale_*h, horizontal_scale_*y);
-			v.texCoord = glm::vec2(v.position.x/TEXTURE_SCALE, v.position.z/TEXTURE_SCALE);
+			v.texCoord = glm::vec2(v.position.x/texture_scale_, v.position.z/texture_scale_);
 			vertices[i] = v;
 		}
 	}
@@ -125,15 +125,15 @@ void Terrain::generate_water() {
 			if(is_square_below_water(x, y)) {
 				Mesh::vertex_t v;
 				glm::vec3 base_pos = glm::vec3(horizontal_scale_*x, water_level_, horizontal_scale_*y);
-				glm::vec2 base_uv = glm::vec2(v.position.x/TEXTURE_SCALE, v.position.z/TEXTURE_SCALE);
+				glm::vec2 base_uv = glm::vec2(v.position.x/texture_scale_, v.position.z/texture_scale_);
 				for(int i=0;i<2;++i) {
 					v.position = base_pos;
 					v.texCoord = base_uv;
 					v.position.x+=i*horizontal_scale_;
-					v.texCoord.x+=i*horizontal_scale_/TEXTURE_SCALE; 
+					v.texCoord.x+=i*horizontal_scale_/texture_scale_; 
 					for(int j=0;j<2;++j) {
 						v.position.z+=j*horizontal_scale_;
-						v.texCoord.y+=j*horizontal_scale_/TEXTURE_SCALE; 
+						v.texCoord.y+=j*horizontal_scale_/texture_scale_; 
 						vertices.push_back(v);
 					}
 				}
@@ -171,9 +171,6 @@ void Terrain::load_textures() {
 	texture_->bind();
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_BASE_LEVEL, 0);
-	//glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAX_LEVEL, texture_->mipmap_count());
-	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAX_LEVEL, 6);
 	texture_->unbind();
 }
 
