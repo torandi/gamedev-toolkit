@@ -206,7 +206,7 @@ void Renderer::load_skybox(std::string skybox_path) {
 
 	skybox_texture = new Texture(files, true);
 
-	glActiveTexture(GL_TEXTURE_CUBE_MAP);
+	glActiveTexture(GL_TEXTURE0);
 
 	skybox_texture->bind();
 	skybox_texture->set_clamp_params();

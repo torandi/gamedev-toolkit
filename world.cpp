@@ -25,9 +25,9 @@ const float high_morning = 8;
 const float high_day = 14;
 const float high_evening = 21;
 
-const float time_per_hour=100.f;
+const float time_per_hour=10.f;
 
-float time_of_day = 2.0; //0->24;
+float time_of_day = 12.0; //0->24;
 
 
 void create_world(Renderer * renderer) {
@@ -39,8 +39,8 @@ void create_world(Renderer * renderer) {
 	//Skybox
 	renderer->load_skybox("skybox");
 
-	Terrain * t = new Terrain ("valley",1.f, 100.f, 40.0f);
-	t->start_height = 30.f;
+	Terrain * t = new Terrain ("valley",1.f, 100.f, 30.0f);
+	t->start_height = 25.f;
 
 	renderer->render_objects.push_back(t);
 

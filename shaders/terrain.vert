@@ -18,7 +18,7 @@ out vec2 texcoord;
 out float height;
 
 void main() {
-	height = (in_position.y - start_height)/(vertical_scale-start_height);
+	height = clamp((in_position.y - start_height)/(vertical_scale-start_height),0.0, 1.0);
 
 	vec4 w_pos = modelMatrix * in_position;
 	position = w_pos.xyz;

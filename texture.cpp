@@ -63,7 +63,9 @@ int Texture::height() const {
 void Texture::bind() const {
 	assert(_texture != (unsigned int)-1);
 	glBindTexture(_texture_type, _texture);
-	Renderer::checkForGLErrors("Texture::bind()");
+	char tmp[256];
+	sprintf(tmp, "Texture(%s,...)::bind()", _filenames[0].c_str());
+	Renderer::checkForGLErrors(tmp);
 }
 
 void Texture::unbind() const {
