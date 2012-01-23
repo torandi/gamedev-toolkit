@@ -39,6 +39,7 @@ void Renderer::init_shader(Shader &shader) {
 	shader.texture2 = glGetUniformLocation(shader.program, "tex2");
 	shader.texture_array1 = glGetUniformLocation(shader.program, "tex_array1");
 	shader.texture_array2 = glGetUniformLocation(shader.program, "tex_array2");
+	shader.skybox = glGetUniformLocation(shader.program, "skybox");
 
 	checkForGLErrors((std::string("init shader: local uniforms ")+shader.name).c_str());
 
@@ -85,6 +86,7 @@ void Renderer::init_shader(Shader &shader) {
 	glUniform1i(shader.texture2, 1);
 	glUniform1i(shader.texture_array1, 0);
 	glUniform1i(shader.texture_array2, 1);
+	glUniform1i(shader.skybox, 0);
 	glUseProgram(0);
 
 	checkForGLErrors((std::string("init shader: bind textures")+shader.name).c_str());
@@ -199,11 +201,16 @@ void Renderer::load_skybox(std::string skybox_path) {
 	for(int i=0; i < 6; ++i) {
 		files.push_back(skybox_path+skybox_texture_name[i]);
 	}
-	
-	skybox_texture = new Texture(files, false);
+
+	glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+
+	skybox_texture = new Texture(files, true);
+
+	glActiveTexture(GL_TEXTURE_CUBE_MAP);
+
 	skybox_texture->bind();
 	skybox_texture->set_clamp_params();
-	skybox_texture->unbind();
+	//skybox_texture->unbind(); - Do not unbind!
 
 }
 
@@ -309,15 +316,15 @@ void Renderer::render_skybox() {
 
 	checkForGLErrors("render_skybox(): pre");
 	
-	glActiveTexture(GL_TEXTURE0);
+	//glActiveTexture(GL_TEXTURE0);
 
-	skybox_texture->bind();
+	//skybox_texture->bind();
 
 	glDrawArrays(GL_TRIANGLES, 0, 36);
 
 	checkForGLErrors("render_skybox(): render");
 
-	skybox_texture->unbind();
+	//skybox_texture->unbind();
 
 
 	glDisableVertexAttribArray(1);

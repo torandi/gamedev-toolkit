@@ -80,6 +80,7 @@ public:
 	GLint texture2;
 	GLint texture_array1;
 	GLint texture_array2;
+	GLint skybox;
 
 	std::map<std::string, GLint> uniform; //For shader specific uniforms
 

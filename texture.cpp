@@ -137,8 +137,10 @@ void Texture::load_texture() {
 		case GL_TEXTURE_CUBE_MAP:
 			set_clamp_params();
 			for(int i=0; i < 6; ++i) {
+				fmt = glimg::GetUploadFormatType(images[i]->GetFormat(), 0); 
 				glPixelStorei(GL_UNPACK_ALIGNMENT, images[i]->GetFormat().LineAlign());
-				glTexImage2D(cube_map_index_[i], 0, GL_RGBA , _width, _height, 0, fmt.format, fmt.type, images[0]->GetImageArray(0) );
+				assert(_width == _height);
+				glTexImage2D(cube_map_index_[i], 0, GL_RGBA , _width, _height, 0, fmt.format, fmt.type, images[i]->GetImageArray(0) );
 				Renderer::checkForGLErrors("load_texture(): Fill cube map");
 			}
 			break;

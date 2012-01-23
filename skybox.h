@@ -5,22 +5,22 @@
 const float skyboxData[] = {
 
 	//Front
-	0.5f, 0.5f, -0.5f,
-	0.5f, -0.5f, -0.5f,
-	-0.5f, 0.5f, -0.5f,
-
-	0.5f, -0.5f, -0.5f,
-	-0.5f, -0.5f, -0.5f, 
-	-0.5f, 0.5f, -0.5f, 
-
-	//Back
 	0.5f, 0.5f, 0.5f,
 	0.5f, -0.5f, 0.5f,
-	-0.5f, 0.5f, 0.5f, 
+	-0.5f, 0.5f, 0.5f,
 
 	0.5f, -0.5f, 0.5f,
-	-0.5f, -0.5f, 0.5f,
-	-0.5f, 0.5f, 0.5f,
+	-0.5f, -0.5f, 0.5f, 
+	-0.5f, 0.5f, 0.5f, 
+
+	//Back
+	0.5f, 0.5f, -0.5f,
+	0.5f, -0.5f, -0.5f,
+	-0.5f, 0.5f, -0.5f, 
+
+	0.5f, -0.5f, -0.5f,
+	-0.5f, -0.5f, -0.5f,
+	-0.5f, 0.5f, -0.5f,
 
 	//Left
 	-0.5f, 0.5f, 0.5f, 
@@ -118,12 +118,12 @@ const float skyboxData[] = {
 };
 
 const char * skybox_texture_name[] {
-	"front_alpha.png",
-	"back_alpha.png",
 	"left_alpha.png",
 	"right_alpha.png",
 	"top_alpha.png",
-	"bottom_alpha.png"
+	"bottom_alpha.png",
+	"front_alpha.png",
+	"back_alpha.png"
 };
 
 #endif

@@ -9,6 +9,8 @@ uniform sampler2D tex2;
 uniform sampler2DArray tex_array1;
 uniform sampler2DArray tex_array2;
 
+uniform samplerCube skybox;
+
 layout(std140) uniform Matrices {
 	mat4 projectionViewMatrix;
 	mat4 modelMatrix;
