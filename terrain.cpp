@@ -29,6 +29,7 @@ void Terrain::init_terrain(Renderer * renderer) {
 
 	glSamplerParameteri(renderer->shaders[Renderer::TERRAIN_SHADER].texture_array1, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glSamplerParameteri(renderer->shaders[Renderer::TERRAIN_SHADER].texture_array1, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
+	glSamplerParameterf(renderer->shaders[Renderer::TERRAIN_SHADER].texture_array1, GL_TEXTURE_MAX_ANISOTROPY_EXT, 4.0f);
 
 	glUseProgram(0);
 }
@@ -66,7 +67,7 @@ void Terrain::generate_terrain() {
 			int i = y * width_ + x;
 			glm::vec4 color = get_pixel_color(x, y);
 			v.position = glm::vec3(horizontal_scale_*x, vertical_scale_*height_from_color(color), horizontal_scale_*y);
-			v.texCoord = glm::vec2(v.position.x/4.0, v.position.z/4.0);
+			v.texCoord = glm::vec2(v.position.x/2.0, v.position.z/2.0);
 			vertices[i] = v;
 		}
 	}
