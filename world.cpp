@@ -40,7 +40,7 @@ void create_world(Renderer * renderer) {
 	renderer->load_skybox("skybox");
 
 	Terrain * t = new Terrain ("valley",1.f, 100.f);
-	t->start_height = 20.f;
+	t->start_height = 30.f;
 
 	renderer->render_objects.push_back(t);
 

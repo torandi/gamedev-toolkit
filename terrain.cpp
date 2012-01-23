@@ -66,7 +66,7 @@ void Terrain::generate_terrain() {
 			int i = y * width_ + x;
 			glm::vec4 color = get_pixel_color(x, y);
 			v.position = glm::vec3(horizontal_scale_*x, vertical_scale_*height_from_color(color), horizontal_scale_*y);
-			v.texCoord = glm::vec2(v.position.x/2.0, v.position.z/2.0);
+			v.texCoord = glm::vec2(v.position.x/4.0, v.position.z/4.0);
 			vertices[i] = v;
 		}
 	}
@@ -110,9 +110,8 @@ void Terrain::load_textures() {
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_BASE_LEVEL, 0);
-	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAX_LEVEL, texture_->mipmap_count());
+	//glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAX_LEVEL, texture_->mipmap_count());
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAX_LEVEL, 6);
-	printf("Mipmap count: %d\n", texture_->mipmap_count());
 	texture_->unbind();
 }
 
