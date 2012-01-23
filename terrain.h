@@ -46,12 +46,15 @@ class Terrain : public RenderGroup {
 	const float water_level_;
 	const float texture_scale_;
 	float time_;
+	int num_waves_;
 
 	public:
 		//Start height (relative this object) used when selecting terrain
 		float start_height;
 		//Water level
 
+		int num_waves() { return num_waves_; };
+		void set_num_waves(int num);
 		float height() { return height_; };
 		float width() { return width_; };
 		Terrain(const std::string folder, float horizontal_scale, float vertical_scale, float water_level);

@@ -42,6 +42,8 @@ void create_world(Renderer * renderer) {
 	Terrain * t = new Terrain ("valley",1.f, 100.f, 30.0f);
 	t->start_height = 25.f;
 
+	t->set_num_waves(3);
+
 	renderer->render_objects.push_back(t);
 
 	//Lights:

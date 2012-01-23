@@ -1,11 +1,14 @@
 #version 330
 #include "uniforms.glsl"
 
-#define MAX_NUM_WAVES 8
+#define MAX_NUM_WAVES 16
+
+const float water_sight = 80.0;
 
 const float pi = 3.14159;
 uniform int num_waves;
 uniform float time;
+uniform float water_height;
 uniform float amplitude[MAX_NUM_WAVES];
 uniform float wavelength[MAX_NUM_WAVES];
 uniform float speed[MAX_NUM_WAVES];
@@ -19,9 +22,7 @@ layout (location = 4) in vec4 in_bitangent;
 
 out vec3 position;
 out vec3 normal;
-out vec3 tangent;
-out vec3 bitangent;
-out vec2 texcoord;
+out float depth;
 
 float wave(int i, vec2 pos) {
 	float frequency = 2*pi/wavelength[i];
@@ -67,13 +68,11 @@ vec3 waveNormal(vec2 pos) {
 
 void main() {
 	vec4 pos = in_position;
-	pos.y+= waveHeight(pos.xz);
+	pos.y = water_height + waveHeight(pos.xz);
 	vec4 w_pos = modelMatrix * pos;
 	position = w_pos.xyz;
 	gl_Position = projectionViewMatrix *  w_pos;
-	texcoord = in_texcoord;
 	normal = (normalMatrix * (vec4(waveNormal(pos.xz), 1.0))).xyz;
-	tangent = (normalMatrix * in_tangent).xyz;
-	bitangent = (normalMatrix * in_bitangent).xyz;
+	depth = abs(pos.y - in_position.y)/water_sight;
 }
 

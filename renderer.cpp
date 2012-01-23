@@ -94,7 +94,7 @@ void Renderer::init_shader(Shader &shader) {
 
 Renderer::Renderer(int w, int h, bool fullscreen) {
 	float zNear = 1.0f;
-	float zFar = 1000.0f;
+	float zFar = 10000.0f;
 	ambient_intensity = glm::vec3(0.1f,0.1f,0.1f);
 
 	skybox_texture = NULL;
