@@ -2,6 +2,10 @@
 #define UTIL_H
 
 #include <cmath>
+#include <string>
+
+float uniformRandomInRange(float min, float max);
+std::string format(const std::string &fmt, ...);
 
 inline float deg_to_rad(const float &fAngDeg) {
 	const float fDegToRad = M_PI * 2.0f / 360.0f;

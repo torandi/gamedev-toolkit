@@ -45,6 +45,7 @@ class Terrain : public RenderGroup {
 	static const char * texture_files_[];
 	const float water_level_;
 	const float texture_scale_;
+	float time_;
 
 	public:
 		//Start height (relative this object) used when selecting terrain

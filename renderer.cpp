@@ -29,7 +29,7 @@ std::string Renderer::shader_files_[] = {
 
 void Renderer::load_shader_uniform_location(shader_program_t shader, std::string uniform_name) {
 	shaders[shader].uniform[uniform_name] = glGetUniformLocation(shaders[shader].program, uniform_name.c_str());
-	checkForGLErrors((std::string("load uniform ")+uniform_name+"from shader "+shaders[shader].name).c_str());
+	checkForGLErrors((std::string("load uniform ")+uniform_name+" from shader "+shaders[shader].name).c_str());
 }
 
 void Renderer::init_shader(Shader &shader) {

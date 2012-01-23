@@ -1,6 +1,8 @@
 #version 330
 #include "uniforms.glsl"
 
+const vec3 water_tint = vec3(0.7, 1.0, 0.9);
+
 in vec3 position;
 in vec3 normal;
 in vec3 tangent;
@@ -32,8 +34,8 @@ void main() {
 
 	vec3 r = reflect(-camera_direction, norm_normal);
 	vec4 originalColor;
-	originalColor.rgb = skybox_color(r);
-	originalColor.a = 0.5;
+	originalColor.rgb = skybox_color(r)*water_tint;
+	originalColor.a = 0.7;
 	/*
 	vec4 accumLighting = originalColor * Lgt.ambient_intensity;
 

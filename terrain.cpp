@@ -2,6 +2,7 @@
 #include "texture.h"
 #include "renderer.h"
 #include "mesh.h"
+#include "util.h"
 
 #include <SDL/SDL.h>
 #include <SDL/SDL_image.h>
@@ -29,6 +30,11 @@ void Terrain::init_terrain(Renderer * renderer) {
 	renderer->load_shader_uniform_location(Renderer::TERRAIN_SHADER, "vertical_scale");
 	renderer->load_shader_uniform_location(Renderer::TERRAIN_SHADER, "start_height");
 	renderer->load_shader_uniform_location(Renderer::TERRAIN_SHADER, "specular_map");
+
+	renderer->load_shader_uniform_location(Renderer::WATER_SHADER, "time");
+	renderer->load_shader_uniform_location(Renderer::WATER_SHADER, "num_waves");
+
+	Renderer::checkForGLErrors("Terrain::init() load shader uniforms");
 	
 	glUseProgram(renderer->shaders[Renderer::TERRAIN_SHADER].program);
 	glUniform1i(renderer->shaders[Renderer::TERRAIN_SHADER].uniform["specular_map"], 2);
@@ -37,6 +43,33 @@ void Terrain::init_terrain(Renderer * renderer) {
 	glSamplerParameteri(renderer->shaders[Renderer::TERRAIN_SHADER].texture_array1, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	//glSamplerParameteri(renderer->shaders[Renderer::TERRAIN_SHADER].texture_array1, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	glSamplerParameterf(renderer->shaders[Renderer::TERRAIN_SHADER].texture_array1, GL_TEXTURE_MAX_ANISOTROPY_EXT, 4.0f);
+
+	Renderer::checkForGLErrors("Terrain::init() set terrain data");
+	//Set wave data:
+	Shader &water_shader = renderer->shaders[Renderer::WATER_SHADER];
+
+	glUseProgram(water_shader.program);
+	glUniform1i(water_shader.uniform["num_waves"], 4);
+	Renderer::checkForGLErrors("Terrain::init() set num waves");
+
+	for (int i = 0; i < 4; ++i) {
+	  float amplitude = 0.5f / (i + 1);
+	  renderer->load_shader_uniform_location(Renderer::WATER_SHADER, format("amplitude[%d]", i));
+	  glUniform1f(water_shader.uniform[format("amplitude[%d]", i)], amplitude);
+
+	  float wavelength = 8 * M_PI / (i + 1);
+	  renderer->load_shader_uniform_location(Renderer::WATER_SHADER, format("wavelength[%d]", i));
+	  glUniform1f(water_shader.uniform[format("wavelength[%d]", i)], wavelength);
+
+	  float speed = 1.0f + 2*i;
+	  renderer->load_shader_uniform_location(Renderer::WATER_SHADER, format("speed[%d]", i));
+	  glUniform1f(water_shader.uniform[format("speed[%d]", i)], speed);
+
+	  float angle = uniformRandomInRange(-M_PI/3, M_PI/3);
+	  renderer->load_shader_uniform_location(Renderer::WATER_SHADER, format("direction[%d]", i));
+	  glUniform2f(water_shader.uniform[format("direction[%d]", i)], cos(angle), sin(angle));
+	  Renderer::checkForGLErrors("Terrain set wave data");
+	}
 
 	glUseProgram(0);
 }
@@ -68,6 +101,8 @@ Terrain::Terrain(const std::string folder, float horizontal_scale, float vertica
 	generate_terrain();	
 	generate_water();
 	load_textures();
+
+	time_ = 0.0;
 
 	position_-=glm::vec3(width_*horizontal_scale_, vertical_scale_, height_*horizontal_scale_/2.0)/2.0f;
 	SDL_FreeSurface(heightmap_);
@@ -307,6 +342,8 @@ SDL_Surface * Terrain::load_image() {
 }
 
 void Terrain::render(double dt, Renderer * renderer) {
+	time_+=dt;
+
 	glUseProgram(renderer->shaders[Renderer::TERRAIN_SHADER].program);
 
 	glUniform1f(renderer->shaders[Renderer::TERRAIN_SHADER].uniform["vertical_scale"], vertical_scale_);
@@ -328,6 +365,7 @@ void Terrain::render(double dt, Renderer * renderer) {
 	terrain_mesh_->render();
 
 	glUseProgram(renderer->shaders[Renderer::WATER_SHADER].program);
+	glUniform1f(renderer->shaders[Renderer::WATER_SHADER].uniform["time"], time_);
 
 	water_mesh_->render();
 
