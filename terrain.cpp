@@ -12,20 +12,26 @@
 #define RENDER_DEBUG 0
 
 const char * Terrain::texture_files_[] = {
-	"dirt.jpg",
-	"sand.jpg",
-	"grass.jpg",
-	"mountain.jpg",
-	"snow.jpg"
+	"dirt",
+	"sand",
+	"grass",
+	"mountain",
+	"snow"
 };
+
+#define NORMAL_TEXTURE ".jpg"
+#define SPECULAR_MAP "_specular.jpg"
+#define NORMAL_MAP "_normal.jpg"
 
 #define TEXTURE_LEVELS 5
 
 void Terrain::init_terrain(Renderer * renderer) {
 	renderer->load_shader_uniform_location(Renderer::TERRAIN_SHADER, "vertical_scale");
 	renderer->load_shader_uniform_location(Renderer::TERRAIN_SHADER, "start_height");
+	renderer->load_shader_uniform_location(Renderer::TERRAIN_SHADER, "specular_map");
 	
 	glUseProgram(renderer->shaders[Renderer::TERRAIN_SHADER].program);
+	glUniform1i(renderer->shaders[Renderer::TERRAIN_SHADER].uniform["specular_map"], 2);
 
 	glSamplerParameteri(renderer->shaders[Renderer::TERRAIN_SHADER].texture_array1, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glSamplerParameteri(renderer->shaders[Renderer::TERRAIN_SHADER].texture_array1, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -164,11 +170,23 @@ void Terrain::generate_water() {
 
 void Terrain::load_textures() {
 	std::vector<std::string> textures;
+	std::vector<std::string> specular;
+	std::vector<std::string> normal;
 	for(unsigned int i=0;i<TEXTURE_LEVELS;++i) {
-		textures.push_back(folder_+texture_files_[i]);
+		textures.push_back((folder_+texture_files_[i])+NORMAL_TEXTURE);
+		specular.push_back((folder_+texture_files_[i])+SPECULAR_MAP);
+		normal.push_back((folder_+texture_files_[i])+NORMAL_MAP);
 	}
 	texture_ = new Texture(textures, false);
+	specular_map_ = new Texture(specular, false);
+	normal_map_ = new Texture(normal, false);
 	texture_->bind();
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	specular_map_->bind();
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	normal_map_->bind();
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	texture_->unbind();
@@ -295,8 +313,11 @@ void Terrain::render(double dt, Renderer * renderer) {
 	glUniform1f(renderer->shaders[Renderer::TERRAIN_SHADER].uniform["start_height"], start_height);
 
 	glActiveTexture(GL_TEXTURE0);
-
 	texture_->bind();
+	glActiveTexture(GL_TEXTURE1);
+	normal_map_->bind();
+	glActiveTexture(GL_TEXTURE2);
+	specular_map_->bind();
 
 	renderer->modelMatrix.Push();
 

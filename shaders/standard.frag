@@ -52,7 +52,11 @@ void main() {
 			light_dir.y = dot(dir, norm_bitangent);
 			light_dir.z = dot(dir, norm_normal);
 
-			accumLighting += computeLighting(Lgt.lights[light], originalColor, normal_map, light_dir, camera_dir, light_distance);
+			accumLighting += computeLighting(
+					Lgt.lights[light], originalColor, normal_map,
+					light_dir, camera_dir, light_distance, 
+					Mtl.shininess, Mtl.specular, 1.0,
+					true, true);
 		} else {
 			accumLighting += originalColor; //This is a light, add full color
 		}

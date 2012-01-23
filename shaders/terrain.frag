@@ -1,6 +1,8 @@
 #version 330
 #include "uniforms.glsl"
 
+uniform sampler2DArray specular_map;
+
 const int num_height_levels = 5;
 
 const float height_levels[num_height_levels] = {
@@ -9,6 +11,14 @@ const float height_levels[num_height_levels] = {
 	0.2,
 	0.5,
 	0.8
+};
+
+const float height_shininess[num_height_levels] = {
+	0.0,
+	2.0,
+	0.0,
+	0.0,
+	5.0
 };
 
 in vec3 position;
@@ -36,10 +46,12 @@ void main() {
 	camera_dir.z = dot(camera_direction, norm_normal); 
 
 	vec4 originalColor; 
+	vec4 specular_color = vec4(1.0);
+	float shininess = 1.0;
 
 	//Find level:
 	int prev=num_height_levels-1;
-	int next=num_height_levels;
+	int next=num_height_levels-1;
 	for(int i=1; i < num_height_levels; ++i) {
 		if(height < height_levels[i]) {
 			prev=i-1;
@@ -48,24 +60,27 @@ void main() {
 		}
 	}
 
-	if(next != num_height_levels) {
-		vec4 c1, c2;
-		c1 = texture2DArray(tex_array1, vec3(texcoord, prev));
-		c2 = texture2DArray(tex_array1, vec3(texcoord, next));
-		float m = (height-height_levels[prev])/(height_levels[next]-height_levels[prev]);
-		originalColor = c1*(1-m)+c2*m;
-		//originalColor = c1;
-	} else {
-		originalColor = texture2DArray(tex_array1,vec3(texcoord, num_height_levels-1));
-	}
+	vec4 normal_map = vec4(0.0, 0.0, 1.0,1.0);
 
-	/*originalColor = vec4(height);
-	originalColor.a = 1.0f;*/
+	vec4 c1, c2, s1, s2, n1, n2;
+	float sh1, sh2;
+	c1 = texture2DArray(tex_array1, vec3(texcoord, prev));
+	c2 = texture2DArray(tex_array1, vec3(texcoord, next));
+	s1 = texture2DArray(specular_map, vec3(texcoord, prev));
+	s2 = texture2DArray(specular_map, vec3(texcoord, next));
+	n1 = texture2DArray(tex_array2, vec3(texcoord, prev));
+	n2 = texture2DArray(tex_array2, vec3(texcoord, next));
+	sh1 = height_shininess[prev];
+	sh2 = height_shininess[next];
+	float m = (height-height_levels[prev])/(height_levels[next]-height_levels[prev]);
+	if(next==prev)
+		m=1.0;
+	originalColor = c1*(1-m)+c2*m;
+	specular_color = s1*(1-m)+s2*m;
+	shininess = sh1*(1-m)+sh2*m;
+	normal_map = n1*(1-m)+n2*m;
 
-	vec3 normal_map = vec3(0.0, 0.0, 1.0);
-
-	//normal_map = normalize(texture(tex2, texcoord).xyz * 2.0 - 1.0);
-	
+	normal_map.xyz = normalize(normal_map.xyz * 2.0 - 1.0);
 	vec4 accumLighting = originalColor * Lgt.ambient_intensity;
 
 	for(int light = 0; uint(light) < Lgt.num_lights; ++light) {
@@ -77,8 +92,11 @@ void main() {
 		light_dir.y = dot(dir, norm_bitangent);
 		light_dir.z = dot(dir, norm_normal);
 
-		accumLighting += computeLighting(Lgt.lights[light], originalColor, normal_map, light_dir, camera_dir, light_distance);
-	//	accumLighting += computeLighting(Lgt.lights[light], originalColor, norm_normal, dir, camera_direction, light_distance);
+		accumLighting += computeLighting(
+				Lgt.lights[light], originalColor, normal_map.xyz,
+				light_dir, camera_dir, light_distance, 
+				shininess, specular_color, 0.5,
+				true, true);
 	}
 
 	ocolor= clamp(accumLighting,0.0, 1.0);

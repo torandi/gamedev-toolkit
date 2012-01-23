@@ -25,9 +25,9 @@ const float high_morning = 8;
 const float high_day = 14;
 const float high_evening = 21;
 
-const float time_per_hour=10.f;
+const float time_per_hour=100.f;
 
-float time_of_day = 14.0; //0->24;
+float time_of_day = 2.0; //0->24;
 
 
 void create_world(Renderer * renderer) {
@@ -50,7 +50,7 @@ void create_world(Renderer * renderer) {
 	lights_lights[LIGHT_SOURCE1] = new Light(glm::vec3(0.6, 0.6, 0.6), Light::POINT_LIGHT);
 #else
 	lights_lights[0] = new Light(glm::vec3(0.8, 0.8, 0.8), Light::POINT_LIGHT);
-	lights_lights[0]->set_half_light_distance(100.f);
+	lights_lights[0]->set_half_light_distance(10.f);
 #endif
 
 	for(int i=0; i < NUM_LIGHTS; ++i) {
@@ -65,7 +65,6 @@ void create_world(Renderer * renderer) {
 	}
 
 	//load models:
-
 /*
 	//objects.back().position+=glm::vec3(0.0, 0.0, 0.f);
 	renderer->render_objects.push_back(new RenderObject("models/nintendo.obj", Renderer::NORMAL_SHADER));//, true, aiProcess_FixInfacingNormals));
@@ -82,7 +81,7 @@ void create_world(Renderer * renderer) {
 	renderer->render_objects.push_back(new RenderObject("models/wall.obj", Renderer::NORMAL_SHADER));
 	renderer->render_objects.back()->absolute_move(glm::vec3(-5.0,0.0,5.0));
 	renderer->render_objects.back()->scale*=5.f;
-	*renderer->render_objects.push_back(new RenderObject("models/cube_textured.obj", Renderer::NORMAL_SHADER));
+	renderer->render_objects.push_back(new RenderObject("models/cube_textured.obj", Renderer::NORMAL_SHADER));
 	renderer->render_objects.back()->absolute_move(glm::vec3(0.0,0.0,2.0));
 
 	RenderObject * m = new RenderObject("models/mario_obj.obj", Renderer::NORMAL_SHADER);
@@ -91,7 +90,7 @@ void create_world(Renderer * renderer) {
 	m->absolute_move(glm::vec3(0.0, 2.0, 0.0));
 	renderer->render_objects.push_back(m);
 	renderer->render_objects.back()->scale*=3.0f;
-**/
+*/
 	lights[LIGHT_SOURCE0].set_position(glm::vec3(-1.0, 1.0, -2.0));
 
 
@@ -99,8 +98,6 @@ void create_world(Renderer * renderer) {
 }
 
 void update_world(double dt, Renderer * renderer) {
-	//printf("Light pos: (%f, %f, %f)\n", lights_ro[LIGHT_SOURCE1]->position().x, lights_ro[LIGHT_SOURCE1]->position().y, lights_ro[LIGHT_SOURCE1]->position().z);
-	//mario.absolute_rotate(glm::vec3(1.0, 1.0, 1.0), dt*20.f);
 
 	time_of_day+=dt/time_per_hour;
 	time_of_day = fmod(time_of_day, 24.f);

@@ -21,6 +21,7 @@ layout(std140) uniform Camera {
 	vec3 camera_pos; //The cameras position in world space
 };
 
+
 layout(std140) uniform Material {
 	uint use_texture;
 	uint use_normal_map;

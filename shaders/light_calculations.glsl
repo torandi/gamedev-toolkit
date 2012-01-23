@@ -1,11 +1,11 @@
 vec4 computeLighting(
 	in light_data light, in vec4 originalColor, 
 	in vec3 normal_map, in vec3 light_dir, 
-	in vec3 camera_dir, in vec3 light_distance
+	in vec3 camera_dir, in vec3 light_distance,
+	float shininess, vec4 specular, float specular_intensity,
+	bool use_diffuse, bool use_specular
 	) {
 	vec3 lightIntensity;
-
-	float specular_intensity = 1.0;
 
 	//Turn off light attenuation if w == 0.0
 	if(light.position.w == 0.0) {
@@ -20,14 +20,17 @@ vec4 computeLighting(
 
 	if( LambertTerm > 0.0) {
 		//Apply specular
-		specular_amount = pow(clamp(dot(reflect(light_dir, normal_map), camera_dir), 0.0, 1.0), Mtl.shininess);
+		specular_amount = pow(clamp(dot(reflect(-light_dir, normal_map), camera_dir), 0.0, 1.0), shininess);
 	}
 
 	vec3 diffuse = originalColor.rgb * LambertTerm * lightIntensity;	
-	vec3 specular = Mtl.specular.rgb * specular_amount * specular_intensity * length(diffuse);
+	vec3 specular_color = specular.rgb * specular_amount * specular_intensity * length(diffuse);
 
-	vec4 color;
-	color.rgb = diffuse + specular;
+	vec4 color = vec4(0.0);
+	if(use_diffuse)
+		color.rgb += diffuse;
+	if(use_specular)
+		color.rgb += specular_color;
 	color.a = 1.0;
 
 	return color;

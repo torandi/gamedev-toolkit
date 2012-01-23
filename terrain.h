@@ -35,6 +35,8 @@ class Terrain : public RenderGroup {
 	Mesh * water_mesh_;
 
 	Texture * texture_;
+	Texture * specular_map_;
+	Texture * normal_map_;
 
 	//Hide these functions:
 	RenderGroup::operator[];
