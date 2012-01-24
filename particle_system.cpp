@@ -77,21 +77,22 @@ void ParticleSystem::generate_buffers() {
 	//The vertices buffer is filled as needed while the indices buffer is filled once, the texCoord is static in the vb though
 	for(int i=0; i<MAX_NUM_PARTICLES; ++i) {
 		for(int n=0;n<NUM_SIDES; ++n) {
+			int base_index = i*NUM_SIDES*4;
 			//Set texture coordinates on the verticel
-			vertices_[i+n+0].texCoord = glm::vec2(0,0);
-			vertices_[i+n+1].texCoord = glm::vec2(1,0);
-			vertices_[i+n+2].texCoord = glm::vec2(0,1);
-			vertices_[i+n+3].texCoord = glm::vec2(1,1);
+			vertices_[base_index+0].texCoord = glm::vec2(0,0);
+			vertices_[base_index+1].texCoord = glm::vec2(1,0);
+			vertices_[base_index+2].texCoord = glm::vec2(0,1);
+			vertices_[base_index+3].texCoord = glm::vec2(1,1);
 
 			//indices:
 			//Face 1
-			indices.push_back(i+n+0);
-			indices.push_back(i+n+1);
-			indices.push_back(i+n+3);
+			indices.push_back(base_index+0);
+			indices.push_back(base_index+1);
+			indices.push_back(base_index+3);
 			//Face 2
-			indices.push_back(i+n+0);
-			indices.push_back(i+n+3);
-			indices.push_back(i+n+2);
+			indices.push_back(base_index+0);
+			indices.push_back(base_index+3);
+			indices.push_back(base_index+2);
 		}
 	}
 	//Generate buffers and upload:
@@ -115,10 +116,9 @@ void ParticleSystem::spawn_particles(int num_particles) {
 	srand(time(NULL));
 	for(int i=0;i<num_particles;++i) {
 		particle_t p;
-		p.position = position_ + rand(spawn_area_);
+		p.position = position_ + rand(spawn_area_)+spawn_area_;
 		float m = frand();
 		p.color = (1-m)*color1_  + m*color2_;
-	//	p.color = glm::vec4(1.0, 0.0, 0.0, 1.0);
 		p.direction = spawn_direction_ + rand(direction_var_);
 		p.ttl = avg_ttl_ + rand(ttl_var_);
 		p.speed = avg_spawn_speed_ + rand(spawn_speed_var_);
@@ -172,7 +172,7 @@ void ParticleSystem::render(double dt, Renderer * renderer) {
 
 	glBindBuffer(GL_ARRAY_BUFFER, vb_);
 	Renderer::checkForGLErrors("ParticleSystem::render() - bind buffer");
-	//count = 1;	
+	
 	//Upload new vertex data
 	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertex_t)*count*NUM_SIDES*4, vertices_);
 	Renderer::checkForGLErrors("ParticleSystem::render() - Upload new data");
@@ -187,17 +187,11 @@ void ParticleSystem::render(double dt, Renderer * renderer) {
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(vertex_t), (const GLvoid*) (sizeof(glm::vec3)));
 	glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, sizeof(vertex_t), (const GLvoid*) (sizeof(glm::vec3)+sizeof(glm::vec2)));
 
-	renderer->modelMatrix.Push();
-	renderer->modelMatrix.SetIdentity();
-
-	renderer->upload_model_matrices();
 	glDrawElements(GL_TRIANGLES, count*6*NUM_SIDES, GL_UNSIGNED_INT, 0);
 	Renderer::checkForGLErrors("ParticleSystem::render() - draw");
 /*
 	glUseProgram(renderer->shaders[Renderer::DEBUG_SHADER].program);
 	glDrawElements(GL_TRIANGLES, count*6*NUM_SIDES, GL_UNSIGNED_INT, 0);	*/
-
-	renderer->modelMatrix.Pop();
 
 	glDisableVertexAttribArray(2);
 	glDisableVertexAttribArray(1);

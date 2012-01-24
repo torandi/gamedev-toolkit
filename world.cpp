@@ -41,17 +41,17 @@ ParticleSystem::ParticleSystem(
 	glm::vec3 spawn_direction, glm::vec3 direction_var, float avg_scale, float scale_var,
 	Renderer::shader_program_t shader, std::string texture, glm::vec4 color1, glm::vec4 color2
 )*/
-/*
-	particles = new ParticleSystem(glm::vec3(0.0, -5.0, 2.0), glm::vec3(1, 1, 1), 10, 5, 2, 
+
+	particles = new ParticleSystem(glm::vec3(0.0, -5.0, 2.0), glm::vec3(1, 1, 1), 20, 10, 2, 
 		2.f, 1.f, 0.5, 0.2, 0.1, 0.0, 
-		glm::vec3(0, -1, 0), glm::vec3(1, 0, 1), 1.0, 0.1, 
+		glm::vec3(0, -1, 0), glm::vec3(1, 0, 1), 1.0, 1.0, 
 		Renderer::PARTICLES_SHADER, "textures/snow.png", glm::vec4(1,0,0,1), glm::vec4(1, 0, 1,1));
-*/
-	particles = new ParticleSystem(glm::vec3(0.0, -5.0, 2.0), glm::vec3(10, 10, 10), 10, 10, 2, 
+
+	/*particles = new ParticleSystem(glm::vec3(0.0, -5.0, 2.0), glm::vec3(10, 10, 10), 0, 1000, 2, 
 		0.3f, 0.1f, 0.1, 0.0, 0.0, 0.0, 
 		glm::vec3(0, -1, 0), glm::vec3(0, 0, 0), 10.0, 0.0, 
 		Renderer::PARTICLES_SHADER, "textures/snow.png", glm::vec4(1,0,0,1), glm::vec4(0, 0, 1,1));
-
+*/
 	particles->spawn_particles(100);
 
 	renderer->render_objects.push_back(particles);
