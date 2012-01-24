@@ -55,7 +55,7 @@ public:
 	void load_shader_uniform_location(shader_program_t shader, std::string uniform_name);
 
 	//Uploads model and normal matrices
-	void upload_model_matrices();
+	void upload_model_matrices(bool normal_matrix=true);
 
 	//Load skybox
 	void load_skybox(std::string skybox_path);

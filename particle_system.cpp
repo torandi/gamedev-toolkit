@@ -20,7 +20,7 @@ bool ParticleSystem::particle_t::update(double dt) {
 	
 	acc-=deacc*dt;
 	speed+=acc*dt;
-	position+=(direction*(float)(speed*dt));
+	position+=(direction*(float)(speed*dt))+rand(motion_randomization*(float)dt);
 	//TODO: Change color during lifespan, and maybe alpha too
 
 	return true;
@@ -53,11 +53,11 @@ ParticleSystem::ParticleSystem(
 	glm::vec3 position, glm::vec3 spawn_area, float regeneration, float avg_ttl, float ttl_var,
 	float avg_spawn_speed,float  spawn_speed_var,float  avg_acc,float  acc_var,float  avg_deacc,float  deacc_var,
 	glm::vec3 spawn_direction, glm::vec3 direction_var, float avg_scale, float scale_var,
-	Renderer::shader_program_t shader, std::string texture, glm::vec4 color1, glm::vec4 color2
+	Renderer::shader_program_t shader, std::string texture, glm::vec4 color1, glm::vec4 color2, glm::vec3 motion_rand
 ) : RenderGroup(position), 
 	spawn_area_(spawn_area), regen_(regeneration), avg_ttl_(avg_ttl), ttl_var_(ttl_var),
 	avg_spawn_speed_(avg_spawn_speed), spawn_speed_var_(spawn_speed_var), avg_acc_(avg_acc), acc_var_(acc_var),
-	avg_deacc_(avg_deacc), deacc_var_(deacc_var), color1_(color1), color2_(color2),
+	avg_deacc_(avg_deacc), deacc_var_(deacc_var), color1_(color1), color2_(color2), motion_rand_(motion_rand),
 	spawn_direction_(spawn_direction), direction_var_(direction_var), 
 	avg_scale_(avg_scale), scale_var_(scale_var),	
 	shader_(shader), particle_rest_(0.f)
@@ -136,6 +136,7 @@ void ParticleSystem::spawn_particles(int num_particles) {
 		p.acc = avg_acc_ + rand(acc_var_);
 		p.deacc = avg_deacc_ + rand(deacc_var_);
 		p.scale = avg_scale_ + rand(scale_var_);
+		p.motion_randomization = motion_rand_;
 		particles_.push_back(p);
 	}
 }
@@ -165,6 +166,7 @@ void ParticleSystem::update(double dt) {
 
 void ParticleSystem::render(double dt, Renderer * renderer) {
 
+
 	//Update vertices:
 	std::list<particle_t>::iterator it = particles_.begin();
 	int count=0;
@@ -175,7 +177,9 @@ void ParticleSystem::render(double dt, Renderer * renderer) {
 		if(count>=MAX_NUM_PARTICLES)
 			break;
 	}
+
 	cube_->render(dt, renderer);
+
 
 	glUseProgram(renderer->shaders[shader_].program);
 	glUseProgram(renderer->shaders[Renderer::PARTICLES_SHADER].program);
@@ -199,9 +203,15 @@ void ParticleSystem::render(double dt, Renderer * renderer) {
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(vertex_t), (const GLvoid*) (sizeof(glm::vec3)));
 	glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, sizeof(vertex_t), (const GLvoid*) (sizeof(glm::vec3)+sizeof(glm::vec2)));
 
+	//Upload matrix (if parent have changed it)
+	renderer->upload_model_matrices(false);
+	//Disable depth mask to get alpha blending right
 	glDepthMask(GL_FALSE);
+
 	glDrawElements(GL_TRIANGLES, count*6*NUM_SIDES, GL_UNSIGNED_INT, 0);
 	Renderer::checkForGLErrors("ParticleSystem::render() - draw");
+
+	//And turn depth mask on again
 	glDepthMask(GL_TRUE);
 
 	glDisableVertexAttribArray(2);
@@ -225,4 +235,8 @@ float ParticleSystem::rand(float var, bool d) {
 }
 glm::vec3 ParticleSystem::rand(glm::vec3 var, bool d) {
 	return glm::vec3(rand(var.x,d), rand(var.y,d), rand(var.z,d));
+}
+
+const glm::mat4 ParticleSystem::translation_matrix() const {
+	return glm::mat4(1.f); //Identity matrix
 }

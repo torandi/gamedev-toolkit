@@ -343,12 +343,14 @@ void Renderer::render_skybox() {
 	checkForGLErrors("render_skybox(): post");
 }
 
-void Renderer::upload_model_matrices() {
+void Renderer::upload_model_matrices(bool normal_matrix) {
 	glBindBuffer(GL_UNIFORM_BUFFER, Shader::globals.matricesBuffer);
 	//Model matrix:
 	glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(modelMatrix.Top()));
-	//Normal matrix:
-	glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4)*2, sizeof(glm::mat4), glm::value_ptr(glm::transpose(glm::inverse(modelMatrix.Top()))));
+	if(normal_matrix) {
+		//Normal matrix:
+		glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4)*2, sizeof(glm::mat4), glm::value_ptr(glm::transpose(glm::inverse(modelMatrix.Top()))));
+	}
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 

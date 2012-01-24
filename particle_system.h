@@ -9,7 +9,7 @@
 #include <string>
 #include <list>
 
-#define MAX_NUM_PARTICLES 10000
+#define MAX_NUM_PARTICLES 80000
 
 class ParticleSystem : public RenderGroup {
 	//Hide these functions:
@@ -23,6 +23,7 @@ class ParticleSystem : public RenderGroup {
 	float regen_, avg_ttl_, ttl_var_, avg_spawn_speed_, spawn_speed_var_, avg_acc_, acc_var_, avg_deacc_, deacc_var_;
 	Texture * texture_;
 	glm::vec4 color1_, color2_;
+	glm::vec3 motion_rand_;
 	glm::vec3 spawn_direction_, direction_var_;
 	float avg_scale_, scale_var_;
 
@@ -43,6 +44,7 @@ class ParticleSystem : public RenderGroup {
 		glm::vec3 position;
 		glm::vec4 color;
 		glm::vec3 direction;
+		glm::vec3 motion_randomization;
 		float ttl;
 		float speed;
 		float acc;
@@ -60,9 +62,11 @@ class ParticleSystem : public RenderGroup {
 
 	void generate_buffers();
 
-	float rand(float var, bool d=true); //d=true -> double sided, => 2*var*frand()-var
-	glm::vec3 rand(glm::vec3 var, bool d=true);
+	static float rand(float var, bool d=true); //d=true -> double sided, => 2*var*frand()-var
+	static glm::vec3 rand(glm::vec3 var, bool d=true);
 
+	protected:
+		virtual const glm::mat4 translation_matrix() const;
 	public:
 	/*
 	 * Position: coordinate of the lower left corner of the spawn area
@@ -79,14 +83,15 @@ class ParticleSystem : public RenderGroup {
 		glm::vec3 position, glm::vec3 spawn_area_size, float regeneration, float avg_ttl, float ttl_var,
 		float avg_spawn_speed,float  spawn_speed_var,float  avg_acc,float  acc_var,float  avg_deacc,float  deacc_var,
 		glm::vec3 spawn_direction, glm::vec3 direction_var, float avg_scale, float scale_var,
-		Renderer::shader_program_t shader, std::string texture, glm::vec4 color1, glm::vec4 color2
+		Renderer::shader_program_t shader, std::string texture, glm::vec4 color1, glm::vec4 color2, glm::vec3 motion_rand
 	);
-	~ParticleSystem();
+	virtual ~ParticleSystem();
 
 	void spawn_particles(int num_particles);
 
 	void update(double dt);
-	void render(double dt, Renderer * renderer);
+	virtual void render(double dt, Renderer * renderer);
+
 };
 
 #endif
