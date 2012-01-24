@@ -3,6 +3,9 @@
 #include <cstdarg>
 #include <cstdlib>
 #include <string>
+#include <time.h>
+#include <sys/time.h>
+#include <unistd.h>
 
 std::string format(const std::string &fmt, ...) {
     va_list args;
@@ -28,4 +31,14 @@ float uniformRandomInRange(float min, float max) {
     double n = (double) rand() / (double) RAND_MAX;
     double v = min + n * (max - min);
     return v;
+}
+
+void seed_random() {
+	struct timeval ts;
+	gettimeofday(&ts, NULL);
+
+    /* calculate dt */
+    double t = ts.tv_sec * 1000000.0;
+    t += ts.tv_usec;
+	 srand(t);
 }

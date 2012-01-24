@@ -9,7 +9,7 @@
 #include <string>
 #include <list>
 
-#define MAX_NUM_PARTICLES 500
+#define MAX_NUM_PARTICLES 10000
 
 class ParticleSystem : public RenderGroup {
 	//Hide these functions:

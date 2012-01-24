@@ -21,4 +21,6 @@ inline float rad_to_deg(const float &fAngRad) {
 inline float frand() {
 	return (float)rand()/RAND_MAX;
 }
+
+void seed_random();
 #endif

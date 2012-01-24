@@ -7,7 +7,7 @@
 #include "util.h"
 #include "render_object.h"
 
-#define NUM_SIDES 1
+#define NUM_SIDES 2
 
 bool ParticleSystem::particle_t::update(double dt) {
 	ttl-=dt;
@@ -29,15 +29,15 @@ void ParticleSystem::particle_t::update_vertices(ParticleSystem::vertex_t * v) {
 	}
 
 	//Update position:
-	v[0].position = position+glm::vec3(0, 0, 0)*scale;
-	v[1].position = position+glm::vec3(1, 0, 0)*scale;
-	v[2].position = position+glm::vec3(0, 1, 0)*scale;
-	v[3].position = position+glm::vec3(1, 1, 0)*scale;
-/*
-	v[4].position = position+glm::vec3(0, 0, 0)*scale;
-	v[5].position = position+glm::vec3(0, 0, 1)*scale;
-	v[6].position = position+glm::vec3(0, 1, 0)*scale;
-	v[7].position = position+glm::vec3(0, 1, 1)*scale;*/
+	v[0].position = position+glm::vec3(-0.5, -0.5, 0)*scale;
+	v[1].position = position+glm::vec3(0.5, -0.5, 0)*scale;
+	v[2].position = position+glm::vec3(-0.5, 0.5, 0)*scale;
+	v[3].position = position+glm::vec3(0.5, 0.5, 0)*scale;
+
+	v[4].position = position+glm::vec3(0, -0.5, -0.5)*scale;
+	v[5].position = position+glm::vec3(0, 0.5, -0.5)*scale;
+	v[6].position = position+glm::vec3(0, -0.5, 0.5)*scale;
+	v[7].position = position+glm::vec3(0, 0.5, 0.5)*scale;
 }
 
 ParticleSystem::~ParticleSystem() {
@@ -81,7 +81,7 @@ void ParticleSystem::generate_buffers() {
 	//The vertices buffer is filled as needed while the indices buffer is filled once, the texCoord is static in the vb though
 	for(int i=0; i<MAX_NUM_PARTICLES; ++i) {
 		for(int n=0;n<NUM_SIDES; ++n) {
-			int base_index = i*NUM_SIDES*4;
+			int base_index = (i*NUM_SIDES*4)+n*4;
 			//Set texture coordinates on the verticel
 			vertices_[base_index+0].texCoord = glm::vec2(0,0);
 			vertices_[base_index+1].texCoord = glm::vec2(1,0);
@@ -119,6 +119,7 @@ void ParticleSystem::generate_buffers() {
 void ParticleSystem::spawn_particles(int num_particles) {
 	srand(time(NULL));
 	for(int i=0;i<num_particles;++i) {
+		seed_random();
 		particle_t p;
 		p.position = position_ + rand(spawn_area_, false);
 		float m = frand();
