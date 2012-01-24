@@ -3,7 +3,6 @@
 
 #define MAX_NUM_WAVES 16
 
-const float water_sight = 80.0;
 
 const float pi = 3.14159;
 uniform int num_waves;
@@ -73,6 +72,6 @@ void main() {
 	position = w_pos.xyz;
 	gl_Position = projectionViewMatrix *  w_pos;
 	normal = (normalMatrix * (vec4(waveNormal(pos.xz), 1.0))).xyz;
-	depth = abs(pos.y - in_position.y)/water_sight;
+	depth = abs(pos.y - in_position.y);
 }
 

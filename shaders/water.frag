@@ -1,6 +1,9 @@
 #version 330
 #include "uniforms.glsl"
 
+const float water_sight = 40.0;
+const float min_water_depth = 1.0;
+
 const vec3 water_tint = vec3(0.8, 1.0, 1.0);
 
 in vec3 position;
@@ -36,6 +39,13 @@ void main() {
 				true, true);
 	}
 
+	float d = depth;
+
+	if(d < min_water_depth)
+		d = 0;
+	else
+		d /= water_sight;
+
 	ocolor= clamp(accumLighting,0.0, 1.0);
-	ocolor.a = 0.5+0.4*(depth);
+	ocolor.a = 0.3+0.65*(d);
 }

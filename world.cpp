@@ -72,7 +72,7 @@ ParticleSystem::ParticleSystem(
 	renderer->load_skybox("skybox");
 
 
-	t = new Terrain ("valley",1.f, 100.f, 50.0f);
+	t = new Terrain ("valley",1.f, 100.f, 30.0f);
 	t->start_height = 25.f;
 
 	t->set_num_waves(3);
