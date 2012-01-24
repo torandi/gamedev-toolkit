@@ -73,5 +73,8 @@ public:
 
 	void render(double dt);
 
+	int width() { return width_; };
+	int height() { return height_; }
+
 };
 #endif

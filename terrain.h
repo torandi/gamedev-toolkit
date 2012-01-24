@@ -57,6 +57,8 @@ class Terrain : public RenderGroup {
 		void set_num_waves(int num);
 		float height() { return height_; };
 		float width() { return width_; };
+		float water_level() { return water_level_; };
+		float vertical_scale() { return vertical_scale_; };
 		Terrain(const std::string folder, float horizontal_scale, float vertical_scale, float water_level);
 		~Terrain();
 

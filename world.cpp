@@ -14,8 +14,10 @@
 Light * lights_lights[NUM_LIGHTS]; //The actual lights
 RenderObject * lights_ro[NUM_LIGHTS];
 MoveGroup lights[NUM_LIGHTS];
+Terrain * t;
 
 ParticleSystem * particles;
+ParticleSystem * underwater;
 
 const glm::vec3 night_light = glm::vec3(0.0, 0.15, 0.15);
 const glm::vec3 morning_light = glm::vec3(0.6, 0.3, 0.3);
@@ -70,13 +72,27 @@ ParticleSystem::ParticleSystem(
 	renderer->load_skybox("skybox");
 
 
-	Terrain * t = new Terrain ("valley",1.f, 100.f, 30.0f);
+	t = new Terrain ("valley",1.f, 100.f, 50.0f);
 	t->start_height = 25.f;
 
 	t->set_num_waves(3);
 
 	renderer->render_objects.push_back(t);
-	renderer->render_objects.push_back(particles);
+
+	underwater = new ParticleSystem(glm::vec3(-t->width()/2.f, -t->water_level(), -t->height()/2.f), glm::vec3(t->width(), t->water_level()+5.f, t->height()), 500, 20, 5, 
+		0.25f, 0.20f, 0.1, 0.05, 0.0, 0.0, 
+		glm::vec3(0, -1, 0), glm::vec3(1,1.5, 1), 1.0, 0.2, 
+		Renderer::PARTICLES_SHADER, "textures/particle.png", glm::vec4(0.8,0.9,1,0.9), glm::vec4(0.8, 0.9, 1,0.8), glm::vec3(0, 0, 0)
+		);
+	underwater->spawn_particles(50000);
+	//Run a couple of cycles:
+	for(int i=0;i<10;++i) {
+		underwater->update(1.f);
+	}
+
+	//renderer->render_objects.push_back(particles);
+	renderer->render_objects.push_back(underwater);
+
 
 	//Lights:
 #if NUM_LIGHTS > 1
@@ -97,7 +113,7 @@ ParticleSystem::ParticleSystem(
 		renderer->lights.push_back(lights_lights[i]);
 		lights[i].set_position(glm::vec3(5.0, -9.0, 5.0));
 	}
-
+	
 	//load models:
 /*
 	//objects.back().position+=glm::vec3(0.0, 0.0, 0.f);
@@ -132,7 +148,13 @@ ParticleSystem::ParticleSystem(
 }
 
 void update_world(double dt, Renderer * renderer) {
-	particles->update(dt);
+	if(renderer->camera.position().y < (t->matrix()*glm::vec4(0.0, t->water_level(), 0.0, 1.f)).y)
+		underwater->enabled = true;
+	else
+		underwater->enabled = false;
+
+	//particles->update(dt);
+	underwater->update(dt);
 
 	time_of_day+=dt/time_per_hour;
 	time_of_day = fmod(time_of_day, 24.f);

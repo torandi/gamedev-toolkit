@@ -64,10 +64,10 @@ ParticleSystem::ParticleSystem(
 {
 	cube_ = new RenderObject("models/cube.obj", Renderer::DEBUG_SHADER);
 	cube_->scale = spawn_area;
-	cube_->set_position(position+spawn_area/2.f);
 	texture_ = new Texture(texture);
 	vertices_ = new vertex_t[MAX_NUM_PARTICLES*NUM_SIDES*4];
 	generate_buffers();
+	enabled = true;
 }
 
 /*
@@ -142,6 +142,8 @@ void ParticleSystem::spawn_particles(int num_particles) {
 }
 
 void ParticleSystem::update(double dt) {
+	if(!enabled)
+		return;
 	//Spawn new particles:
 	float new_particles = regen_*dt+particle_rest_;
 	int num_new = (int)new_particles;
@@ -165,7 +167,8 @@ void ParticleSystem::update(double dt) {
 }
 
 void ParticleSystem::render(double dt, Renderer * renderer) {
-
+	if(!enabled)
+		return;
 
 	//Update vertices:
 	std::list<particle_t>::iterator it = particles_.begin();
@@ -178,6 +181,7 @@ void ParticleSystem::render(double dt, Renderer * renderer) {
 			break;
 	}
 
+	cube_->set_position(position_+spawn_area_/2.f);
 	cube_->render(dt, renderer);
 
 

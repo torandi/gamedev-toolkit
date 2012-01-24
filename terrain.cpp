@@ -114,7 +114,7 @@ Terrain::Terrain(const std::string folder, float horizontal_scale, float vertica
 
 	time_ = 0.0;
 
-	position_-=glm::vec3(width_*horizontal_scale_, vertical_scale_, height_*horizontal_scale_/2.0)/2.0f;
+	position_-=glm::vec3(width_*horizontal_scale_, vertical_scale_, height_*horizontal_scale_)/2.0f;
 	SDL_FreeSurface(heightmap_);
 }
 

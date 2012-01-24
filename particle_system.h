@@ -9,7 +9,7 @@
 #include <string>
 #include <list>
 
-#define MAX_NUM_PARTICLES 80000
+#define MAX_NUM_PARTICLES 100000
 
 class ParticleSystem : public RenderGroup {
 	//Hide these functions:
@@ -92,6 +92,7 @@ class ParticleSystem : public RenderGroup {
 	void update(double dt);
 	virtual void render(double dt, Renderer * renderer);
 
+	bool enabled; //Set to false to pause rendering and updating
 };
 
 #endif
