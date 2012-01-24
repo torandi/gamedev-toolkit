@@ -54,7 +54,6 @@ ParticleSystem::ParticleSystem(
 */
 	particles->spawn_particles(100);
 
-	renderer->render_objects.push_back(particles);
 
 	Terrain::init_terrain(renderer);
 
@@ -65,12 +64,14 @@ ParticleSystem::ParticleSystem(
 	//Skybox
 	renderer->load_skybox("skybox");
 
-/*	Terrain * t = new Terrain ("valley",1.f, 100.f, 30.0f);
+
+	Terrain * t = new Terrain ("valley",1.f, 100.f, 30.0f);
 	t->start_height = 25.f;
 
 	t->set_num_waves(3);
 
-	renderer->render_objects.push_back(t);*/
+	renderer->render_objects.push_back(t);
+	renderer->render_objects.push_back(particles);
 
 	//Lights:
 #if NUM_LIGHTS > 1
