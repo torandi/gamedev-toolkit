@@ -5,6 +5,7 @@
 
 #include "particle_system.h"
 #include "util.h"
+#include "render_object.h"
 
 #define NUM_SIDES 1
 
@@ -57,6 +58,9 @@ ParticleSystem::ParticleSystem(
 	avg_scale_(avg_scale), scale_var_(scale_var),	
 	shader_(shader), particle_rest_(0.f)
 {
+	cube_ = new RenderObject("models/cube.obj", Renderer::DEBUG_SHADER);
+	cube_->scale = spawn_area;
+	cube_->set_position(position+spawn_area/2.f);
 	texture_ = new Texture(texture);
 	vertices_ = new vertex_t[MAX_NUM_PARTICLES*NUM_SIDES*4];
 	generate_buffers();
@@ -116,7 +120,7 @@ void ParticleSystem::spawn_particles(int num_particles) {
 	srand(time(NULL));
 	for(int i=0;i<num_particles;++i) {
 		particle_t p;
-		p.position = position_ + rand(spawn_area_)+spawn_area_;
+		p.position = position_ + rand(spawn_area_, false);
 		float m = frand();
 		p.color = (1-m)*color1_  + m*color2_;
 		p.direction = spawn_direction_ + rand(direction_var_);
@@ -165,6 +169,8 @@ void ParticleSystem::render(double dt, Renderer * renderer) {
 			break;
 	}
 
+	cube_->render(dt, renderer);
+
 	glUseProgram(renderer->shaders[shader_].program);
 	glUseProgram(renderer->shaders[Renderer::PARTICLES_SHADER].program);
 	glActiveTexture(GL_TEXTURE0);
@@ -205,9 +211,12 @@ void ParticleSystem::render(double dt, Renderer * renderer) {
 	glUseProgram(0);
 }
 
-float ParticleSystem::rand(float var) {
-	return (var*2.f)*frand()-var;
+float ParticleSystem::rand(float var, bool d) {
+	if(d)
+		return (var*2.f)*frand()-var;
+	else
+		return var*frand();
 }
-glm::vec3 ParticleSystem::rand(glm::vec3 var) {
-	return glm::vec3(rand(var.x), rand(var.y), rand(var.z));
+glm::vec3 ParticleSystem::rand(glm::vec3 var, bool d) {
+	return glm::vec3(rand(var.x,d), rand(var.y,d), rand(var.z,d));
 }

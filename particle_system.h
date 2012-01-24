@@ -16,6 +16,8 @@ class ParticleSystem : public RenderGroup {
 	RenderGroup::operator[];
 	RenderGroup::add_object;
 
+	RenderObject * cube_;
+
 	//Private vars
 	glm::vec3 spawn_area_;
 	float regen_, avg_ttl_, ttl_var_, avg_spawn_speed_, spawn_speed_var_, avg_acc_, acc_var_, avg_deacc_, deacc_var_;
@@ -58,8 +60,8 @@ class ParticleSystem : public RenderGroup {
 
 	void generate_buffers();
 
-	float rand(float var);
-	glm::vec3 rand(glm::vec3 var);
+	float rand(float var, bool d=true); //d=true -> double sided, => 2*var*frand()-var
+	glm::vec3 rand(glm::vec3 var, bool d=true);
 
 	public:
 	/*

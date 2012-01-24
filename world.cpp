@@ -42,7 +42,7 @@ ParticleSystem::ParticleSystem(
 	Renderer::shader_program_t shader, std::string texture, glm::vec4 color1, glm::vec4 color2
 )*/
 
-	particles = new ParticleSystem(glm::vec3(0.0, -5.0, 2.0), glm::vec3(1, 1, 1), 20, 10, 2, 
+	particles = new ParticleSystem(glm::vec3(0.0, -5.0, 2.0), glm::vec3(2, 2, 2), 20, 10, 2, 
 		2.f, 1.f, 0.5, 0.2, 0.1, 0.0, 
 		glm::vec3(0, -1, 0), glm::vec3(1, 0, 1), 1.0, 1.0, 
 		Renderer::PARTICLES_SHADER, "textures/snow.png", glm::vec4(1,0,0,1), glm::vec4(1, 0, 1,1));
