@@ -8,6 +8,10 @@
 #include "render_object.h"
 
 #define NUM_SIDES 2
+#define VERTICES_PER_SIDE 4
+#define INDICES_PER_SIDE 6
+#define VERTICES_PER_PARTICLE NUM_SIDES*VERTICES_PER_SIDE
+#define INDICES_PER_PARTICLE NUM_SIDES*INDICES_PER_SIDE
 
 bool ParticleSystem::particle_t::update(double dt) {
 	ttl-=dt;
@@ -17,7 +21,7 @@ bool ParticleSystem::particle_t::update(double dt) {
 	acc-=deacc*dt;
 	speed+=acc*dt;
 	position+=(direction*(float)(speed*dt));
-	//TODO: Change color during lifespan
+	//TODO: Change color during lifespan, and maybe alpha too
 
 	return true;
 }
@@ -124,7 +128,9 @@ void ParticleSystem::spawn_particles(int num_particles) {
 		p.position = position_ + rand(spawn_area_, false);
 		float m = frand();
 		p.color = (1-m)*color1_  + m*color2_;
-		p.direction = spawn_direction_ + rand(direction_var_);
+		p.direction = glm::normalize(spawn_direction_ + rand(direction_var_));
+		if(p.direction.length() == 0.0)
+			p.direction = glm::normalize(spawn_direction_);
 		p.ttl = avg_ttl_ + rand(ttl_var_);
 		p.speed = avg_spawn_speed_ + rand(spawn_speed_var_);
 		p.acc = avg_acc_ + rand(acc_var_);
@@ -193,11 +199,10 @@ void ParticleSystem::render(double dt, Renderer * renderer) {
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(vertex_t), (const GLvoid*) (sizeof(glm::vec3)));
 	glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, sizeof(vertex_t), (const GLvoid*) (sizeof(glm::vec3)+sizeof(glm::vec2)));
 
+	glDepthMask(GL_FALSE);
 	glDrawElements(GL_TRIANGLES, count*6*NUM_SIDES, GL_UNSIGNED_INT, 0);
 	Renderer::checkForGLErrors("ParticleSystem::render() - draw");
-/*
-	glUseProgram(renderer->shaders[Renderer::DEBUG_SHADER].program);
-	glDrawElements(GL_TRIANGLES, count*6*NUM_SIDES, GL_UNSIGNED_INT, 0);	*/
+	glDepthMask(GL_TRUE);
 
 	glDisableVertexAttribArray(2);
 	glDisableVertexAttribArray(1);
