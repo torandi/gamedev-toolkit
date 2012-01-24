@@ -24,6 +24,7 @@ std::string Renderer::shader_files_[] = {
 	"skybox",
 	"terrain",
 	"water",
+	"particles",
 	"debug"
 };
 
@@ -279,8 +280,8 @@ void Renderer::render(double dt){
 
 	for(std::vector<RenderGroup*>::iterator it=render_objects.begin(); it!=render_objects.end(); ++it) {
 		(*it)->render(dt, this);
+		checkForGLErrors("Renderer::render() - in model");
 	}	
-	checkForGLErrors("render(): in model");
 
 	projectionViewMatrix.Pop();
 

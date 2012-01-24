@@ -211,12 +211,6 @@ void Terrain::generate_water() {
 
 	water_mesh_ = new Mesh(vertices, indices);
 
-	printf("Generating normals\n");
-	//water_mesh_->generate_normals();
-	printf("Generating tangents\n");
-	//water_mesh_->generate_tangents_and_bitangents();
-	printf("Ortonormalizing tangent space\n");
-	//water_mesh_->ortonormalize_tangent_space();
 	printf("Uploading to gfx memory\n");
 	water_mesh_->generate_vbos();
 }

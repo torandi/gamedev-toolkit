@@ -4,16 +4,18 @@
 #include "render_object.h"
 
 #include "terrain.h"
+#include "particle_system.h"
 
 #include <assimp/aiPostProcess.h>
 #include <cstdio>
+#include <glm/glm.hpp>
 
 
 Light * lights_lights[NUM_LIGHTS]; //The actual lights
 RenderObject * lights_ro[NUM_LIGHTS];
 MoveGroup lights[NUM_LIGHTS];
 
-MoveGroup mario;
+ParticleSystem * particles;
 
 const glm::vec3 night_light = glm::vec3(0.0, 0.15, 0.15);
 const glm::vec3 morning_light = glm::vec3(0.6, 0.3, 0.3);
@@ -32,19 +34,43 @@ float time_of_day = 12.0; //0->24;
 
 void create_world(Renderer * renderer) {
 
+/*	
+ParticleSystem::ParticleSystem(
+	glm::vec3 position, glm::vec3 spawn_area_size, float regeneration, float avg_ttl, float ttl_var,
+	avg_spawn_speed, spawn_speed_var, avg_acc, acc_var, avg_deacc, deacc_var,
+	glm::vec3 spawn_direction, glm::vec3 direction_var, float avg_scale, float scale_var,
+	Renderer::shader_program_t shader, std::string texture, glm::vec4 color1, glm::vec4 color2
+)*/
+/*
+	particles = new ParticleSystem(glm::vec3(0.0, -5.0, 2.0), glm::vec3(1, 1, 1), 10, 5, 2, 
+		2.f, 1.f, 0.5, 0.2, 0.1, 0.0, 
+		glm::vec3(0, -1, 0), glm::vec3(1, 0, 1), 1.0, 0.1, 
+		Renderer::PARTICLES_SHADER, "textures/snow.png", glm::vec4(1,0,0,1), glm::vec4(1, 0, 1,1));
+*/
+	particles = new ParticleSystem(glm::vec3(0.0, -5.0, 2.0), glm::vec3(10, 10, 10), 10, 10, 2, 
+		0.3f, 0.1f, 0.1, 0.0, 0.0, 0.0, 
+		glm::vec3(0, -1, 0), glm::vec3(0, 0, 0), 10.0, 0.0, 
+		Renderer::PARTICLES_SHADER, "textures/snow.png", glm::vec4(1,0,0,1), glm::vec4(0, 0, 1,1));
+
+	particles->spawn_particles(100);
+
+	renderer->render_objects.push_back(particles);
+
 	Terrain::init_terrain(renderer);
 
-	renderer->camera.set_position(glm::vec3(0.0, -7.5, 0.0));
+	//renderer->camera.set_position(glm::vec3(0.0, -7.5, 0.0));
+	renderer->camera.set_position(glm::vec3(-2.75, -1.62, 28));
+	renderer->camera.relative_rotate(glm::vec3(0, 1, 0), 180);
 
 	//Skybox
 	renderer->load_skybox("skybox");
 
-	Terrain * t = new Terrain ("valley",1.f, 100.f, 30.0f);
+/*	Terrain * t = new Terrain ("valley",1.f, 100.f, 30.0f);
 	t->start_height = 25.f;
 
 	t->set_num_waves(3);
 
-	renderer->render_objects.push_back(t);
+	renderer->render_objects.push_back(t);*/
 
 	//Lights:
 #if NUM_LIGHTS > 1
@@ -100,12 +126,15 @@ void create_world(Renderer * renderer) {
 }
 
 void update_world(double dt, Renderer * renderer) {
+	particles->update(dt);
 
 	time_of_day+=dt/time_per_hour;
 	time_of_day = fmod(time_of_day, 24.f);
 	
 	const glm::vec3 * v1, *v2;
 	float t1, t2;
+
+	//printf("(%f, %f, %f), (%f, %f, %f)\n", renderer->camera.position().x, renderer->camera.position().y, renderer->camera.position().z, renderer->camera.look_at().x, renderer->camera.look_at().y, renderer->camera.look_at().z);
 
 	if(time_of_day > high_evening || time_of_day < high_night) {
 		v1 = &evening_light;
