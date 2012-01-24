@@ -45,7 +45,7 @@ ParticleSystem::ParticleSystem(
 	particles = new ParticleSystem(glm::vec3(0.0, -5.0, 2.0), glm::vec3(2, 2, 2), 100, 10, 2, 
 		2.f, 1.f, 0.5, 0.2, 0.1, 0.0, 
 		glm::vec3(0, -1, 0), glm::vec3(1, 0, 1), 1.0, 1.0, 
-		Renderer::PARTICLES_SHADER, "textures/snow.png", glm::vec4(1,0,0,1), glm::vec4(1, 0, 1,1));
+		Renderer::PARTICLES_SHADER, "textures/particle.png", glm::vec4(1,0,0,1), glm::vec4(1, 0, 1,1));
 
 	/*particles = new ParticleSystem(glm::vec3(0.0, -5.0, 2.0), glm::vec3(10, 10, 10), 0, 1000, 2, 
 		0.3f, 0.1f, 0.1, 0.0, 0.0, 0.0, 

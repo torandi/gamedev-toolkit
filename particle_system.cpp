@@ -169,7 +169,7 @@ void ParticleSystem::render(double dt, Renderer * renderer) {
 		if(count>=MAX_NUM_PARTICLES)
 			break;
 	}
-
+	glDisable(GL_DEPTH_TEST);
 	cube_->render(dt, renderer);
 
 	glUseProgram(renderer->shaders[shader_].program);
@@ -209,6 +209,7 @@ void ParticleSystem::render(double dt, Renderer * renderer) {
 
 	texture_->unbind();
 
+	glEnable(GL_DEPTH_TEST);
 	glUseProgram(0);
 }
 
