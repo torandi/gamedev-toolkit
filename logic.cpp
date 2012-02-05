@@ -58,8 +58,8 @@ void logic(double dt, Renderer * renderer) {
 		z = -normalized_axis_value(1)*MOVE_SPEED*dt;
 
 		lights[move_light].absolute_move(glm::vec3(x, y, z));
-		underwater->absolute_move(glm::vec3(x, y, z));
-		printf("(%f, %f, %f)\n", underwater->position().x, underwater->position().y, underwater->position().z);
+		particles->absolute_move(glm::vec3(x, y, z));
+		printf("(%f, %f, %f)\n", particles->position().x, particles->position().y, particles->position().z);
 
 	} else {
 
