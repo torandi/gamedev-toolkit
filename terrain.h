@@ -2,6 +2,7 @@
 #define TERRAIN_H
 
 #include <string>
+#include <vector>
 #include <glm/glm.hpp>
 #include <glload/gl_3_3.h>
 #include <SDL/SDL.h>
@@ -19,10 +20,9 @@ class Terrain : public RenderGroup {
 	int width_, height_;
 	float * map_;
 
-	SDL_Surface * load_image();
+	SDL_Surface * load_image(glm::vec2 size);
 	void generate_terrain();
 	void generate_water();
-	void load_textures();
 
 	glm::vec4 get_pixel_color(int x, int y);
 	float height_from_color(const glm::vec4 &color);
@@ -34,23 +34,21 @@ class Terrain : public RenderGroup {
 	Mesh * terrain_mesh_;
 	Mesh * water_mesh_;
 
-	Texture * texture_;
-	Texture * specular_map_;
-	Texture * normal_map_;
-
 	//Hide these functions:
 	RenderGroup::operator[];
 	RenderGroup::add_object;
 
-	static const char * texture_files_[];
 	const float water_level_;
 	const float texture_scale_;
 	float time_;
 	int num_waves_;
+	texture_pack_t * textures_;
 
 	public:
+		static texture_pack_t * generate_texture_pack(std::string folder, std::vector<std::string> texture_files);
 		//Start height (relative this object) used when selecting terrain
 		float start_height;
+		glm::vec2 position;
 		//Water level
 
 		int num_waves() { return num_waves_; };
@@ -59,7 +57,7 @@ class Terrain : public RenderGroup {
 		float width() { return width_; };
 		float water_level() { return water_level_; };
 		float vertical_scale() { return vertical_scale_; };
-		Terrain(const std::string folder, float horizontal_scale, float vertical_scale, float water_level);
+		Terrain(const std::string folder, float horizontal_scale, float vertical_scale, float water_level, texture_pack_t *textures, glm::vec2 pos=glm::vec2(0,0), glm::vec2 size=glm::vec2(0,0));
 		~Terrain();
 
 		virtual void render(double dt, Renderer * renderer);

@@ -12,14 +12,6 @@
 
 #define RENDER_DEBUG 0
 
-const char * Terrain::texture_files_[] = {
-	"dirt",
-	"sand",
-	"grass",
-	"mountain",
-	"snow"
-};
-
 #define NORMAL_TEXTURE ".jpg"
 #define SPECULAR_MAP "_specular.jpg"
 #define NORMAL_MAP "_normal.jpg"
@@ -63,7 +55,7 @@ void Terrain::init_terrain(Renderer * renderer) {
 	  renderer->load_shader_uniform_location(Renderer::WATER_SHADER, format("wavelength[%d]", i));
 	  glUniform1f(water_shader.uniform[format("wavelength[%d]", i)], wavelength);
 
-	  float speed = 1.0f + 2*i;
+	  float speed = 2.0f + 2*i;
 	  renderer->load_shader_uniform_location(Renderer::WATER_SHADER, format("speed[%d]", i));
 	  glUniform1f(water_shader.uniform[format("speed[%d]", i)], speed);
 
@@ -83,43 +75,35 @@ Terrain::~Terrain() {
 		delete water_mesh_;
 	if(map_ != NULL)
 		delete map_;
-	if(texture_!= NULL)
-		delete texture_;
-	if(normal_map_!= NULL)
-		delete normal_map_;
-	if(specular_map_!= NULL)
-		delete specular_map_;
 }
 
-Terrain::Terrain(const std::string folder, float horizontal_scale, float vertical_scale, float water_level) :
+Terrain::Terrain(const std::string folder, float horizontal_scale, float vertical_scale, float water_level, texture_pack_t * textures, glm::vec2 pos, glm::vec2 size) :
 		RenderGroup(), folder_(folder+"/"),
 		horizontal_scale_(horizontal_scale),
 		vertical_scale_(vertical_scale),
 		map_(NULL),
 		terrain_mesh_(NULL),
 		water_mesh_(NULL),
-		texture_(NULL),
-		specular_map_(NULL),
-		normal_map_(NULL),
 		water_level_(water_level),
 		texture_scale_(128.0f) ,
 		num_waves_(1),
-		start_height(0.f)
+		textures_(textures),
+		start_height(0.f),
+		position(pos)
 		{
-	heightmap_ = load_image();
+	heightmap_ = load_image(size);
 	generate_terrain();	
 	generate_water();
-	load_textures();
+	SDL_FreeSurface(heightmap_);
 
 
 	time_ = 0.0;
 
 	position_-=glm::vec3(width_*horizontal_scale_, vertical_scale_, height_*horizontal_scale_)/2.0f;
-	SDL_FreeSurface(heightmap_);
 }
 
 void  Terrain::set_num_waves(int num) {
-	assert(num<=MAX_NUM_WAVES && num > 0);
+	assert(num<=MAX_NUM_WAVES && num >= 0);
 	num_waves_ = num;
 }
 
@@ -215,28 +199,31 @@ void Terrain::generate_water() {
 	water_mesh_->generate_vbos();
 }
 
-void Terrain::load_textures() {
+texture_pack_t  * Terrain::generate_texture_pack(std::string folder, std::vector<std::string> texture_files) {
 	std::vector<std::string> textures;
-	std::vector<std::string> specular;
 	std::vector<std::string> normal;
-	for(unsigned int i=0;i<TEXTURE_LEVELS;++i) {
-		textures.push_back((folder_+texture_files_[i])+NORMAL_TEXTURE);
-		specular.push_back((folder_+texture_files_[i])+SPECULAR_MAP);
-		normal.push_back((folder_+texture_files_[i])+NORMAL_MAP);
+	std::vector<std::string> specular;
+	texture_pack_t * tp = new texture_pack_t();
+
+	for(std::vector<std::string>::iterator it=texture_files.begin(); it!=texture_files.end(); ++it) {
+		textures.push_back((folder+"/"+(*it))+NORMAL_TEXTURE);
+		normal.push_back((folder+"/"+(*it))+NORMAL_MAP);
+		specular.push_back((folder+"/"+(*it))+SPECULAR_MAP);
 	}
-	texture_ = new Texture(textures, false);
-	specular_map_ = new Texture(specular, false);
-	normal_map_ = new Texture(normal, false);
-	texture_->bind();
+	tp->texture = new Texture(textures, false);
+	tp->normal_map = new Texture(normal, false);
+	tp->specular_map =  new Texture(specular, false);
+	tp->texture->bind();
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	specular_map_->bind();
+	tp->normal_map->bind();
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	normal_map_->bind();
+	tp->specular_map->bind();
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	texture_->unbind();
+	tp->specular_map->unbind();
+	return tp;
 }
 
 float Terrain::height_from_color(const glm::vec4 &color) {
@@ -309,7 +296,7 @@ bool Terrain::is_square_below_water(int x, int y) {
 }
 
 
-SDL_Surface * Terrain::load_image() {
+SDL_Surface * Terrain::load_image(glm::vec2 size) {
 	/* Load image using SDL Image */
 	std::string heightmap = folder_+"heightmap.png";
 	SDL_Surface* surface = IMG_Load(heightmap.c_str());
@@ -317,9 +304,16 @@ SDL_Surface * Terrain::load_image() {
 	  fprintf(stderr, "Failed to load heightmap at %s\n", heightmap.c_str());
 	  exit(1);
 	}
+	if(size.x == 0 && size.y == 0) {
+		width_ = surface->w;
+		height_ = surface->h;
+	} else {
+		width_ = size.x;
+		height_ = size.y;
+	}
 	SDL_Surface* rgba_surface = SDL_CreateRGBSurface(
 			SDL_SWSURFACE,
-			surface->w, surface->h,
+			width_, height_,
 			32,
 			0xFF000000,
 			0x00FF0000,
@@ -339,15 +333,19 @@ SDL_Surface * Terrain::load_image() {
 		SDL_SetAlpha(surface, 0, 0);
 	}
 
-	SDL_BlitSurface(surface, 0, rgba_surface, 0);
+	SDL_Rect srcrect;
+	srcrect.x = position.x;
+	srcrect.y = position.y;
+	srcrect.w = width_;
+	srcrect.h = height_;
+
+	SDL_BlitSurface(surface, &srcrect, rgba_surface, 0);
 
 	/* Restore the alpha blending attributes */
 	if ( (saved_flags & SDL_SRCALPHA) == SDL_SRCALPHA ) {
 		SDL_SetAlpha(surface, saved_flags, saved_alpha);
 	}
 
-	width_ = rgba_surface->w;
-	height_ = rgba_surface->h;
 
 	SDL_FreeSurface(surface);
 	return rgba_surface;
@@ -361,12 +359,7 @@ void Terrain::render(double dt, Renderer * renderer) {
 	glUniform1f(renderer->shaders[Renderer::TERRAIN_SHADER].uniform["vertical_scale"], vertical_scale_);
 	glUniform1f(renderer->shaders[Renderer::TERRAIN_SHADER].uniform["start_height"], start_height);
 
-	glActiveTexture(GL_TEXTURE0);
-	texture_->bind();
-	glActiveTexture(GL_TEXTURE1);
-	normal_map_->bind();
-	glActiveTexture(GL_TEXTURE2);
-	specular_map_->bind();
+	textures_->bind();
 
 	renderer->modelMatrix.Push();
 
@@ -395,7 +388,7 @@ void Terrain::render(double dt, Renderer * renderer) {
 
 	renderer->modelMatrix.Pop();
 
-	texture_->unbind();
+	textures_->unbind();
 
 	glUseProgram(0);
 }

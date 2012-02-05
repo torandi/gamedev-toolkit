@@ -61,4 +61,39 @@ class Texture  {
 		static GLuint cube_map_index_[6];
 };
 
+struct texture_pack_t {
+	Texture * texture;
+	Texture * normal_map;
+	Texture * specular_map;
+	texture_pack_t() : texture(NULL), normal_map(NULL), specular_map(NULL) {};
+	~texture_pack_t() {
+		if(texture!=NULL)
+			delete texture;
+		if(normal_map!=NULL)
+			delete normal_map;
+		if(specular_map!=NULL)
+			delete specular_map;
+	};
+
+	void bind() {
+		glActiveTexture(GL_TEXTURE0);
+		texture->bind();
+		glActiveTexture(GL_TEXTURE1);
+		normal_map->bind();
+		glActiveTexture(GL_TEXTURE2);
+		specular_map->bind();
+		glActiveTexture(GL_TEXTURE0);
+	};
+
+	void unbind() {
+		glActiveTexture(GL_TEXTURE0);
+		texture->unbind();
+		glActiveTexture(GL_TEXTURE1);
+		normal_map->unbind();
+		glActiveTexture(GL_TEXTURE2);
+		specular_map->unbind();
+		glActiveTexture(GL_TEXTURE0);
+	};
+};
+
 #endif /* TEXTURE_H */

@@ -16,7 +16,7 @@
 	extern Light *lights_lights[NUM_LIGHTS]; //The actual lights
 	extern RenderObject* lights_ro[NUM_LIGHTS];
 	extern MoveGroup lights[NUM_LIGHTS];
-	extern ParticleSystem * underwater;
+	extern ParticleSystem * particles;
 
 
 	void create_world(Renderer * renderer);

@@ -29,12 +29,14 @@ const float high_morning = 8;
 const float high_day = 14;
 const float high_evening = 21;
 
-const float time_per_hour=10.f;
+const float time_per_hour=5.f;
 
-float time_of_day = 2.0; //0->24;
+float time_of_day = 8.0; //0->24;
 
 
 void create_world(Renderer * renderer) {
+
+texture_pack_t * terrain_textures;
 
 /*	
 ParticleSystem::ParticleSystem(
@@ -44,23 +46,21 @@ ParticleSystem::ParticleSystem(
 	Renderer::shader_program_t shader, std::string texture, glm::vec4 color1, glm::vec4 color2, motion rand
 )*/
 
-	particles = new ParticleSystem(glm::vec3(-100.0, 500.0, 2.0), glm::vec3(1000, 10, 1000), 1000, 50, 10, 
+	particles = new ParticleSystem(glm::vec3(137, 417, 231), glm::vec3(400, 1, 400), 1000, 50, 40, 
 		5.f, 3.f, 2.0, 0.6, 0.0, 0.0, 
 		glm::vec3(0, -1, 0), glm::vec3(1, 0.5, 1), 1.0, 0.2, 
 		Renderer::PARTICLES_SHADER, "textures/particle.png", glm::vec4(1,1,1,0.9), glm::vec4(1, 1, 1,0.8), glm::vec3(5, 1, 5)
 		);
 
-	/*particles = new ParticleSystem(glm::vec3(0.0, -5.0, 2.0), glm::vec3(10, 10, 10), 0, 1000, 2, 
-		0.3f, 0.1f, 0.1, 0.0, 0.0, 0.0, 
-		glm::vec3(0, -1, 0), glm::vec3(0, 0, 0), 10.0, 0.0, 
-		Renderer::PARTICLES_SHADER, "textures/snow.png", glm::vec4(1,0,0,1), glm::vec4(0, 0, 1,1));
-*/
 	particles->spawn_particles(50000);
 	//Run a couple of cycles:
 	for(int i=0;i<10;++i) {
 		particles->update(1.f);
 	}
 
+	std::string tf[] = {"dirt", "sand","grass","mountain", "snow"};
+	std::vector<std::string> texture_files(tf, tf+5);
+	terrain_textures = Terrain::generate_texture_pack("valley",texture_files);
 
 	Terrain::init_terrain(renderer);
 
@@ -72,17 +72,17 @@ ParticleSystem::ParticleSystem(
 	renderer->load_skybox("skybox");
 
 
-	t = new Terrain ("valley",1.f, 100.f, 30.0f);
-	t->start_height = 25.f;
+	t = new Terrain ("valley",1.f, 200.f, 50.0f, terrain_textures, glm::vec2(0,0), glm::vec2(1024, 1024));
+	t->start_height = 50.f;
 
-	t->set_num_waves(3);
+	t->set_num_waves(0);
 
 	renderer->render_objects.push_back(t);
 
 	underwater = new ParticleSystem(glm::vec3(-t->width()/2.f, -t->water_level(), -t->height()/2.f), glm::vec3(t->width(), t->water_level()+5.f, t->height()), 500, 20, 5, 
 		0.25f, 0.20f, 0.1, 0.05, 0.0, 0.0, 
 		glm::vec3(0, -1, 0), glm::vec3(1,1.5, 1), 1.0, 0.2, 
-		Renderer::PARTICLES_SHADER, "textures/particle.png", glm::vec4(0.8,0.9,1,0.9), glm::vec4(0.8, 0.9, 1,0.8), glm::vec3(0, 0, 0)
+		Renderer::PARTICLES_SHADER, "textures/particle.png", glm::vec4(0.5,0.7,1,0.6), glm::vec4(0.5, 0.5, 1,0.6), glm::vec3(0, 0, 0)
 		);
 	underwater->spawn_particles(50000);
 	//Run a couple of cycles:
@@ -90,7 +90,7 @@ ParticleSystem::ParticleSystem(
 		underwater->update(1.f);
 	}
 
-	//renderer->render_objects.push_back(particles);
+	renderer->render_objects.push_back(particles);
 	renderer->render_objects.push_back(underwater);
 
 
@@ -141,7 +141,7 @@ ParticleSystem::ParticleSystem(
 	renderer->render_objects.push_back(m);
 	renderer->render_objects.back()->scale*=3.0f;
 */
-	lights[LIGHT_SOURCE0].set_position(glm::vec3(-1.0, 1.0, -2.0));
+	lights[LIGHT_SOURCE0].set_position(glm::vec3(-1.0, 10.0, -2.0));
 
 
 	
@@ -153,7 +153,7 @@ void update_world(double dt, Renderer * renderer) {
 	else
 		underwater->enabled = false;
 
-	//particles->update(dt);
+	particles->update(dt);
 	underwater->update(dt);
 
 	time_of_day+=dt/time_per_hour;
