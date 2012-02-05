@@ -181,8 +181,8 @@ void ParticleSystem::render(double dt, Renderer * renderer) {
 			break;
 	}
 
-	cube_->set_position(position_+spawn_area_/2.f);
-	cube_->render(dt, renderer);
+	//cube_->set_position(position_+spawn_area_/2.f);
+	//cube_->render(dt, renderer);
 
 
 	glUseProgram(renderer->shaders[shader_].program);
