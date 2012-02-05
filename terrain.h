@@ -43,21 +43,21 @@ class Terrain : public RenderGroup {
 	float time_;
 	int num_waves_;
 	texture_pack_t * textures_;
+	Texture * water_normal_map_;
 
 	public:
 		static texture_pack_t * generate_texture_pack(std::string folder, std::vector<std::string> texture_files);
 		//Start height (relative this object) used when selecting terrain
 		float start_height;
-		glm::vec2 position;
+		glm::vec2 chunk_position;
+		glm::vec2 wave1, wave2;
 		//Water level
 
-		int num_waves() { return num_waves_; };
-		void set_num_waves(int num);
 		float height() { return height_; };
 		float width() { return width_; };
 		float water_level() { return water_level_; };
 		float vertical_scale() { return vertical_scale_; };
-		Terrain(const std::string folder, float horizontal_scale, float vertical_scale, float water_level, texture_pack_t *textures, glm::vec2 pos=glm::vec2(0,0), glm::vec2 size=glm::vec2(0,0));
+		Terrain(const std::string folder, float horizontal_scale, float vertical_scale, float water_level, texture_pack_t *textures, Texture * water_nm, glm::vec2 chunk_pos=glm::vec2(0,0), glm::vec2 size=glm::vec2(0,0));
 		~Terrain();
 
 		virtual void render(double dt, Renderer * renderer);

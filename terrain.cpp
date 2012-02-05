@@ -18,8 +18,6 @@
 
 #define TEXTURE_LEVELS 5
 
-#define MAX_NUM_WAVES 16
-
 void Terrain::init_terrain(Renderer * renderer) {
 	renderer->load_shader_uniform_location(Renderer::TERRAIN_SHADER, "vertical_scale");
 	renderer->load_shader_uniform_location(Renderer::TERRAIN_SHADER, "start_height");
@@ -27,7 +25,8 @@ void Terrain::init_terrain(Renderer * renderer) {
 
 	renderer->load_shader_uniform_location(Renderer::WATER_SHADER, "water_height");
 	renderer->load_shader_uniform_location(Renderer::WATER_SHADER, "time");
-	renderer->load_shader_uniform_location(Renderer::WATER_SHADER, "num_waves");
+	renderer->load_shader_uniform_location(Renderer::WATER_SHADER, "wave1");
+	renderer->load_shader_uniform_location(Renderer::WATER_SHADER, "wave2");
 
 	Renderer::checkForGLErrors("Terrain::init() load shader uniforms");
 	
@@ -44,26 +43,10 @@ void Terrain::init_terrain(Renderer * renderer) {
 	Shader &water_shader = renderer->shaders[Renderer::WATER_SHADER];
 
 	glUseProgram(water_shader.program);
-	Renderer::checkForGLErrors("Terrain::init() set num waves");
 
-	for (int i = 0; i < MAX_NUM_WAVES; ++i) {
-	  float amplitude = 0.7f / (i + 1);
-	  renderer->load_shader_uniform_location(Renderer::WATER_SHADER, format("amplitude[%d]", i));
-	  glUniform1f(water_shader.uniform[format("amplitude[%d]", i)], amplitude);
-
-	  float wavelength = 15 * M_PI / (i + 1);
-	  renderer->load_shader_uniform_location(Renderer::WATER_SHADER, format("wavelength[%d]", i));
-	  glUniform1f(water_shader.uniform[format("wavelength[%d]", i)], wavelength);
-
-	  float speed = 2.0f + 2*i;
-	  renderer->load_shader_uniform_location(Renderer::WATER_SHADER, format("speed[%d]", i));
-	  glUniform1f(water_shader.uniform[format("speed[%d]", i)], speed);
-
-	  float angle = uniformRandomInRange(-M_PI/2, M_PI/2);
-	  renderer->load_shader_uniform_location(Renderer::WATER_SHADER, format("direction[%d]", i));
-	  glUniform2f(water_shader.uniform[format("direction[%d]", i)], cos(angle), sin(angle));
-	  Renderer::checkForGLErrors("Terrain set wave data");
-	}
+	glSamplerParameteri(water_shader.texture1, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glSamplerParameteri(water_shader.texture1, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
+	glSamplerParameterf(water_shader.texture1, GL_TEXTURE_MAX_ANISOTROPY_EXT, 4.0f);
 
 	glUseProgram(0);
 }
@@ -77,36 +60,30 @@ Terrain::~Terrain() {
 		delete map_;
 }
 
-Terrain::Terrain(const std::string folder, float horizontal_scale, float vertical_scale, float water_level, texture_pack_t * textures, glm::vec2 pos, glm::vec2 size) :
+Terrain::Terrain(const std::string folder, float horizontal_scale, float vertical_scale, float water_level, texture_pack_t * textures,  Texture * water_nm, glm::vec2 chunk_pos, glm::vec2 size) :
 		RenderGroup(), folder_(folder+"/"),
 		horizontal_scale_(horizontal_scale),
 		vertical_scale_(vertical_scale),
 		map_(NULL),
 		terrain_mesh_(NULL),
 		water_mesh_(NULL),
-		water_level_(water_level),
+		water_level_(water_level*vertical_scale_),
 		texture_scale_(128.0f) ,
 		num_waves_(1),
 		textures_(textures),
+		water_normal_map_(water_nm),
 		start_height(0.f),
-		position(pos)
+		chunk_position(chunk_pos)
 		{
 	heightmap_ = load_image(size);
 	generate_terrain();	
 	generate_water();
 	SDL_FreeSurface(heightmap_);
 
-
 	time_ = 0.0;
 
-	position_-=glm::vec3(width_*horizontal_scale_, vertical_scale_, height_*horizontal_scale_)/2.0f;
+	position_-=glm::vec3(width_*horizontal_scale_, 0, height_*horizontal_scale_)/2.0f;
 }
-
-void  Terrain::set_num_waves(int num) {
-	assert(num<=MAX_NUM_WAVES && num >= 0);
-	num_waves_ = num;
-}
-
 
 void Terrain::generate_terrain() {
 	unsigned long numVertices = width_*height_;
@@ -160,6 +137,7 @@ void Terrain::generate_terrain() {
 void Terrain::generate_water() {
 	std::vector<unsigned int> indices;
 	std::vector<Mesh::vertex_t> vertices;
+
 	unsigned long vi=0;
 	for(int y=0; y<height_-1; ++y) {
 		for(int x=0; x<width_-1; ++x) {
@@ -168,7 +146,7 @@ void Terrain::generate_water() {
 				//Note that the y component is not the water height. It is used to calculate water depth in shader
 				//Water height is set with uniform 
 				glm::vec3 base_pos = glm::vec3(horizontal_scale_*x,get_height_at(x, y) , horizontal_scale_*y);
-				glm::vec2 base_uv = glm::vec2(v.position.x/texture_scale_, v.position.z/texture_scale_);
+				glm::vec2 base_uv = glm::vec2(base_pos.x/texture_scale_, base_pos.z/texture_scale_);
 				for(int i=0;i<2;++i) {
 					v.position = base_pos;
 					v.texCoord = base_uv;
@@ -195,6 +173,12 @@ void Terrain::generate_water() {
 
 	water_mesh_ = new Mesh(vertices, indices);
 
+	printf("Generating normals\n");
+	water_mesh_->generate_normals();
+	printf("Generating tangents\n");
+	water_mesh_->generate_tangents_and_bitangents();
+	printf("Ortonormalizing tangent space\n");
+	water_mesh_->ortonormalize_tangent_space();
 	printf("Uploading to gfx memory\n");
 	water_mesh_->generate_vbos();
 }
@@ -334,8 +318,8 @@ SDL_Surface * Terrain::load_image(glm::vec2 size) {
 	}
 
 	SDL_Rect srcrect;
-	srcrect.x = position.x;
-	srcrect.y = position.y;
+	srcrect.x = chunk_position.x;
+	srcrect.y = chunk_position.y;
 	srcrect.w = width_;
 	srcrect.h = height_;
 
@@ -359,7 +343,6 @@ void Terrain::render(double dt, Renderer * renderer) {
 	glUniform1f(renderer->shaders[Renderer::TERRAIN_SHADER].uniform["vertical_scale"], vertical_scale_);
 	glUniform1f(renderer->shaders[Renderer::TERRAIN_SHADER].uniform["start_height"], start_height);
 
-	textures_->bind();
 
 	renderer->modelMatrix.Push();
 
@@ -367,14 +350,25 @@ void Terrain::render(double dt, Renderer * renderer) {
 
 	renderer->upload_model_matrices();
 
+	textures_->bind();
 	terrain_mesh_->render();
+	textures_->unbind();
 
 	glUseProgram(renderer->shaders[Renderer::WATER_SHADER].program);
 	glUniform1f(renderer->shaders[Renderer::WATER_SHADER].uniform["time"], time_);
 	glUniform1f(renderer->shaders[Renderer::WATER_SHADER].uniform["water_height"], water_level_);
-	glUniform1i(renderer->shaders[Renderer::WATER_SHADER].uniform["num_waves"], num_waves_);
+	glUniform2fv(renderer->shaders[Renderer::WATER_SHADER].uniform["wave1"], 1, glm::value_ptr(wave1));
+	glUniform2fv(renderer->shaders[Renderer::WATER_SHADER].uniform["wave2"], 1, glm::value_ptr(wave2));
+
+
+	glActiveTexture(GL_TEXTURE0);
+	water_normal_map_->bind();
 
 	water_mesh_->render();
+
+	Renderer::checkForGLErrors("Render water ");
+
+	water_normal_map_->unbind();
 
 #if RENDER_DEBUG
 	//Render debug:
@@ -383,12 +377,10 @@ void Terrain::render(double dt, Renderer * renderer) {
 
 
 	terrain_mesh_->render();
-	water_mesh_->render();
 #endif
 
 	renderer->modelMatrix.Pop();
 
-	textures_->unbind();
 
 	glUseProgram(0);
 }

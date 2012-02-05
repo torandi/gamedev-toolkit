@@ -151,6 +151,11 @@ void Texture::load_texture() {
 			assert(false);
 	}
 
+	/*if(_mipmap_count > 0) {
+		glTexParameteri(_texture_type, GL_TEXTURE_BASE_LEVEL, 0);
+		glTexParameteri(_texture_type, GL_TEXTURE_MAX_LEVEL, _mipmap_count - 1);
+	}*/
+
 	unbind();
 
 	//Free images:

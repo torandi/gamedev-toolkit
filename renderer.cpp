@@ -37,6 +37,7 @@ void Renderer::init_shader(Shader &shader) {
 
 	//Local uniforms
 	shader.texture1 = glGetUniformLocation(shader.program, "tex1");
+
 	shader.texture2 = glGetUniformLocation(shader.program, "tex2");
 	shader.texture_array1 = glGetUniformLocation(shader.program, "tex_array1");
 	shader.texture_array2 = glGetUniformLocation(shader.program, "tex_array2");
@@ -83,11 +84,31 @@ void Renderer::init_shader(Shader &shader) {
 
 	//Bind texture
 	glUseProgram(shader.program);
-	glUniform1i(shader.texture1, 0);
-	glUniform1i(shader.texture2, 1);
-	glUniform1i(shader.texture_array1, 0);
-	glUniform1i(shader.texture_array2, 1);
-	glUniform1i(shader.skybox, 0);
+	if(shader.texture1!=-1) {
+		glUniform1i(shader.texture1, 0);
+	} else {
+		printf("texture1 not used in %s\n", shader.name.c_str());
+	}
+	if(shader.texture2!=-1) {
+		glUniform1i(shader.texture2, 1);
+	} else {
+		printf("texture2 not used in %s\n", shader.name.c_str());
+	}
+	if(shader.texture_array1!=-1) {
+		glUniform1i(shader.texture_array1, 0);
+	} else {
+		printf("texture_array1 not used in %s\n", shader.name.c_str());
+	}
+	if(shader.texture_array2!=-1) {
+		glUniform1i(shader.texture_array2, 1);
+	} else {
+		printf("texture_array2 not used in %s\n", shader.name.c_str());
+	}
+	if(shader.skybox!=-1) {
+		glUniform1i(shader.skybox, 2);
+	} else {
+		printf("skybox texture not used in %s\n", shader.name.c_str());
+	}
 	glUseProgram(0);
 
 	checkForGLErrors((std::string("init shader: bind textures")+shader.name).c_str());
@@ -207,7 +228,7 @@ void Renderer::load_skybox(std::string skybox_path) {
 
 	skybox_texture = new Texture(files, true);
 
-	glActiveTexture(GL_TEXTURE0);
+	glActiveTexture(GL_TEXTURE2);
 
 	skybox_texture->bind();
 	skybox_texture->set_clamp_params();

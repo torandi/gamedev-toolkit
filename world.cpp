@@ -63,6 +63,7 @@ ParticleSystem::ParticleSystem(
 	terrain_textures = Terrain::generate_texture_pack("valley",texture_files);
 
 	Terrain::init_terrain(renderer);
+	Renderer::checkForGLErrors("init Terrain");
 
 	//renderer->camera.set_position(glm::vec3(0.0, -7.5, 0.0));
 	renderer->camera.set_position(glm::vec3(-2.75, -1.62, 28));
@@ -71,15 +72,25 @@ ParticleSystem::ParticleSystem(
 	//Skybox
 	renderer->load_skybox("skybox");
 
+	Texture * water = new Texture("valley/water.dds");
 
-	t = new Terrain ("valley",1.f, 200.f, 50.0f, terrain_textures, glm::vec2(0,0), glm::vec2(1024, 1024));
+	water->bind();
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	water->unbind();
+	Renderer::checkForGLErrors("water params");
+
+	t = new Terrain ("valley",1.f, 200.f, 0.3f, terrain_textures, water, glm::vec2(0,0), glm::vec2(0, 0));
+	Renderer::checkForGLErrors("Terrain load");
 	t->start_height = 50.f;
+	t->relative_move(glm::vec3(0,-200.f,0));
 
-	t->set_num_waves(0);
+	t->wave1 = glm::vec2(0.1, 0)*0.01f;
+	t->wave2 = glm::vec2(0.05, 0.3)*0.01f;
 
 	renderer->render_objects.push_back(t);
 
-	underwater = new ParticleSystem(glm::vec3(-t->width()/2.f, -t->water_level(), -t->height()/2.f), glm::vec3(t->width(), t->water_level()+5.f, t->height()), 500, 20, 5, 
+	/*underwater = new ParticleSystem(glm::vec3(-t->width()/2.f, -t->water_level(), -t->height()/2.f), glm::vec3(t->width(), t->water_level()+5.f, t->height()), 500, 20, 5, 
 		0.25f, 0.20f, 0.1, 0.05, 0.0, 0.0, 
 		glm::vec3(0, -1, 0), glm::vec3(1,1.5, 1), 1.0, 0.2, 
 		Renderer::PARTICLES_SHADER, "textures/particle.png", glm::vec4(0.5,0.7,1,0.6), glm::vec4(0.5, 0.5, 1,0.6), glm::vec3(0, 0, 0)
@@ -88,10 +99,10 @@ ParticleSystem::ParticleSystem(
 	//Run a couple of cycles:
 	for(int i=0;i<10;++i) {
 		underwater->update(1.f);
-	}
+	}*/
 
 	renderer->render_objects.push_back(particles);
-	renderer->render_objects.push_back(underwater);
+	//renderer->render_objects.push_back(underwater);
 
 
 	//Lights:
@@ -148,13 +159,13 @@ ParticleSystem::ParticleSystem(
 }
 
 void update_world(double dt, Renderer * renderer) {
-	if(renderer->camera.position().y < (t->matrix()*glm::vec4(0.0, t->water_level(), 0.0, 1.f)).y)
+	/*if(renderer->camera.position().y < (t->matrix()*glm::vec4(0.0, t->water_level(), 0.0, 1.f)).y)
 		underwater->enabled = true;
 	else
-		underwater->enabled = false;
+		underwater->enabled = false;*/
 
 	particles->update(dt);
-	underwater->update(dt);
+	//underwater->update(dt);
 
 	time_of_day+=dt/time_per_hour;
 	time_of_day = fmod(time_of_day, 24.f);

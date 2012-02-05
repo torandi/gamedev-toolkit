@@ -103,6 +103,8 @@ void Mesh::render() {
 	glBindBuffer(GL_ARRAY_BUFFER, buffers_[0]);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffers_[1]);
 
+	Renderer::checkForGLErrors("Mesh::render(): Bind buffers");
+
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);
 	glEnableVertexAttribArray(2);
@@ -115,7 +117,11 @@ void Mesh::render() {
 	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_t), (const GLvoid*) (2*sizeof(glm::vec3)+sizeof(glm::vec2)));
 	glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_t), (const GLvoid*) (3*sizeof(glm::vec3)+sizeof(glm::vec2)));
 
+	Renderer::checkForGLErrors("Mesh::render(): Set vertex attribs");
+
 	glDrawElements(GL_TRIANGLES, num_faces_, GL_UNSIGNED_INT, 0);	
+
+	Renderer::checkForGLErrors("Mesh::render(): glDrawElements()");
 
 	glDisableVertexAttribArray(4);
 	glDisableVertexAttribArray(3);
@@ -125,4 +131,6 @@ void Mesh::render() {
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+	Renderer::checkForGLErrors("Mesh::render(): Teardown ");
 }
